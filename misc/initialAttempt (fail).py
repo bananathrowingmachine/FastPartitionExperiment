@@ -1,5 +1,5 @@
 """
-CHANGE APPROACH!
+CHANGE APPROACH! USE A GRAPH THEN, MAKE A DAG, THEN TOPO SORT AND RUN IN REVERSE
 
 This is an astronomically fast partition algorithm. Partition is the problem of determining if a set of integers can be split into 2 subsets with equal sum and no intersection.
 A lot of credit goes to Jeff Erickson, author of https://jeffe.cs.illinois.edu/teaching/algorithms/book/Algorithms-JeffE.pdf, a free online textbook for my university algorithms class.
