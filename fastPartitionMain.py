@@ -1,11 +1,13 @@
 """
+CHANGE APPROACH!
+
 This is an astronomically fast partition algorithm. Partition is the problem of determining if a set of integers can be split into 2 subsets with equal sum and no intersection.
 A lot of credit goes to Jeff Erickson, author of https://jeffe.cs.illinois.edu/teaching/algorithms/book/Algorithms-JeffE.pdf, a free online textbook for my university algorithms class.
 His version of fastSubsetSum (pg 116, 117) is the backbone of this algorithm, I mostly modified how it runs. 
 
-This version is designed to be the most understandable, especially for other languages, as python allows me do some things most other languages don't.
-In /variations, I will eventually provide this algorithm but made explicity for python (use some python features I'm explicity not here), and a version in c++ just to see the general idea of the algorithm.
-Finally, after this and those above are done I will attempt to make a version that does the same general idea of making sure 2 recursive calls don't solve the same subproblem, but without the loop over everything to finish off. Language TBD
+This is hopefully understandable, but I use a lot of unique python features (like the fact that dictionaries are ordered)
+In /variations, I will eventually provide this algorithm but made in c++ just to help others understand how to make it work.
+Finally, after the other variations are done I will attempt to make a version that does the same general idea of making sure 2 recursive calls don't solve the same subproblem, but without the loop over everything to finish off. Language TBD
 
 Made by bananathrowingmachine, [insert date here].
 """
@@ -22,7 +24,7 @@ class dpObject:
         self.__dpTableDict__: dict[tuple[int, int], int] = {}
         self.__dpSubProblemStack__: list[tuple[int, int]] = [] # While in reality it's a list as Python has no "real" stack, this is used like a stack, think of it as one.
         self.__userInput__ = absInputArray
-        self.__dpTableBuilder__(0, sum(self.__userInput__)/2) # To accurately build, give the builder the set of inputs that correspond to the answer.
+        self.__dpTableBuilder__(0, int(sum(self.__userInput__)/2)) # To accurately build, give the builder the set of inputs that correspond to the answer.
 
     def __iter__(self):
         """
@@ -38,7 +40,7 @@ class dpObject:
         """
         if not self.__dpSubProblemStack__:
             raise StopIteration
-        self.iterator = self.pop()
+        self.iterator = self.__dpSubProblemStack__.pop()
         return self.iterator
 
     def __dpTableBuilder__(self, index: int, goal: int):
@@ -50,20 +52,16 @@ class dpObject:
         """
         if goal == 0 or index == len(self.__userInput__): # If the problem has a recursive base case answer, skip, these can be computed in O(1) by the DP algorithm.
             return
-        if (index, goal) not in self.__dpTableDict__: # If the problem has not already been recorded. If it has, do nothing.
+        if (index, goal) not in self.__dpTableDict__: 
+            # If the problem has not already been recorded.
             self.__dpTableDict__[(index, goal)] = None 
-            self.__dpSubProblemStack__.append((index, goal)) # Since we are building this recursively, the first problems recorded will be the last ones that need to be done.
             if goal > self.__userInput__[index]: # Only "take" if the value at index is smaller than goal.
                 self.__dpTableBuilder__(index + 1, goal - self.__userInput__[index]) # The "take" option.
             self.__dpTableBuilder__(index + 1, goal) # The "leave" option.
-
-    def getSize(self) -> int:
-        """
-        Gets the size of the stored input.
-
-        :return: Length of array.
-        """
-        return len(self.__userInput__)
+        else:
+            # If a problem checks that this is already here
+            del self.__dpTableDict__[(index, goal)]
+            self.__dpTableDict__[(index, goal)] = None 
     
     def getAnswer(self, index, goal) -> int:
         """
@@ -78,28 +76,6 @@ class dpObject:
         if goal == 0:
             return 1
         return 0
-    
-    def peek(self) -> tuple[int, int, int]:
-        """
-        Finds the (index, pair) key at the top of the stack, and it's value in the table dictionary.
-
-        :return: The tuple of (index, pair, score) stored at the top of the stack.
-        """
-        if len(self.__dpSubProblemStack__) == 0:
-            return None
-        dictKey = self.__dpSubProblemStack__[-1] # [-1] just means the last element in the list.
-        return (dictKey[0], dictKey[1], self.__dpTableDict__[(dictKey)])
-    
-    def pop(self) -> tuple[int, int, int]:
-        """
-        Removes the (index, pair) key at the top of the stack. Does not remove the associated value in the table dictionary.
-
-        :return: The tuple of (index, pair, score) stored at the top of the stack.
-        """
-        if len(self.__dpSubProblemStack__) == 0:
-            return None
-        dictKey = self.__dpSubProblemStack__.pop() # [-1] just means the last element in the list.
-        return (dictKey[0], dictKey[1], self.__dpTableDict__[(dictKey)])
     
     def setAnswer(self, index, goal, answer):
         """
@@ -152,4 +128,4 @@ def outerShell(inputSet: set[int]) -> bool:
     print(totalSolutions)
     return False
 
-outerShell({1, 2, 3, 100})
+outerShell({1, 2, 7, -3, -5, -2})
