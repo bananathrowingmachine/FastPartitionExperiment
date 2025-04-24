@@ -1,5 +1,6 @@
 Astronomically fast partition
 =
+This is very outdated, let's finish the algorithm first before yapping
 
 This is an astronomically fast partition algorithm. Partition is defined on page 405 of the pdf linked below.
 A lot of credit goes to Jeff Erickson, author of https://jeffe.cs.illinois.edu/teaching/algorithms/book/Algorithms-JeffE.pdf, a free online textbook for my university algorithms class.
