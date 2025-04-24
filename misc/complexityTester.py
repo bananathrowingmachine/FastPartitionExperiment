@@ -1,6 +1,8 @@
 """
 Builds theoretical time complexities of my recursive dp table culling method, and the crazy math DP (which is O(nM/2) compared to regular partition which is O(nM)) complexity for reference)
 Results are here (this sheet is bad im gonna remake it): https://docs.google.com/spreadsheets/d/1EVpkLWv8gCQcz2yu1IRJDw23yp9A61_KYahQDJ6xTzY/edit?usp=sharing
+
+Mostly used to show that recursively finding all relevant subproblems, avoiding duplicates and then doing dp on the releveant problems found is worth it. Probably uses old versions of dpTableBuilder.
 """
 import random
 

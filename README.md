@@ -11,16 +11,16 @@ I wrote this in python as it's fairly easy to understand what's going on in that
 
 Why the math works:
 =
-[Found in the documents folder, click for direct link](https://github.com/bananathrowingmachine/fastPartition/tree/main/documents/notAddedYet.txt)
+[Found in the documents folder, click here for direct link](https://github.com/bananathrowingmachine/fastPartition/tree/main/documents/notAddedYet.txt)
 
 Why the algorithm is so fast:
 =
-[Found in the documents folder, click for direct link](https://github.com/bananathrowingmachine/fastPartition/tree/main/documents/notAddedYet.txt)
+[Found in the documents folder, click here for direct link](https://github.com/bananathrowingmachine/fastPartition/tree/main/documents/notAddedYet.txt)
 
 Complexity Data:
 =
-[Found in the documents folder, click for direct link](https://github.com/bananathrowingmachine/fastPartition/tree/main/documents/notAddedYet.txt)
+[Found in the documents folder, click here for direct link](https://github.com/bananathrowingmachine/fastPartition/tree/main/documents/notAddedYet.txt)
 
 Complexity Graph:
 =
-[Found in the documents folder, click for direct link](https://github.com/bananathrowingmachine/fastPartition/tree/main/documents/notAddedYet.txt)
+[Found in the documents folder, click here for direct link](https://github.com/bananathrowingmachine/fastPartition/tree/main/documents/notAddedYet.txt)
