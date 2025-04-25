@@ -1,2 +1,1 @@
 Reset results.
-Size 1 could handle a deviation divisor up to 3.

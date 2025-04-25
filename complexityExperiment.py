@@ -11,7 +11,6 @@ from versions.recursiveNormal import recursiveNormal
 from multiprocessing import Pool
 from typing import NamedTuple
 import numpy as np
-import random
 from typing import Optional
 
 class complexityExperiment:
@@ -58,22 +57,25 @@ class complexityExperiment:
         return experiment.runAllSizes(repeat)
     
     @classmethod
-    def testSetBuilder(cls, size: int) -> int:
+    def testSetBuilder(cls, size: int) -> tuple[int, float]:
         """
         Used specifically to test my random set builder function. Has no other use.
         """
         test = cls(size)
         deviation = 5
+        totalFails = 0
         fails = 0
         while fails < 11 and deviation <= 200:
             fails = 0
             deviation += 1
-            print("size {} deviation divisor now at {}".format(size, deviation))
             for _ in range(0, 1000):
                 for i in range(0, 21):
                     if test.generateRandomSet(i, deviation): 
                         fails += 1
-        return deviation
+            totalFails += fails
+            print("finished deviation test for size {}, divider {}".format(size, deviation))
+        failPercent = (totalFails/21000)*100
+        return deviation, failPercent
     
     def findAbsSumBounds(self) -> int:
         """
