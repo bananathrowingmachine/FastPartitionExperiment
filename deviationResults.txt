@@ -1,8 +1,2 @@
+Reset results.
 Size 1 could handle a deviation divisor up to 3.
-Size 25 could handle a deviation divisor up to 3.
-Size 50 could handle a deviation divisor up to 3.
-Size 75 could handle a deviation divisor up to 3.
-Size 1 could handle a deviation divisor up to 3.
-Size 25 could handle a deviation divisor up to 3.
-Size 50 could handle a deviation divisor up to 3.
-Size 75 could handle a deviation divisor up to 3.

@@ -4,7 +4,7 @@ from complexityExperiment import complexityExperiment
 
 setSizeTests = [1, 25, 50, 75, 100, 125, 150, 175, 200, 225, 250]
 with open("deviationResults.txt", "w") as f:
-    f.write("Reset results.")
+    f.write("Reset results.\n")
 for i in setSizeTests:
     result = complexityExperiment.testSetBuilder(i)
     with open("deviationResults.txt", "a") as f:

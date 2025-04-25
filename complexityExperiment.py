@@ -12,6 +12,7 @@ from multiprocessing import Pool
 from typing import NamedTuple
 import numpy as np
 import random
+from typing import Optional
 
 class complexityExperiment:
     """
@@ -44,7 +45,8 @@ class complexityExperiment:
         self.runRecurse = size <= 25
         self.setSize = size
         self.sumSize = [int for _ in range(21)]
-        self.sumSizeDev = self.findAbsSumBounds()
+        self.sumSizeBound = self.findAbsSumBounds() # The maximum allowed difference between the predetermined absolute sum (self.sumSize[i]) and the actual absolute sum.
+        self.standardDeviation = self.sumSizeBound/(3*self.setSize) # The entire bound is self.sumSize[i]+-self.sumSizeBound, so the value on it's own represents half, therefore divide by 3 instead of 6.
 
     @classmethod
     def testProblemSize(cls, size: int, repeat = 20) -> list[OutputTuple]:
@@ -61,7 +63,7 @@ class complexityExperiment:
         Used specifically to test my random set builder function. Has no other use.
         """
         test = cls(size)
-        deviation = 2
+        deviation = 5
         fails = 0
         while fails < 11 and deviation <= 200:
             fails = 0
@@ -96,28 +98,28 @@ class complexityExperiment:
             self.sumSize[i] = round(percent5inc + self.sumSize[i-1])
         return round(percent5inc/5)
 
-    def generateRandomSet(self, bigS: int, devDiv) -> bool:
+    def generateRandomSet(self, bigS: int, newDevDiv: Optional[int] = None) -> bool:
         """
         Generates a set of random ints of size n and absolute sum +-1% of sumSize[bigS]. The absolute sum will also not be above sumSize[21] or below sumSize[0], and will always be even.
         Uses numpy gaussian distribution to generate the sets.
         """
         newSet = set()
-        upperDev = self.sumSize[bigS] + self.sumSizeDev if bigS != 20 else self.sumSize[bigS]
-        lowerDev = self.sumSize[bigS] - self.sumSizeDev if bigS != 0 else self.sumSize[bigS]
         gaussianCenter = round(self.sumSize[bigS]/self.setSize) # Target abs sum / size of set
-        stdDev = round((upperDev-lowerDev)/devDiv)
         currentAbsSum = 0
 
+        standardDeviation = self.standardDeviation if newDevDiv == None else self.sumSizeBound/((newDevDiv/2)*self.setSize) # Takes in the deviation divisor as expected, then halves it to work liked expected.
+
+        random = np.random.default_rng()
         while len(newSet) != self.setSize:
             nextNum = None
             while nextNum == None or (nextNum in newSet and nextNum * -1 in newSet):
-                nextNum = abs(round(np.random.normal(gaussianCenter, stdDev)))
+                nextNum = abs(round(random.normal(gaussianCenter, standardDeviation)))
                 if nextNum > 32767:
                     nextNum = nextNum - (nextNum - 32767)*2 # Wraps numbers that are too big around, similar to absolute value for negatives
             currentAbsSum += nextNum
             if nextNum in newSet or nextNum * -1 in newSet:
                 nextNum = nextNum * -1 if nextNum in newSet else nextNum
-            elif np.random.randint(0, 2) == 1: nextNum *= -1
+            elif random.integers(0, 2) == 1: nextNum *= -1
             newSet.add(nextNum)
         
         sumDeviation = abs(currentAbsSum - self.sumSize[bigS]) # Checks to make sure the set's absolute value is within the error bounds
@@ -129,8 +131,7 @@ class complexityExperiment:
             newSet.remove(victim)
             newSet.add(victim + 1)
 
-        if sumDeviation > self.sumSizeDev: print("sumDev {} sumSizeDev {}".format(sumDeviation, self.sumSizeDev))
-        return sumDeviation > self.sumSizeDev
+        return sumDeviation > self.sumSizeBound
 
     def runSingleTest(self, current: CurrentConditions) -> tuple[int, int, int, int]:
         """
