@@ -1,4 +1,7 @@
-class memoizedCrazyMath:
+"""
+Solves the partition problem using a recursive dynamic programming algorithm, however also does some crazy math.
+"""
+class memoizedCrazy:
     def __init__(self):
         """
         Algorithm setup. Creates the input and output, parses the incoming numbers then runs partition. Nothing in here is part of the algorithm being tested.
@@ -8,13 +11,13 @@ class memoizedCrazyMath:
         self.absoluteList: list[int] = []
 
     @classmethod
-    def testIterations(cls, inputSet: set[int]) -> int:
+    def testIterations(cls, inputSet: set[int]) -> tuple[int, bool]:
         """
-        Creates a new instance of the problem, runs the input on it, then returns iteration count. Useful for testing.
+        Creates a new instance of the problem, runs the input on it, then returns iteration count, as well as if the set can or cannot be subdivided.
         """
         solver = cls()
-        solver.partition(inputSet)
-        return solver.iterationCount
+        answer = solver.partition(inputSet)
+        return (solver.iterationCount, answer)
 
     def partition(self, inputSet: set[int]) -> bool:
         """
