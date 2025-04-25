@@ -36,8 +36,7 @@ class memoizedCrazy:
         """
         Recursively solves the subset sum problem with inputs for partition. 
         """
-        self.iterationCount += 1 # Increments every time subsetSum is called.
-
+        self.iterationCount += 1
         if goal == 0:
             return 1
         if index >= len(self.absoluteList):

@@ -8,48 +8,104 @@ from versions.memoizedNormal import memoizedNormal
 from versions.tabulatedNormal import tabulatedNormal
 from versions.recursiveNormal import recursiveNormal
 
-from collections import namedtuple
+from multiprocessing import Pool
+from typing import NamedTuple
 
 class complexityExperiment:
     """
+    Class for running a complexity experiment with an inputted size and optional repeat count. Designed to be run by the classMethod testProblemSize(size, repeat)
+    """
+    class OutputTuple(NamedTuple):
+        """
+        Named output tuple for the results.
+        """
+        sumTarget: int
+        memoCrazy: float
+        memoNormal: float
+        tabNormal: float
+        recurseNormal: float
+
+    """
     Experiment setup. Finds the sets of size n with the smallest possible and largest possible (with signed 32 bit int limit being the largest number added) absolute sums. Then finds the size each bigS should be.
+    Designed to be run by calling the class method testProblemSize.
     """
     def __init__(self, size: int):
         self.runRecurse = size <= 25
+        self.setSize = size
         self.sumSize = [int for _ in range(21)]
-        self.findAbsSumBounds()
+        self.sumSizeError = self.findAbsSumBounds()
 
     @classmethod
-    def testProblemSize(cls, size: int, repeat = 20) -> list[tuple[float, float, float, float]]:
+    def testProblemSize(cls, size: int, repeat = 20) -> list[OutputTuple]:
         """
         Runs a new experiment of set size n. Will repeat the test the given amount of times, get the average, append it to the output, then increment bigS until bigS reaches 20.
         Do note that once n is larger than 25, recursion testing will stop and the final float will always be None.
         """
         experiment = cls(size)
-        return experiment.runAllSizes()
+        return experiment.runAllSizes(repeat)
     
-    def findAbsSumBounds(self):
+    @classmethod
+    def testSetBuilder(cls, size: int) -> list[set[int]]:
         """
-        Finds the smallest and biggest set of integers, names their sizes sumSize[0] and sumSize[20] respectively, then finds the other 19 values as 5%% increments from sumSize[0] to sumSize[20].
+        Used specifically to test my random set builder function. Has no other use.
         """
-        pass
+        test = cls(size)
+    
+    def findAbsSumBounds(self) -> int:
+        """
+        Finds the smallest and largest possible set for the size given at object construction, in terms of sum of the absolute values inside of the set.
+        Then fills in the rest of the sumSize as 5% increments from the smallest to the largest.
+        """
+        smallest = 0
+        biggest = 32767 # I arbitrarily chose the signed 16 bit int limit, I know python goes larger.
+        smallBound = 0
+        bigBound = 0
+        toggleChange = True # Due to the 0, the time when I increment smallest and decrement biggest are opposite, so this toggles which one happens.
+        for _ in range(self.setSize): # Since I'm building the max and min absolute sum of a set, instead of dealing with negatives and absolute values, I just add every positive twice.
+            smallBound += smallest
+            bigBound += biggest 
+            if toggleChange: smallest += 1
+            else: biggest -= 1
+            toggleChange != toggleChange
+        self.sumSize[0] = smallBound
+        self.sumSize[20] = bigBound
+        useableRange = bigBound - smallBound
+        percent5inc = useableRange/20
+        unrounded = smallBound
+        for i in range(1, 20):
+            unrounded = percent5inc + self.sumSize[i-1]
+            self.sumSize[i] = round(unrounded)
+        return round(percent5inc/5)
 
-    def generateRandomSet(self, size: int, bigS: int) -> set[int]:
-        pass
+    def generateRandomSet(self, bigS: int) -> set[int]:
+        """
+        Generates a set of random ints of size n and absolute sum +-1% of sumSize[bigS]. The absolute sum will also not be above sumSize[21] or below sumSize[0], and will always be even.
+        """
+        randomSet = {}
+        upperSumBound = self.sumSize[bigS] + self.sumSizeError if bigS != 21 else self.sumSize[bigS]
+        lowerSumBound = self.sumSize[bigS] - self.sumSizeError if bigS != 0 else self.sumSize[bigS]
+
+
 
     def runSingleTest(self, currentConds: tuple[int, int, set[int]]) -> tuple[int, int, int, int]:
         """
         Runs each algorithm once. Verifies all algorithms returned the same bool, and will record the parameters and which algorithm disagrees if not. Also returns the iteration count of each.
+        Uses a python multithreading pool to run each version at the same time.
         """
-        testSet = currentConds[2]
-        memoCrazy = memoizedCrazy.testIterations(testSet)
-        memoNormal = memoizedNormal.testIterations(testSet)
-        tabNormal = tabulatedNormal.testIterations(testSet)
-        xnor = [memoCrazy[1], memoNormal[1], tabNormal[1]]
-        if self.runRecurse:
-            recurseNormal = recursiveNormal.testIterations(testSet)
-            xnor.append(recurseNormal[1])
+        testSet = currentConds[2] 
 
+        # If problem size is small enough for basic recursion, run it, if not, make it's results var a tuple of None, None
+        with Pool(processes=4 if self.runRecurse else 3) as pool:
+            memoCrazyThread = pool.apply_async(memoizedCrazy.testIterations, (testSet,))
+            memoNormalThread = pool.apply_async(memoizedNormal.testIterations, (testSet,))
+            tabNormalThread = pool.apply_async(tabulatedNormal.testIterations, (testSet,))
+            if self.runRecurse: recurseNormalThread = pool.apply_async(recursiveNormal.testIterations, (testSet,))
+        memoCrazy = memoCrazyThread.get()
+        memoNormal = memoNormalThread.get()
+        tabNormal = tabNormalThread.get()
+        recurseNormal = recurseNormalThread.get() if self.runRecurse else (None, None)
+
+        xnor = [memoCrazy[1], memoNormal[1], tabNormal[1], recurseNormal[1]]
         if len(set(xnor)) > 1:
             self.recordDisagreement(xnor, currentConds)
 
@@ -57,19 +113,24 @@ class complexityExperiment:
             memoCrazy[0],
             memoNormal[0],
             tabNormal[0],
-            recurseNormal[0] if self.runRecurse else None
+            recurseNormal[0]
         )   
 
     def runSingleSize(self) -> tuple[float, float, float, float]:
+        """
+        Runs multiple tests of the same condition (set size and abs sum size). Will return a tuple of the average iterations count from each test.
+        Uses a python multithreading pool to run 3 (or 4 if not using regular recursion) tests at once as my computer allows this program 12 threads.
+        """
         pass
 
-    def runAllSizes(self) -> list[tuple[float, float, float, float]]:
-        outputList = [[tuple[float, float, float, float]] for _ in range(21)]
+    def runAllSizes(self) -> list[OutputTuple]:
+        outputList = [[self.OutputTuple] for _ in range(21)]
+        return outputList
 
     def recordDisagreement(xnor: list[bool], currentConds: tuple[int, int, set[int]]):
         algoNames = ["Memoized Crazy", "Memoized Normal", "Tabulated Normal", "Recursive Normal"]
         culprits = []
-        if len(xnor) == 4: # It's hard to really know who's right, so in the case recursive normal is running, it's always right, and otherwise, it's the majority opinion.
+        if xnor[3] != None: # It's hard to really know who's right, so in the case recursive normal is running, it's always right, and otherwise, it's the majority opinion.
             truth = xnor[3] 
         else:
             if xnor[0] == xnor[1]: truth = xnor[2]
@@ -78,6 +139,6 @@ class complexityExperiment:
         for i in range(len(xnor)):
             if xnor[i] != truth:
                 culprits.append(algoNames[i])
-        # TODO: Have this write to 2 sheets. One that has the culprits and the first 2 current conds and then then one that has all 3.
+        # TODO: Have this write to 2 docs. One that has the culprits and the first 2 current conds (set size and abs sum size), and one that points to the actual set inputted in another document.
         
 
