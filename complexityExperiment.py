@@ -42,10 +42,11 @@ class complexityExperiment:
     """
     def __init__(self, size: int):
         self.runRecurse = size <= 25
-        self.setSize = size
-        self.sumSize = [int for _ in range(21)]
+        self.setCount = size
+        self.sumSizeTarget = [int for _ in range(21)]
         self.sumSizeBound = self.findAbsSumBounds() # The maximum allowed difference between the predetermined absolute sum (self.sumSize[i]) and the actual absolute sum.
-        self.standardDeviation = self.sumSizeBound/(3*self.setSize) # The entire bound is self.sumSize[i]+-self.sumSizeBound, so the value on it's own represents half, therefore divide by 3 instead of 6.
+        self.intSizeBound = round(self.sumSizeBound/self.setCount)
+        # TODO change gaussian approach to find the standard deviation necessary to retain x percent of numbers within the intSizeBounds
 
     @classmethod
     def testProblemSize(cls, size: int, repeat = 20) -> list[OutputTuple]:
@@ -57,25 +58,13 @@ class complexityExperiment:
         return experiment.runAllSizes(repeat)
     
     @classmethod
-    def testSetBuilder(cls, size: int) -> tuple[int, float]:
+    def testSetBuilder(cls, size: int) -> list[set[int]]:
         """
         Used specifically to test my random set builder function. Has no other use.
         """
         test = cls(size)
-        deviation = 5
-        totalFails = 0
-        fails = 0
-        while fails < 11 and deviation <= 200:
-            fails = 0
-            deviation += 1
-            for _ in range(0, 1000):
-                for i in range(0, 21):
-                    if test.generateRandomSet(i, deviation): 
-                        fails += 1
-            totalFails += fails
-            print("finished deviation test for size {}, divider {}".format(size, deviation))
-        failPercent = (totalFails/21000)*100
-        return deviation, failPercent
+        for i in range(0, 21):
+            print(test.generateRandomSet(i))
     
     def findAbsSumBounds(self) -> int:
         """
@@ -87,32 +76,32 @@ class complexityExperiment:
         smallBound = 0
         bigBound = 0
         toggleChange = True # Due to the 0, the time when I increment smallest and decrement biggest are opposite, so this toggles which one happens.
-        for _ in range(self.setSize): # Since I'm building the max and min absolute sum of a set, instead of dealing with negatives and absolute values, I just add every positive twice.
+        for _ in range(self.setCount): # Since I'm building the max and min absolute sum of a set, instead of dealing with negatives and absolute values, I just add every positive twice.
             smallBound += smallest
             bigBound += biggest 
             if toggleChange: smallest += 1
             else: biggest -= 1
             toggleChange != toggleChange
-        self.sumSize[0] = smallBound
-        self.sumSize[20] = bigBound
+        self.sumSizeTarget[0] = smallBound
+        self.sumSizeTarget[20] = bigBound
         percent5inc = (bigBound - smallBound)/20
         for i in range(1, 20):
-            self.sumSize[i] = round(percent5inc + self.sumSize[i-1])
+            self.sumSizeTarget[i] = round(percent5inc + self.sumSizeTarget[i-1])
         return round(percent5inc/5)
 
-    def generateRandomSet(self, bigS: int, newDevDiv: Optional[int] = None) -> bool:
+    def generateRandomSet(self, bigS: int) -> set[int]:
         """
         Generates a set of random ints of size n and absolute sum +-1% of sumSize[bigS]. The absolute sum will also not be above sumSize[21] or below sumSize[0], and will always be even.
         Uses numpy gaussian distribution to generate the sets.
         """
         newSet = set()
-        gaussianCenter = round(self.sumSize[bigS]/self.setSize) # Target abs sum / size of set
+        gaussianCenter = round(self.sumSizeTarget[bigS]/self.setCount) # Target abs sum / size of set
         currentAbsSum = 0
 
-        standardDeviation = self.standardDeviation if newDevDiv == None else self.sumSizeBound/((newDevDiv/2)*self.setSize) # Takes in the deviation divisor as expected, then halves it to work liked expected.
+        standardDeviation = self.intSizeBound/6 
 
         random = np.random.default_rng()
-        while len(newSet) != self.setSize:
+        while len(newSet) != self.setCount:
             nextNum = None
             while nextNum == None or (nextNum in newSet and nextNum * -1 in newSet):
                 nextNum = abs(round(random.normal(gaussianCenter, standardDeviation)))
@@ -124,7 +113,9 @@ class complexityExperiment:
             elif random.integers(0, 2) == 1: nextNum *= -1
             newSet.add(nextNum)
         
-        sumDeviation = abs(currentAbsSum - self.sumSize[bigS]) # Checks to make sure the set's absolute value is within the error bounds
+        sumDeviation = abs(currentAbsSum - self.sumSizeTarget[bigS]) # Checks to make sure the set's absolute value is within the error bounds
+        if sumDeviation > self.sumSizeBound:
+            pass
 
         if currentAbsSum % 2 == 1: # Make sure it has a absolute sum that is even
             victim = None
@@ -133,7 +124,7 @@ class complexityExperiment:
             newSet.remove(victim)
             newSet.add(victim + 1)
 
-        return sumDeviation > self.sumSizeBound
+        return newSet
 
     def runSingleTest(self, current: CurrentConditions) -> tuple[int, int, int, int]:
         """
