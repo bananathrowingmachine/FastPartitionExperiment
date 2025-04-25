@@ -10,6 +10,8 @@ from versions.recursiveNormal import recursiveNormal
 
 from multiprocessing import Pool
 from typing import NamedTuple
+import numpy as np
+import random
 
 class complexityExperiment:
     """
@@ -25,6 +27,15 @@ class complexityExperiment:
         tabNormal: float
         recurseNormal: float
 
+    class CurrentConditions(NamedTuple):
+        """
+        For storing the current experiment conditions.
+        """
+        setSize: int
+        absSumSize: int
+        iterationCount: int
+        currentSet: set[int]
+
     """
     Experiment setup. Finds the sets of size n with the smallest possible and largest possible (with signed 32 bit int limit being the largest number added) absolute sums. Then finds the size each bigS should be.
     Designed to be run by calling the class method testProblemSize.
@@ -33,7 +44,7 @@ class complexityExperiment:
         self.runRecurse = size <= 25
         self.setSize = size
         self.sumSize = [int for _ in range(21)]
-        self.sumSizeError = self.findAbsSumBounds()
+        self.sumSizeDev = self.findAbsSumBounds()
 
     @classmethod
     def testProblemSize(cls, size: int, repeat = 20) -> list[OutputTuple]:
@@ -45,15 +56,21 @@ class complexityExperiment:
         return experiment.runAllSizes(repeat)
     
     @classmethod
-    def testSetBuilder(cls, size: int) -> list[set[int]]:
+    def testSetBuilder(cls, size: int, deviation: int) -> int:
         """
         Used specifically to test my random set builder function. Has no other use.
         """
         test = cls(size)
+        exampleSetList = []
+        for i in range(0, 21):
+            exampleSet = test.generateRandomSet(i)
+            insideSumDeviation = abs(exampleSet[0] - test.sumSize[i]) < test.sumSizeDev
+            exampleSetList.append((insideSumDeviation, exampleSet[1]))
+        return exampleSetList
     
     def findAbsSumBounds(self) -> int:
         """
-        Finds the smallest and largest possible set for the size given at object construction, in terms of sum of the absolute values inside of the set.
+        Finds the smallest and largest possible set for the size given at object construction, in terms of sum of the absolute values inside of the set. Called by the constructor.
         Then fills in the rest of the sumSize as 5% increments from the smallest to the largest.
         """
         smallest = 0
@@ -69,30 +86,52 @@ class complexityExperiment:
             toggleChange != toggleChange
         self.sumSize[0] = smallBound
         self.sumSize[20] = bigBound
-        useableRange = bigBound - smallBound
-        percent5inc = useableRange/20
-        unrounded = smallBound
+        percent5inc = (bigBound - smallBound)/20
         for i in range(1, 20):
-            unrounded = percent5inc + self.sumSize[i-1]
-            self.sumSize[i] = round(unrounded)
+            self.sumSize[i] = round(percent5inc + self.sumSize[i-1])
         return round(percent5inc/5)
 
-    def generateRandomSet(self, bigS: int) -> set[int]:
+    def generateRandomSet(self, bigS: int, devDiv) -> tuple[int, set[int]]:
         """
         Generates a set of random ints of size n and absolute sum +-1% of sumSize[bigS]. The absolute sum will also not be above sumSize[21] or below sumSize[0], and will always be even.
+        Uses numpy gaussian distribution to generate the sets.
         """
-        randomSet = {}
-        upperSumBound = self.sumSize[bigS] + self.sumSizeError if bigS != 21 else self.sumSize[bigS]
-        lowerSumBound = self.sumSize[bigS] - self.sumSizeError if bigS != 0 else self.sumSize[bigS]
+        newSet = set()
+        upperDev = self.sumSize[bigS] + self.sumSizeDev if bigS != 20 else self.sumSize[bigS]
+        lowerDev = self.sumSize[bigS] - self.sumSizeDev if bigS != 0 else self.sumSize[bigS]
+        gaussianCenter = round(self.sumSize[bigS]/self.setSize) # Target abs sum / size of set
+        stdDev = round((upperDev-lowerDev)/devDiv)
+        currentAbsSum = 0
 
+        while len(newSet) != self.setSize:
+            nextNum = None
+            while nextNum == None or (nextNum in newSet and nextNum * -1 in newSet):
+                nextNum = abs(round(np.random.normal(gaussianCenter, stdDev)))
+                if nextNum > 32767:
+                    nextNum = nextNum - (nextNum - 32767)*2 # Wraps numbers that are too big around, similar to absolute value for negatives
+            currentAbsSum += nextNum
+            if nextNum in newSet or nextNum * -1 in newSet:
+                nextNum = nextNum * -1 if nextNum in newSet else nextNum
+            elif np.random.randint(0, 2) == 1: nextNum *= -1
+            newSet.add(nextNum)
+        
+        sumDeviation = abs(currentAbsSum - self.sumSize[bigS]) # Checks to make sure the set's absolute value is within the error bounds
 
+        if currentAbsSum % 2 == 1: # Make sure it has a absolute sum that is even
+            victim = None
+            while victim == None or victim + 1 in newSet:
+                victim = random.choice(list(newSet))
+            newSet.remove(victim)
+            newSet.add(victim + 1)
 
-    def runSingleTest(self, currentConds: tuple[int, int, set[int]]) -> tuple[int, int, int, int]:
+        return sumDeviation <= self.sumSizeDev
+
+    def runSingleTest(self, current: CurrentConditions) -> tuple[int, int, int, int]:
         """
         Runs each algorithm once. Verifies all algorithms returned the same bool, and will record the parameters and which algorithm disagrees if not. Also returns the iteration count of each.
         Uses a python multithreading pool to run each version at the same time.
         """
-        testSet = currentConds[2] 
+        testSet = current[3] 
 
         # If problem size is small enough for basic recursion, run it, if not, make it's results var a tuple of None, None
         with Pool(processes=4 if self.runRecurse else 3) as pool:
@@ -107,7 +146,7 @@ class complexityExperiment:
 
         xnor = [memoCrazy[1], memoNormal[1], tabNormal[1], recurseNormal[1]]
         if len(set(xnor)) > 1:
-            self.recordDisagreement(xnor, currentConds)
+            self.recordDisagreement(xnor, current)
 
         return (
             memoCrazy[0],
@@ -127,7 +166,7 @@ class complexityExperiment:
         outputList = [[self.OutputTuple] for _ in range(21)]
         return outputList
 
-    def recordDisagreement(xnor: list[bool], currentConds: tuple[int, int, set[int]]):
+    def recordDisagreement(xnor: list[bool], current: CurrentConditions):
         algoNames = ["Memoized Crazy", "Memoized Normal", "Tabulated Normal", "Recursive Normal"]
         culprits = []
         if xnor[3] != None: # It's hard to really know who's right, so in the case recursive normal is running, it's always right, and otherwise, it's the majority opinion.
@@ -139,6 +178,6 @@ class complexityExperiment:
         for i in range(len(xnor)):
             if xnor[i] != truth:
                 culprits.append(algoNames[i])
-        # TODO: Have this write to 2 docs. One that has the culprits and the first 2 current conds (set size and abs sum size), and one that points to the actual set inputted in another document.
+        # TODO: Have this write to 2 docs. One that has the culprits and the first 3 current conds (set size, abs sum size, iteration count), and one that points to the actual set inputted in another document.
         
 
