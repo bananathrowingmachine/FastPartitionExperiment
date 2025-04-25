@@ -56,17 +56,22 @@ class complexityExperiment:
         return experiment.runAllSizes(repeat)
     
     @classmethod
-    def testSetBuilder(cls, size: int, deviation: int) -> int:
+    def testSetBuilder(cls, size: int) -> int:
         """
         Used specifically to test my random set builder function. Has no other use.
         """
         test = cls(size)
-        exampleSetList = []
-        for i in range(0, 21):
-            exampleSet = test.generateRandomSet(i)
-            insideSumDeviation = abs(exampleSet[0] - test.sumSize[i]) < test.sumSizeDev
-            exampleSetList.append((insideSumDeviation, exampleSet[1]))
-        return exampleSetList
+        deviation = 2
+        fails = 0
+        while fails < 11 and deviation <= 200:
+            fails = 0
+            deviation += 1
+            print("size {} deviation divisor now at {}".format(size, deviation))
+            for _ in range(0, 1000):
+                for i in range(0, 21):
+                    if test.generateRandomSet(i, deviation): 
+                        fails += 1
+        return deviation
     
     def findAbsSumBounds(self) -> int:
         """
@@ -91,7 +96,7 @@ class complexityExperiment:
             self.sumSize[i] = round(percent5inc + self.sumSize[i-1])
         return round(percent5inc/5)
 
-    def generateRandomSet(self, bigS: int, devDiv) -> tuple[int, set[int]]:
+    def generateRandomSet(self, bigS: int, devDiv) -> bool:
         """
         Generates a set of random ints of size n and absolute sum +-1% of sumSize[bigS]. The absolute sum will also not be above sumSize[21] or below sumSize[0], and will always be even.
         Uses numpy gaussian distribution to generate the sets.
@@ -124,7 +129,8 @@ class complexityExperiment:
             newSet.remove(victim)
             newSet.add(victim + 1)
 
-        return sumDeviation <= self.sumSizeDev
+        if sumDeviation > self.sumSizeDev: print("sumDev {} sumSizeDev {}".format(sumDeviation, self.sumSizeDev))
+        return sumDeviation > self.sumSizeDev
 
     def runSingleTest(self, current: CurrentConditions) -> tuple[int, int, int, int]:
         """
