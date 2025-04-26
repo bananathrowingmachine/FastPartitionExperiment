@@ -3,15 +3,14 @@ Will run a complexity experiment on the provided variations of algorithms that s
 Will run the experiment of (n,S) r times, where there are 21 levels of S, labeled 0-20 (to match their list index), tested and appended to the output list in that order.
 All sets inputted into the algorithms will be verified to have an even absolute sum. 
 """
-from versions.memoizedCrazy import memoizedCrazy
-from versions.memoizedNormal import memoizedNormal
-from versions.tabulatedNormal import tabulatedNormal
-from versions.recursiveNormal import recursiveNormal
+from experimentCode.versions.memoizedCrazy import memoizedCrazy
+from experimentCode.versions.memoizedNormal import memoizedNormal
+from experimentCode.versions.tabulatedNormal import tabulatedNormal
+from experimentCode.versions.recursiveNormal import recursiveNormal
 
 from multiprocessing import Pool
 from typing import NamedTuple
 import numpy as np
-from typing import Optional
 
 class complexityExperiment:
     """
@@ -148,22 +147,26 @@ class complexityExperiment:
         if len(set(xnor)) > 1:
             self.recordDisagreement(xnor, current)
 
-        return (
-            memoCrazy[0],
-            memoNormal[0],
-            tabNormal[0],
-            recurseNormal[0]
-        )   
+        return (memoCrazy[0], memoNormal[0], tabNormal[0], recurseNormal[0])   
 
-    def runSingleSize(self) -> tuple[float, float, float, float]:
+    def runSingleSize(self, rounds: int) -> tuple[float, float, float, float]:
         """
         Runs multiple tests of the same condition (set size and abs sum size). Will return a tuple of the average iterations count from each test.
         Uses a python multithreading pool to run 3 (or 4 if not using regular recursion) tests at once as my computer allows this program 12 threads.
         """
         pass
 
-    def runAllSizes(self) -> list[OutputTuple]:
+    def runAllSizes(self, rounds: int) -> list[OutputTuple]:
+        random = np.random.default_rng()
         outputList = [[self.OutputTuple] for _ in range(21)]
+        for i in range(0,21):
+            nextTuple = self.OutputTuple
+            nextTuple.sumTarget = random.integers(0, 100)
+            nextTuple.memoCrazy = random.random() * 10
+            nextTuple.memoNormal = random.random() * 100
+            nextTuple.tabNormal = random.random() * 1000
+            nextTuple.recurseNormal = random.random() * 10000
+            outputList[i] = nextTuple
         return outputList
 
     def recordDisagreement(xnor: list[bool], current: CurrentConditions):

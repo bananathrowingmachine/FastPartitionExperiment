@@ -1,2 +1,2 @@
-versions/__pycache__/*
-__pycache__/*
+experimentCode/__pycache__/*
+experimentCode/versions/__pycache__/*
