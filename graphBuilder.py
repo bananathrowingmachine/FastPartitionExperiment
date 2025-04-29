@@ -1,5 +1,48 @@
-# The eventual graph and data table building code. Currently will just be an example of getting the output from my code and playing around with it.
 from experiment_code.complexityExperiment import complexityExperiment
+from multiprocessing import Process, Queue
+from functools import partial
+import numpy as np
+from typing import Tuple
 
-# I deleted the named tuple and am gonna add a bit of comp sci stuff to this (multithreading) come back soon.
+def collectData(queue: Queue):
+    """
+    Allows data collection to happen in a seperate thread. Takes data and inputs it into the queue.
 
+    :param queue: The data queue.
+    """
+    for n in range(1, 21):
+        size = n * 5
+        queue.put((size, complexityExperiment.testProblemSize, size <= 25))
+
+def activateProcessData(queue: Queue):
+    """
+    Allows data processing to happen in a seperate thread. Takes data inputted into the queue to process.
+
+    :param queue: The data queue.
+    """
+    while keepGoing:
+        try:
+            processData(queue.get(timeout=0.1))
+        except Queue.empty:
+            continue
+
+def processData(data: Tuple[int, np.ndarray, bool]):
+    """
+    Processes the data into a bunch of neat data tables and graphs.
+
+    :param data: The data to process. Includes the problem size tested, and if recursive normal was run. 
+    """
+    pass
+
+"""
+The main method. Starts up the threads, flags, and gets everything moving.
+"""
+queue = Queue()
+keepGoing = True
+collector = Process(target=collectData, args=(queue,))
+processor = Process(target=activateProcessData, args=(queue,))
+collector.start()
+processor.start()
+collector.join()
+keepGoing = False
+processor.join()

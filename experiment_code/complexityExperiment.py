@@ -1,19 +1,18 @@
 """
-Will run a complexity experiment on the provided variations of algorithms that solve partition. Takes a problem size n, and a repeat amount r.
-Will run the experiment of (n,S) r times, where there are 21 levels of S, labeled 0-20 (to match their list index), tested and appended to the output list in that order.
-All sets inputted into the algorithms will be verified to have an even absolute sum. 
+Written by bananathrowingmachine, Apr 29th, 2025.
 """
 from versions.memoizedCrazy import memoizedCrazy
 from versions.memoizedNormal import memoizedNormal
 from versions.tabulatedNormal import tabulatedNormal
 from versions.recursiveNormal import recursiveNormal
 
-from multiprocessing import Pool
+from multiprocessing import Pool, Lock
 from functools import partial
 from typing import Tuple, Optional
 import numpy as np
 
 resultDType = np.dtype([
+    ('targetSum', np.int64),
     ('memoCrazy', np.float64),
     ('memoNormal', np.float64),
     ('tabNormal', np.float64),
@@ -22,11 +21,12 @@ resultDType = np.dtype([
 
 class complexityExperiment:
     """
-    Class for running a complexity experiment with an inputted size and optional repeat count. Designed to be run by the classMethod testProblemSize(size, repeat)
+    Class for running a complexity experiment. Not desinged for each class to be called seperately however some are more detachable than others but I give you 0 promises on any functionality outside of running it the expected way.
+    To run it the expected way, call class method testProblemSize, and give it an integer that says how many integers should be in a randomized set given to each algorithm.
     """
     def __init__(self, size: int):
         """
-        Experiment setup. Finds the sets of size n with the smallest possible and largest possible (with signed 32 bit int limit being the largest number added) absolute sums. Then finds the size each bigS should be.
+        Experiment setup. Finds the sets of size n with the smallest possible and largest possible (with signed 32 bit int limit being the largest number added) absolute sums. Then finds the size each targetIndex should be.
         Designed to be run by calling the class method testProblemSize.
         """
         self.runRecurse = size <= 25
@@ -34,26 +34,28 @@ class complexityExperiment:
         self.sumSizeTarget = [int for _ in range(21)]
         self.sumSizeBound = self.findAbsSumBounds() # The maximum allowed difference between the predetermined absolute sum (self.sumSize[i]) and the actual absolute sum.
         self.intSizeBound = round(self.sumSizeBound/self.setCount)
+        self.fileLock = Lock()
 
     @classmethod
-    def testProblemSize(cls, size: int, repeat = 20) -> np.ndarray:
+    def testProblemSize(cls, size: int, rounds = 20) -> np.ndarray:
         """
-        Runs a new experiment of set size n. Will repeat the test the given amount of times, get the average, append it to the output, then increment bigS until bigS reaches 20.
-        Do note that once n is larger than 25, recursion testing will stop and the final float will always be None.
+        Runs a new experiment of set integer count size. Will determine the absolute sum targets from min size to max size assuming 32767 is the biggest int (it's not), then get the rest as 5% increments.
+        Will then run them all, and return a np.ndarray of results, ordered from smallest set absolute sum to largest set absolute sum.
+        Do note that if size is greater than 25, the program will not run recurse normal as it is too slow. All of it's result slots will be converted to np.nan.
 
-        :param size: The size of sets to be tested.
-        :param repeat: The amount of times a single size and bigS should be repeated. Defaults to 20 times.
-        :return: A list of the target sum and each algorithm's iteration count for that target sum. Goes from 0% max sum (output[0]) to 100% max sum (ouput[20]), with 5% increments in between.
+        :param size: The amount of seperate integers should be in a set to be tested. Commonly referred to as size.
+        :param rounds: The amount of times a single size and targetIndex should be repeated. Defaults to 20 times.
+        :return: A list of each target absolute sum, and the average iteration count of <memoized crazy, memoized normal, tabulated normal, recursive normal> for each of those. Includes the actual target sum.
         """
         experiment = cls(size)
-        return experiment.runAllSizes(repeat)
+        return experiment.runAllSizes(rounds)
     
     def findAbsSumBounds(self) -> int:
         """
-        Finds the smallest and largest possible set for the size given at object construction, in terms of sum of the absolute values inside of the set. Called by the constructor.
-        Then fills in the rest of the sumSize as 5% increments from the smallest to the largest.
+        Finds the smallest and largest possible set for the size given at object construction, in terms of sum of the absolute values inside of the set. Called by the constructor (so therefore you shouldn't call it).
+        Then fills in the rest of the sumSize as 5% increments from the smallest to the largest, and it's index in the array is known throught the class as "targetIndex".
 
-        :return: 1% of the distance between sumSizeTarget[0] and sumSizeTarget[20]. Used for the set builder error.
+        :return: 1% of the distance between sumSizeTarget[0] and sumSizeTarget[20]. Used for the set builder error, so that absolute sums don't leave a 1% range from the target absolute sum.
         """
         smallest = 0
         biggest = 32767 # I arbitrarily chose the signed 16 bit int limit, I know python goes larger.
@@ -78,7 +80,7 @@ class complexityExperiment:
         Generates a set of random ints of size n and absolute sum +-1% of sumSize[targetIndex]. The absolute sum will also not be above sumSize[21] or below sumSize[0], and will always be even.
         Uses numpy gaussian distribution to generate the sets.
 
-        :param targetIndex: The size target interger of the set. Can be from 0->20 inclusive where 0 is smallest possible, 20 is largest possible, and everything else is increments of 5%.
+        :param targetIndex: The size target index of the set. Can be from 0->20 inclusive where 0 is smallest possible, 20 is largest possible, and everything else is increments of 5%.
         :param recurseLevel: Used internally to prevent infinite recursion. Defaults to 0, unless you are ABSOLUTELY SURE (you aren't) you want to set it to something else, keep it at the default.
         :return: A randomized set with a sum that has an absolute value within 1% of the 5% increment given to it through targetIndex.
         """
@@ -174,7 +176,7 @@ class complexityExperiment:
         Runs each algorithm once. Verifies all algorithms returned the same bool, and will record the parameters and which algorithm disagrees if not. Also returns the iteration count of each.
         Uses a python multithreading pool to run each version at the same time.
 
-        :param current: The current conditions. Will generate the current set internally and add it on.
+        :param targetIndex: The size target index of the set. Can be from 0->20 inclusive where 0 is smallest possible, 20 is largest possible, and everything else is increments of 5%.
         :return: A tuple with each variations results in order <memoized crazy, memoized normal, tabulated normal, recursive normal>. Will return None for recursive normal if the amount of ints in the set it too high (> 25).
         """
         testSet = self.generateRandomSet(self.sumSizeTarget[targetIndex])
@@ -192,13 +194,13 @@ class complexityExperiment:
             self.recordDisagreement(xnor, targetIndex, testSet)
         return (memoCrazy[0], memoNormal[0], tabNormal[0], recurseNormal[0])   
 
-    def runSingleSize(self, targetIndex: int, rounds: int) -> Tuple[np.float64, np.float64, np.float64, np.float64]:
+    def runSingleSize(self, targetIndex: int, rounds = 20) -> Tuple[np.float64, np.float64, np.float64, np.float64]:
         """
         Runs multiple tests of the same condition (set size and abs sum size). Will return a tuple of the average iterations count from each test.
         Uses a python multithreading pool to run 3 (or 4 if not using regular recursion) tests at once as my computer allows this program 12 threads.
 
-        :param rounds: Will run a single test size this amount of times. Will return an average of the results in the form of a tuple of floats.
         :param targetIndex: The index for the sum size target. Ranges from 0->20 inclusive.
+        :param rounds: The amount of times a given size and target sum should be repeated. Defaults to 20 times.
         :return: A tuple with each variations average results in order <memoized crazy, memoized normal, tabulated normal, recursive normal>. Will return np.nan for recursive normal if integer count is above 25.
         """
         results = np.empty((rounds, 4), dtype=np.int64)
@@ -209,20 +211,20 @@ class complexityExperiment:
         avg4 = np.mean(results[:, 3]) if self.runRecurse else np.nan
         return (np.mean(results[:, 0]), np.mean(results[:, 1]), np.mean(results[:, 2]), avg4)
 
-    def runAllSizes(self, rounds: int) -> np.ndarray:
+    def runAllSizes(self, rounds = 20) -> np.ndarray:
         """
-        Runs each size index for the current integer count. Returns a 4 * 21 numpy array, having started at size 0 and moved up to size 21.
+        Runs each size index for the current integer count. Returns a 5 * 21 numpy array, having started at size 0 and moved up to size 21.
 
-        :param rounds: How many rounds to give runSingleSize. 
-        :return: A 4 * 21 numpy array of results where [0] is memoCrazy, [1] is memoNormal, [2] is tabNormal, and [3] is recurseNormal. [3] will be np.nan above integer count 25.
+        :param rounds: The amount of times a single size and targetIndex should be repeated. Defaults to 20 times.
+        :return: A 5 * 21 numpy array of results where [0] is the target abs sum, [1] is memoCrazy, [2] is memoNormal, [3] is tabNormal, and [4] is recurseNormal. [4] will be np.nan if integer count is above 25.
         """
         allResults = np.empty(21, dtype=resultDType)
         for targetIndex in range(21):
             r = self.runSingleSize(targetIndex, rounds)
-            allResults[targetIndex] = (r[0], r[1], r[2], r[3])
+            allResults[targetIndex] = (self.sumSizeTarget[targetIndex], r[0], r[1], r[2], r[3])
         return allResults
 
-    def recordDisagreement(xnor: list[bool], targetIndex: int, testedSet: set[int]):
+    def recordDisagreement(self, xnor: list[bool], targetIndex: int, testedSet: set[int]):
         """
         h
         """
@@ -237,7 +239,9 @@ class complexityExperiment:
         for i in range(len(xnor)):
             if xnor[i] != truth:
                 culprits.append(algoNames[i])
-        # TODO: Write to 2 documents. First document will read the last recorded conflict number in /generated files/solution conflicts/all conflicts.txt then generate a new conflict message with conflict number + 1.
-        # TODO: With the conflict number of this conflict recorded, it will generate a file called /generated files/solution conflicts/problem sets/conflict # set.txt and paste the set.
-        
+        with self.fileLock:
+            pass
+            # TODO: Write to 2 documents. First document will read the last recorded conflict number in /generated files/solution conflicts/all conflicts.txt then generate a new conflict message with conflict number + 1.
+            # TODO: With the conflict number of this conflict recorded, it will generate a file called /generated files/solution conflicts/problem sets/conflict # set.txt and paste the set.
+            
 
