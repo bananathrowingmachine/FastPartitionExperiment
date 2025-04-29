@@ -1,6 +1,7 @@
 from experiment_code.complexityExperiment import complexityExperiment
-from graphBuilder import graphBuilder
+import graphBuilder as gb
 from multiprocessing import Process, Queue
+import time
 
 def collectData(queue: Queue):
     """
@@ -14,18 +15,15 @@ def collectData(queue: Queue):
 
 def activateProcessData(queue: Queue):
     """
-    Allows data processing to happen in a seperate thread. Takes data inputted into the queue to process.
+    Allows data processing to happen in a seperate thread. Takes data inputted into the queue and heads off to processes it. Will wait idly until data arrives.
 
     :param queue: The data queue.
     """
     while keepGoing:
-        try:
-            graphBuilder.processData(queue.get(timeout=0.1))
-        except Queue.empty:
-            continue
+        gb.processData(queue.get())
 
 """
-The main method. Starts up the threads, flags, and gets everything moving.
+The main method. Starts up the threads, flags, and gets everything moving. This is the file to run to start up everything else.
 """
 queue = Queue()
 keepGoing = True
