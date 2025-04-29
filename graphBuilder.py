@@ -1,5 +1,5 @@
 # The eventual graph and data table building code. Currently will just be an example of getting the output from my code and playing around with it.
-from experimentCode.complexityExperiment import complexityExperiment
+from experiment_code.complexityExperiment import complexityExperiment
 
 # Currently all numbers are randints or randfloats, there is no meaning to a single one.
 seperatorBar = "=============================================================================================="

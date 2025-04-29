@@ -31,7 +31,7 @@ class complexityExperiment:
         For storing the current experiment conditions.
         """
         setSize: int
-        absSumSize: int
+        absSumTarget: int
         iterationCount: int
         currentSet: set[int]
 
@@ -70,7 +70,7 @@ class complexityExperiment:
                 print("Which is too high!")
                 totalFails += 1
             avgSumDev += sumDev
-        return sumDev / 21, totalFails
+        return sumDev, totalFails
     
     def findAbsSumBounds(self) -> int:
         """
@@ -95,50 +95,108 @@ class complexityExperiment:
             self.sumSizeTarget[i] = round(percent5inc + self.sumSizeTarget[i-1])
         return round(percent5inc/5)
 
-    def generateRandomSet(self, bigS: int) -> set[int] | bool:
+    def generateRandomSet(self, bigS: int, recurseLevel = 0) -> float:
         """
         Generates a set of random ints of size n and absolute sum +-1% of sumSize[bigS]. The absolute sum will also not be above sumSize[21] or below sumSize[0], and will always be even.
         Uses numpy gaussian distribution to generate the sets.
+
+        :param bigS: The size target interger of the set. Can be from 0->20 inclusive where 0 is smallest possible, 20 is largest possible, and everything else is increments of 5%.
+        :param recurseLevel: Used internally to prevent infinite recursion. Defaults to 0, unless you are ABSOLUTELY SURE (you aren't) you want to set it to something else, keep it at the default.
         """
-        newSet = set()
-        mean = round(self.sumSizeTarget[bigS]/self.setCount) # Target abs sum / size of set
         currentAbsSum = 0
 
-        standardDeviation = (self.intSizeBound * 2) / 12
+        if recurseLevel > 5: # Infinite recursion failsafe. Generates a predetermined set similar to how the lower and upper bounds of set sums were calculated.
+            newList = []
+            nextNum = round(self.sumSizeTarget[bigS]/self.setCount)
+            newList.append(nextNum)
+            nextNum *= -1
+            newList.append(nextNum)
+            currentAbsSum = nextNum * -2
+            next4 = [nextNum * -1 + 1, nextNum - 1, nextNum * -1 - 1, nextNum + 1]
+            next4copy = list(next4)
+            while len(newList) != self.setCount: # Impossible for this to be infinite.
+                if len(next4copy) != 0:
+                    nextNum = next4copy.pop(0)
+                    currentAbsSum += abs(nextNum)
+                    newList.append(nextNum)
+                else:
+                    next4copy = [next4[0] + 1, next4[1] - 1, next4[2] - 1, next4[3] + 1]
+                    next4 = list(next4copy)
+            if currentAbsSum % 2 == 1:
+                if newList[-1] + 1 in newList: # Both options cannot be in the list
+                    newList[-1] -= 1
+                else:
+                    newList[-1] += 1
+            return set(newList)
+
+        newSet = set()
+        mean = round(self.sumSizeTarget[bigS]/self.setCount) # Target abs sum / size of set
+        standardDeviation = (self.intSizeBound * 6) / 12
 
         random = np.random.default_rng()
-        while len(newSet) != self.setCount:
+        for _ in range(0, self.setCount):
             nextNum = None
+            loops = 0
             while nextNum == None or (nextNum in newSet and nextNum * -1 in newSet):
-                nextNum = abs(round(random.normal(mean, standardDeviation)))
-                if nextNum > 32767:
-                    nextNum = nextNum - (nextNum - 32767)*2 # Wraps numbers that are too big around, similar to absolute value for negatives
+                if loops > 20: # Infinite loop failsafe.
+                    nextNum = mean
+                    while nextNum in newSet and nextNum * -1 in newSet: # Impossible for this to be infinite.
+                        nextNum += 1
+                else:
+                    nextNum = abs(round(random.normal(mean, standardDeviation)))
+                    if nextNum > 32767:
+                        nextNum = nextNum - (nextNum - 32767)*2 # Wraps numbers that are too big around, similar to absolute value for negatives
+                    loops += 1
             currentAbsSum += nextNum
             if nextNum in newSet or nextNum * -1 in newSet:
                 nextNum = nextNum * -1 if nextNum in newSet else nextNum
             elif random.integers(0, 2) == 1: nextNum *= -1
             newSet.add(int(nextNum))
             devDiv = (14 - len(newSet) / self.setCount * 10)
-            standardDeviation = (2 * (2 * self.intSizeBound - abs(abs(nextNum) - mean))) / devDiv # Self adjusting standard deviation. Based on how far the last number was from the bounds, and how many numbers are left until set is filled.
-            if standardDeviation <= 0: # Rarely happens, will set the deviation to quarter range with the current divisor.
-                standardDeviation = (self.intSizeBound / 2) / devDiv
+            standardDeviation = (6 * (2 * self.intSizeBound - abs(abs(nextNum) - mean))) / devDiv # Self adjusting standard deviation. Based on how far the last number was from the bounds, and how many numbers are left until set is filled.
+            if standardDeviation <= 0: # Rarely happens, will set the deviation to slightly lower than full with the current standard deviation.
+                standardDeviation = (self.intSizeBound * 1.5) / devDiv
 
+        loops = 0
+        while currentAbsSum > self.sumSizeBound + self.sumSizeTarget[bigS] or currentAbsSum < self.sumSizeTarget[bigS] - self.sumSizeBound: # Exceedingly rare (happens 0-2 times in 420 sets built which is one full experiment), but failsafe just in case.
+            if loops > 5: # Had extremely long loops happen once every few tests, this attempts to stop that by just recursively making a new set, with a recursion level fail safe for the SUPER EXTREMELY rare.
+                return self.generateRandomSet(bigS, recurseLevel + 1)
+            if currentAbsSum > self.sumSizeBound + self.sumSizeTarget[bigS]:
+                neededChange = (currentAbsSum - (self.sumSizeBound + self.sumSizeTarget[bigS])) * 2
+            else:
+                neededChange = ((self.sumSizeBound + self.sumSizeTarget[bigS]) - currentAbsSum) * 2
+                neededChange *= -1
+            victim = int(random.choice(list(newSet)))
+            if victim > 0 and (victim - neededChange) not in newSet: # Positive integers (not including 0).
+                newSet.remove(victim)
+                newSet.add(victim - neededChange)
+                currentAbsSum -= neededChange
+            elif victim < 0 and (victim + neededChange) not in newSet: # Negative integers (not including 0).
+                newSet.remove(victim)
+                newSet.add(victim + neededChange)
+                currentAbsSum -= neededChange      
+            loops += 1
+
+        loops = 0
         if currentAbsSum % 2 == 1: # Make sure it has a absolute sum that is even
+            if loops > 5: # Since I implemented the failsafe above, I put it here too.
+                return self.generateRandomSet(bigS, recurseLevel + 1)
             victim = None
             while victim == None or victim + 1 in newSet:
-                victim = random.choice(list(newSet))
+                victim = int(random.choice(list(newSet)))
             newSet.remove(victim)
-            newSet.add(int(victim + 1))
+            newSet.add(victim + 1)
+            loops += 1
 
-        sumDev = abs((currentAbsSum / (self.sumSizeTarget[20] - self.sumSizeTarget[0]) * 100) - bigS * 5)
-        return sumDev
+        return abs((currentAbsSum / (self.sumSizeTarget[20] - self.sumSizeTarget[0]) * 100) - bigS * 5)
 
     def runSingleTest(self, current: CurrentConditions) -> tuple[int, int, int, int]:
         """
         Runs each algorithm once. Verifies all algorithms returned the same bool, and will record the parameters and which algorithm disagrees if not. Also returns the iteration count of each.
         Uses a python multithreading pool to run each version at the same time.
         """
-        testSet = current[3] 
+        testSet = self.generateRandomSet(current.absSumTarget)
+        current.currentSet = testSet
 
         # If problem size is small enough for basic recursion, run it, if not, make it's results var a tuple of None, None
         with Pool(processes=4 if self.runRecurse else 3) as pool:
@@ -189,6 +247,7 @@ class complexityExperiment:
         for i in range(len(xnor)):
             if xnor[i] != truth:
                 culprits.append(algoNames[i])
-        # TODO: Have this write to 2 docs. One that has the culprits and the first 3 current conds (set size, abs sum size, iteration count), and one that points to the actual set inputted in another document.
+        # TODO: Write to 2 documents. First document will read the last recorded conflict number in /generated files/solution conflicts/all conflicts.txt then generate a new conflict message with conflict number + 1.
+        # TODO: With the conflict number of this conflict recorded, it will generate a file called /generated files/solution conflicts/problem sets/conflict # set.txt and paste the set.
         
 
