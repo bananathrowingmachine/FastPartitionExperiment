@@ -1,7 +1,7 @@
 """
 Solves the partition problem using a recursive dynamic programming algorithm.
 """
-class memoizedNormal:
+class MemoizedNormal:
     def __init__(self):
         """
         Algorithm setup. Creates the input and output, parses the incoming numbers then runs partition. Nothing in here is part of the algorithm being tested.

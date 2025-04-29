@@ -1,7 +1,7 @@
 """
-Solves the partition problem using a regular recursive algorithm. Extremely slow, don't run this past n 25.
+Solves the partition problem using a iterative dynamic programming algorithm that tabulates results.
 """
-class recursiveNormal:
+class TabulatedNormal:
     def __init__(self):
         """
         Algorithm setup. Creates the input and output, parses the incoming numbers then runs partition. Nothing in here is part of the algorithm being tested.

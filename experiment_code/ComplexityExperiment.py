@@ -1,17 +1,20 @@
 """
+Runs an experiment of integer count size for all versions of the algorithm.
+
 Written by bananathrowingmachine, Apr 29th, 2025.
 """
-from versions.memoizedCrazy import memoizedCrazy
-from versions.memoizedNormal import memoizedNormal
-from versions.tabulatedNormal import tabulatedNormal
-from versions.recursiveNormal import recursiveNormal
+from experiment_code.versions.MemoizedCrazy import MemoizedCrazy
+from experiment_code.versions.MemoizedNormal import MemoizedNormal
+from experiment_code.versions.TabulatedNormal import TabulatedNormal
+from experiment_code.versions.RecursiveNormal import RecursiveNormal
 
-from multiprocessing import Pool, Lock
+from multiprocessing import Pool, Lock, Process
 from functools import partial
 from typing import Tuple, Optional
 import numpy as np
+from pathlib import Path
 
-resultDType = np.dtype([
+ResultDType = np.dtype([
     ('targetSum', np.int64),
     ('memoCrazy', np.float64),
     ('memoNormal', np.float64),
@@ -19,37 +22,69 @@ resultDType = np.dtype([
     ('recurseNormal', np.float64) 
 ])
 
-class complexityExperiment:
+class ComplexityExperiment:
     """
     Class for running a complexity experiment. Not desinged for each class to be called seperately however some are more detachable than others but I give you 0 promises on any functionality outside of running it the expected way.
     To run it the expected way, call class method testProblemSize, and give it an integer that says how many integers should be in a randomized set given to each algorithm.
     """
-    def __init__(self, size: int):
+    def __init__(self, size: int, genFileDir: Path):
         """
         Experiment setup. Finds the sets of size n with the smallest possible and largest possible (with signed 32 bit int limit being the largest number added) absolute sums. Then finds the size each targetIndex should be.
         Designed to be run by calling the class method testProblemSize.
+
+        :param size: The amount of integers that should be in each set.
+        :param genFileDir: The upper directory on where to record disagreements.
         """
         self.runRecurse = size <= 25
         self.setCount = size
         self.sumSizeTarget = [int for _ in range(21)]
         self.sumSizeBound = self.findAbsSumBounds() # The maximum allowed difference between the predetermined absolute sum (self.sumSize[i]) and the actual absolute sum.
         self.intSizeBound = round(self.sumSizeBound/self.setCount)
+        self.disagreDir = genFileDir / "solution conflicts"
+        self.disagreDir.mkdir(parents=True, exist_ok=True)
         self.fileLock = Lock()
 
     @classmethod
-    def testProblemSize(cls, size: int, rounds = 20) -> np.ndarray:
+    def testProblemSize(cls, size: int, genFileDir: Path, runExample = False, rounds = 20) -> np.ndarray:
         """
-        Runs a new experiment of set integer count size. Will determine the absolute sum targets from min size to max size assuming 32767 is the biggest int (it's not), then get the rest as 5% increments.
-        Will then run them all, and return a np.ndarray of results, ordered from smallest set absolute sum to largest set absolute sum.
-        Do note that if size is greater than 25, the program will not run recurse normal as it is too slow. All of it's result slots will be converted to np.nan.
+        In a simple TLDR sense, will run a experiment (or example of one)
 
-        :param size: The amount of seperate integers should be in a set to be tested. Commonly referred to as size.
-        :param rounds: The amount of times a single size and targetIndex should be repeated. Defaults to 20 times.
-        :return: A list of each target absolute sum, and the average iteration count of <memoized crazy, memoized normal, tabulated normal, recursive normal> for each of those. Includes the actual target sum.
+        :param size: The amount of seperate integers should be in a set sent to the algorithms. Commonly referred to as size. Stays constant throughtout a single class of the method.
+        :param example: Return an example set of data without blowing up your pc. Defaults to false.
+        :param rounds: The amount of times a test should be repeated. Defaults to 20 times.
+        :return: A numpy array where each column is [targetSum], [memoCrazy], [memoNormal], [tabNormal], and [recurseNormal] in that order, and named.
         """
-        experiment = cls(size)
-        return experiment.runAllSizes(rounds)
+        experiment = cls(size, genFileDir)
+        allResults = np.empty(21, dtype=ResultDType)
+        for targetIndex in range(21):
+            recurse = size <= 25
+            currSize = experiment.getSumSizeTarget(targetIndex)
+            if runExample: # Gives a quick set of example data to verify graphing functions are working. The actual "data" comes from a random gaussian distribution.
+                random = np.random.default_rng()
+                exampleBound = experiment.getSumSizeTarget(20) - experiment.getSumSizeTarget(0)
+                r = (random.normal(currSize, exampleBound / 2), random.normal(currSize, exampleBound / 4), random.normal(currSize, exampleBound / 8), random.normal(currSize, exampleBound / 16) if recurse else np.nan)
+                allResults[targetIndex] = (currSize, r[0], r[1], r[2], r[3]) 
+                if random.uniform(0, 52) == 0: # Generates examples of recorded disagreements. Should happen approx 8 times per example data generated. Complete nonsense like the rest of the example data.
+                    truth = random.uniform(0, 2) == 0
+                    xnor = [truth for _ in range(0, 3 if recurse else 2)]
+                    victim = random.uniform(0, 4 if recurse else 3)
+                    xnor[victim] != xnor[victim]
+                    Process(target=experiment.recordDisagreement, args=(xnor, targetIndex, experiment.generateRandomSet(targetIndex)))
+            else:
+                r = experiment.runSingleSize(targetIndex, rounds)
+                allResults[targetIndex] = (currSize, r[0], r[1], r[2], r[3])
+        return allResults
     
+    def getSumSizeTarget(self, targetIndex: int) -> int:
+        """
+        Gets the sum size target for external (my class method's example data) use.
+
+        :param targetIndex: The target index to get the example sum from.
+        :return: The sum size target, used for recording the specifics somewhere.
+        :
+        """
+        return self.sumSizeTarget[targetIndex]
+
     def findAbsSumBounds(self) -> int:
         """
         Finds the smallest and largest possible set for the size given at object construction, in terms of sum of the absolute values inside of the set. Called by the constructor (so therefore you shouldn't call it).
@@ -183,15 +218,15 @@ class complexityExperiment:
 
         # If problem size is small enough for basic recursion, run it, if not, make it's results var a tuple of None, None
         with Pool(processes=4 if self.runRecurse else 3) as pool:
-            memoCrazy = pool.apply_async(memoizedCrazy.testIterations, (testSet,)).get()
-            memoNormal = pool.apply_async(memoizedNormal.testIterations, (testSet,)).get()
-            tabNormal = pool.apply_async(tabulatedNormal.testIterations, (testSet,)).get()
-            recurseNormal = pool.apply_async(recursiveNormal.testIterations, (testSet,)).get() if self.runRecurse else (None, None)
+            memoCrazy = pool.apply_async(MemoizedCrazy.testIterations, (testSet,)).get()
+            memoNormal = pool.apply_async(MemoizedNormal.testIterations, (testSet,)).get()
+            tabNormal = pool.apply_async(TabulatedNormal.testIterations, (testSet,)).get()
+            recurseNormal = pool.apply_async(RecursiveNormal.testIterations, (testSet,)).get() if self.runRecurse else (None, None)
 
         xnor = [memoCrazy[1], memoNormal[1], tabNormal[1]]
         if self.runRecurse: xnor.append(recurseNormal[1])
-        if len(set(xnor)) > 1:
-            self.recordDisagreement(xnor, targetIndex, testSet)
+        if len(set(xnor)) > 1: # If there's a disagreement, make a non blocking call to record it.
+            Process(target=self.recordDisagreement, args=(xnor, targetIndex, testSet))
         return (memoCrazy[0], memoNormal[0], tabNormal[0], recurseNormal[0])   
 
     def runSingleSize(self, targetIndex: int, rounds = 20) -> Tuple[np.float64, np.float64, np.float64, np.float64]:
@@ -211,22 +246,13 @@ class complexityExperiment:
         avg4 = np.mean(results[:, 3]) if self.runRecurse else np.nan
         return (np.mean(results[:, 0]), np.mean(results[:, 1]), np.mean(results[:, 2]), avg4)
 
-    def runAllSizes(self, rounds = 20) -> np.ndarray:
-        """
-        Runs each size index for the current integer count. Returns a 5 * 21 numpy array, having started at size 0 and moved up to size 21.
-
-        :param rounds: The amount of times a single size and targetIndex should be repeated. Defaults to 20 times.
-        :return: A 5 * 21 numpy array of results where [0] is the target abs sum, [1] is memoCrazy, [2] is memoNormal, [3] is tabNormal, and [4] is recurseNormal. [4] will be np.nan if integer count is above 25.
-        """
-        allResults = np.empty(21, dtype=resultDType)
-        for targetIndex in range(21):
-            r = self.runSingleSize(targetIndex, rounds)
-            allResults[targetIndex] = (self.sumSizeTarget[targetIndex], r[0], r[1], r[2], r[3])
-        return allResults
-
     def recordDisagreement(self, xnor: list[bool], targetIndex: int, testedSet: set[int]):
         """
-        h
+        Records any disagreement between the algorithms. Since the tested sets can get pretty big, all data besides the set is recorded on one txt file, which records the experiment number and then will generate a txt file for each set.
+
+        :param xnor: The "xnor gate" that determined that not all the answers were the same. Used to figure out which algorithm is wrong.
+        :param targetIndex: The current target index being tested. Will be recorded along with the actual target sum.
+        :param testedSet: The set that was being tested on that caused a conflict.
         """
         algoNames = ["Memoized Crazy", "Memoized Normal", "Tabulated Normal", "Recursive Normal"]
         culprits = []

@@ -1,7 +1,9 @@
 """
 Solves the partition problem using a recursive dynamic programming algorithm, however also does some crazy math.
+
+Made by bananathrowingmachine on Apr 24th, 2025.
 """
-class memoizedCrazy:
+class MemoizedCrazy:
     def __init__(self):
         """
         Algorithm setup. Creates the input and output, parses the incoming numbers then runs partition. Nothing in here is part of the algorithm being tested.
