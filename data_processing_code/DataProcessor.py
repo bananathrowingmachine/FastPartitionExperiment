@@ -38,6 +38,8 @@ class DataProcessor:
         :param data: The data to be processed.
         """
         with open(self.graphDir / "graph.txt", "w") as f:
+            # To make life easy for you, all of the directory stuff is handeld by my code. Inside this method just write self.graphDir / "graphName" to access any graph, or make a new one.
+            # As demonstrated below, the same works for self.tableDir, for all the data tables. 
             f.write("File written to (hopefully) the correct directory.")
 
         # Results comes in the form "ResultsWrapper", which is a named tuple. It contains 3 fields and I hope to show you how to use them.
@@ -75,4 +77,8 @@ class DataProcessor:
 
                     f.write(f"{i}, {row[0]}, {row['memoCrazy']}, {row[2]}, {row['tabNormal']}\n")
 
-            # Check your files for all of the example generated .txt files!
+            # Simply run Main.py and DON'T PRESS F, and then this file will generate some example data tables that are basic .txt files just to give you an example of what the data output after 1 collection looks like. 
+            # Each generated .txt file is one round of data collection. You can find them (relative to the Main.py file) in "generated tables/data tables", which is a file directory.
+            # If those file directories don't exist, the program will make them for you. Simply run it and it will create them if needed, as well as wipe all old data currently there.
+
+            # If you have any questions let me know!
