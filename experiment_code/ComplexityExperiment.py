@@ -42,6 +42,8 @@ class ComplexityExperiment:
         self.intSizeBound = round(self.sumSizeBound/self.setCount)
         self.disagreDir = genFileDir / "solution conflicts"
         self.disagreDir.mkdir(parents=True, exist_ok=True)
+        with open(self.disagreDir / "disgaree.txt", "w") as f:
+            f.write("Test disagree file!")
         self.fileLock = Lock()
 
     @classmethod
@@ -81,7 +83,6 @@ class ComplexityExperiment:
 
         :param targetIndex: The target index to get the example sum from.
         :return: The sum size target, used for recording the specifics somewhere.
-        :
         """
         return self.sumSizeTarget[targetIndex]
 
@@ -266,7 +267,8 @@ class ComplexityExperiment:
             if xnor[i] != truth:
                 culprits.append(algoNames[i])
         with self.fileLock:
-            pass
+            with open(self.disagreDir / "table.txt", "w") as f:
+                f.write("Test disagree file!")
             # TODO: Write to 2 documents. First document will read the last recorded conflict number in /generated files/solution conflicts/all conflicts.txt then generate a new conflict message with conflict number + 1.
             # TODO: With the conflict number of this conflict recorded, it will generate a file called /generated files/solution conflicts/problem sets/conflict # set.txt and paste the set.
             

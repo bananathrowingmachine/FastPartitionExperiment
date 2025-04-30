@@ -2,9 +2,14 @@
 Made by bananathrowingmachine and Earthquakeshaker2 on [insert final date here].
 """
 from experiment_code.ComplexityExperiment import ResultDType
-from Main import FullResultDType
 import numpy as np
 from pathlib import Path
+
+FullResultDType = np.dtype([
+    ('setIntCount', np.int64),
+    ('actualData', (ResultDType, 21)), 
+    ('recurseRun', np.bool_),
+])
 
 class DataProcessor:
     def __init__(self, genFileDir: Path):
@@ -36,5 +41,7 @@ class DataProcessor:
 
         :param data: The data to be processed.
         """
-        # TODO: Data processing happens here.
-        pass
+        with open(self.graphDir / "graph.txt", "w") as f:
+            f.write("Test graph file!")
+        with open(self.tableDir / "table.txt", "w") as f:
+            f.write(str(data))
