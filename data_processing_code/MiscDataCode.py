@@ -1,7 +1,7 @@
 """
 Stores types used across multiple files to organize data transfer, as well as manages recording disagreements without causing race conditions.
 
-Made by bananathrowingmachine on Apr 29th, 2025
+Made by bananathrowingmachine on Apr 30th, 2025
 """
 from collections import namedtuple
 from numpy import dtype, int64, float64
@@ -17,16 +17,25 @@ RawResultsDType = dtype([
 
 ResultsWrapper = namedtuple('ResultsWrapper', ['IntCount', 'RawData', 'RanRecurse'])
 
-DisagreementData = namedtuple('DisagreementData', ['AlgoOutputs', 'IntCount', 'TargetIndex', 'TargetSum', 'Current Set'])
+DisagreeData = namedtuple('DisagreementData', ['AlgoOutputs', 'IntCount', 'TargetIndex', 'TargetSum', 'Current Set'])
 
-class DisagreementProcessor:
+class DisagreeProcessor:
     def __init__(self, genFileDir: Path):
         self.disagreDir = genFileDir / "solution conflicts"
         self.disagreDir.mkdir(parents=True, exist_ok=True)
-        with open(self.disagreDir / "disgaree.txt", "w") as f:
-            f.write("Test disagree file!")
 
-    def processDisagreement(self, data: DisagreementData):
+    @classmethod
+    def processBulkDisagreements(cls, genFileDir: Path, dataList: list[DisagreeData]):
+        """
+        Processes a group of disagreements, and their associated data.
+
+        :param dataList: The list of each disagreement in it's named tuple format.
+        """
+        processor = cls(genFileDir)
+        for disagreement in dataList:
+            processor.processDisagreement(disagreement)
+
+    def processDisagreement(self, data: DisagreeData):
         """
         Records any disagreement between the algorithms. Since the tested sets can get pretty big, all data besides the set is recorded on one txt file, and then it will point to the specific set that caused the disagreement.
         Records will list which algorithms disagreed, the current set integer count, the current target index and it's associated sum, the actual and absolute sum of the set, then where the actual set was recorded.

@@ -7,9 +7,9 @@ from experiment_code.versions.MemoizedCrazy import MemoizedCrazy
 from experiment_code.versions.MemoizedNormal import MemoizedNormal
 from experiment_code.versions.TabulatedNormal import TabulatedNormal
 from experiment_code.versions.RecursiveNormal import RecursiveNormal
-from data_processing_code.MiscDataCode import RawResultsDType, DisagreementData
+from data_processing_code.MiscDataCode import RawResultsDType, DisagreeData
 
-from multiprocessing import Pool, Process
+from multiprocessing import Pool, Lock
 from functools import partial
 from typing import Tuple, Optional
 import numpy as np
@@ -31,19 +31,21 @@ class ComplexityExperiment:
         self.sumSizeTarget = [int for _ in range(21)]
         self.sumSizeBound = self.findAbsSumBounds() # The maximum allowed difference between the predetermined absolute sum (self.sumSize[i]) and the actual absolute sum.
         self.intSizeBound = round(self.sumSizeBound/self.setCount)
+        self.disagreeList = [DisagreeData]
+        self.disagreeLock = Lock()
 
     @classmethod
-    def testProblemSize(cls, size: int, runExample = False, rounds = 20) -> np.ndarray:
+    def testProblemSize(cls, size: int, runExample = False, rounds = 20) -> Tuple[np.ndarray, list[DisagreeData]]:
         """
         In a simple TLDR sense, will run a experiment (or example of one)
 
         :param size: The amount of seperate integers should be in a set sent to the algorithms. Commonly referred to as size. Stays constant throughtout a single class of the method.
         :param example: Return an example set of data without blowing up your pc. Defaults to false.
         :param rounds: The amount of times a test should be repeated. Defaults to 20 times.
-        :return: A numpy array where each column is [targetSum], [memoCrazy], [memoNormal], [tabNormal], and [recurseNormal] in that order, and named.
+        :return: A numpy array where each column is [targetSum], [memoCrazy], [memoNormal], [tabNormal], and [recurseNormal] in that order, and named, as well as the list of all recorded disagreements between algorithms.
         """
         experiment = cls(size)
-        allResults = np.empty(21, dtype=RawResultsDType)
+        allRegResults = np.empty(21, dtype=RawResultsDType)
         for targetIndex in range(21):
             recurse = size <= 25
             currSize = experiment.getSumSizeTarget(targetIndex)
@@ -51,17 +53,17 @@ class ComplexityExperiment:
                 random = np.random.default_rng()
                 exampleBound = experiment.getSumSizeTarget(20) - experiment.getSumSizeTarget(0)
                 r = (random.normal(currSize, exampleBound / 2), random.normal(currSize, exampleBound / 4), random.normal(currSize, exampleBound / 8), random.normal(currSize, exampleBound / 16) if recurse else np.nan)
-                allResults[targetIndex] = (currSize, r[0], r[1], r[2], r[3]) 
+                allRegResults[targetIndex] = (currSize, r[0], r[1], r[2], r[3]) 
                 if random.uniform(0, 52) == 0: # Generates examples of recorded disagreements. Should happen approx 8 times per example data generated. Complete nonsense like the rest of the example data.
                     truth = random.uniform(0, 2) == 0
                     xnor = [truth for _ in range(0, 3 if recurse else 2)]
                     victim = random.uniform(0, 4 if recurse else 3)
                     xnor[victim] != xnor[victim]
-                    Process(target=experiment.recordDisagreement, args=(xnor, targetIndex, experiment.generateRandomSet(targetIndex)))
+                    experiment.recordDisagreement(xnor, targetIndex, experiment.generateRandomSet(targetIndex))
             else:
                 r = experiment.runSingleSize(targetIndex, rounds)
-                allResults[targetIndex] = (currSize, r[0], r[1], r[2], r[3])
-        return allResults
+                allRegResults[targetIndex] = (currSize, r[0], r[1], r[2], r[3])
+        return (allRegResults, experiment.getDisagreeData())
     
     def getSumSizeTarget(self, targetIndex: int) -> int:
         """
@@ -71,6 +73,14 @@ class ComplexityExperiment:
         :return: The sum size target, used for recording the specifics somewhere.
         """
         return self.sumSizeTarget[targetIndex]
+    
+    def getDisagreeData(self) -> list[DisagreeData]:
+        """
+        Returns the list of recorded disagreements and their data.
+
+        :return: A list of DisagreeData tuple.
+        """
+        return self.disagreeList
 
     def findAbsSumBounds(self) -> int:
         """
@@ -212,7 +222,7 @@ class ComplexityExperiment:
 
         xnor = [memoCrazy[1], memoNormal[1], tabNormal[1]]
         if self.runRecurse: xnor.append(recurseNormal[1])
-        if len(set(xnor)) > 1: # If there's a disagreement, make a non blocking call to record it.
+        if len(set(xnor)) > 1: # Record all disagreements between algorithms.
             self.recordDisagreement(xnor, targetIndex, testSet)
         return (memoCrazy[0], memoNormal[0], tabNormal[0], recurseNormal[0])   
 
@@ -235,7 +245,15 @@ class ComplexityExperiment:
 
     def recordDisagreement(self, xnor: list[bool], targetIndex: int, testedSet: set[int]):
         """
-        Packages up all the necessary data for when a disagreement occured, and then send it to the data processors to be processed.
+        Packages up all the necessary data for when a disagreement occured, and appends it to the objects disagreements list to be returns with the main data.
+
+        :param xnor: The list essentially used as a xnor gate to determine if all the algorithms returned the same boolean.
+        :param targetIndex: The target index being tested.
+        :param testedSet: The set that caused the disagreement.
         """
+        data = DisagreeData(xnor, self.setCount, targetIndex, self.sumSizeTarget[targetIndex], testedSet)
+        self.disagreeLock.acquire()
+        self.disagreeList.append(data)
+        self.disagreeLock.release()
             
 

@@ -27,7 +27,7 @@ Made by bananathrowingmachine on April 29th, 2025.
 """
 from experiment_code.ComplexityExperiment import ComplexityExperiment
 from data_processing_code.DataProcessor import DataProcessor
-from data_processing_code.MiscDataCode import RawResultsDType, ResultsWrapper, DisagreementData, DisagreementProcessor
+from data_processing_code.MiscDataCode import RawResultsDType, ResultsWrapper, DisagreeData, DisagreeProcessor
 from multiprocessing import Process, Queue, Event
 import numpy as np
 from inputimeout import TimeoutOccurred, inputimeout
@@ -44,11 +44,15 @@ def collectData(queue: Queue, example: bool):
     """
     for n in range(1, 21):
         size = n * 5
-        results = ComplexityExperiment.testProblemSize(size, genFilesDir, example)
+        fullResults = ComplexityExperiment.testProblemSize(size, genFilesDir, example)
+        results = fullResults[0]
         if results.dtype != RawResultsDType or results.shape != (21,):
             print(f"Expected shape (21,) with dtype {RawResultsDType}, got {results.shape} with dtype {results.dtype}. Terminating.")
             break
         queue.put(ResultsWrapper(IntCount=size, RawData=results, RanRecurse=(size <= 25)))
+        disagreeList = fullResults[1]
+        if len(disagreeList) != 0:
+            queue.put(disagreeList)
     # TODO: If no disagreements were recorded, create a file that says that.
 
 def processData(queue: Queue):
@@ -57,10 +61,13 @@ def processData(queue: Queue):
 
     :param queue: The data queue. Used to allow the computer to collect and process data simultaneously. Effectively the input of the method. Instantly calls the data processor when data is made available.
     """
-    while keepGoing.is_set():
+    while keepGoing.is_set() and queue.empty():
         try: 
             data = queue.get(timeout=0.25) # Attempts to process data every 0.25 seconds until the end of work signal of None is sent.
-            DataProcessor.processData(genFilesDir, data)
+            if data is ResultsWrapper:
+                DataProcessor.processData(genFilesDir, data)
+            elif data is list[DisagreeData]:
+                DisagreeProcessor.processBulkDisagreements(genFilesDir, data)
         except Empty:
             continue
 
