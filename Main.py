@@ -4,7 +4,8 @@ Collects and processes all the data from the complexity experiment.
 Made by bananathrowingmachine on April 29th, 2025.
 """
 from experiment_code.ComplexityExperiment import ComplexityExperiment
-from DataProcessor import DataProcessor, FullResultDType
+from data_processing_code.DataProcessor import DataProcessor
+from data_processing_code.Types import RawResultsDType, ResultsWrapper
 from multiprocessing import Process, Queue, Event
 import numpy as np
 from inputimeout import TimeoutOccurred, inputimeout
@@ -21,15 +22,11 @@ def collectData(queue: Queue, example: bool):
     """
     for n in range(1, 21):
         size = n * 5
-        allResults = np.empty(1, dtype=FullResultDType)
-        allResults[0]['setIntCount'] = size
-        allResults[0]['recurseRun'] = (size <= 25)
-        actualData = ComplexityExperiment.testProblemSize(size, genFilesDir, example)
-        if actualData.shape != (21,):
-            print(f"Expected shape {(21,)}, got {actualData.shape} unexpectedly. Experiment terminating.")
+        results = ComplexityExperiment.testProblemSize(size, genFilesDir, example)
+        if results.dtype != RawResultsDType or results.shape != (21,):
+            print(f"Expected shape (21,) with dtype {RawResultsDType}, got {results.shape} with dtype {results.dtype}. Terminating.")
             break
-        allResults[0]['actualData'] = actualData
-        queue.put(allResults)
+        queue.put(ResultsWrapper(IntCount=size, RawData=results, RanRecurse=(size <= 25)))
 
 def processData(queue: Queue):
     """

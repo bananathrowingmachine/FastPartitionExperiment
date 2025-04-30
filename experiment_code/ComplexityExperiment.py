@@ -7,20 +7,13 @@ from experiment_code.versions.MemoizedCrazy import MemoizedCrazy
 from experiment_code.versions.MemoizedNormal import MemoizedNormal
 from experiment_code.versions.TabulatedNormal import TabulatedNormal
 from experiment_code.versions.RecursiveNormal import RecursiveNormal
+from data_processing_code.Types import RawResultsDType
 
 from multiprocessing import Pool, Lock, Process
 from functools import partial
 from typing import Tuple, Optional
 import numpy as np
 from pathlib import Path
-
-ResultDType = np.dtype([
-    ('targetSum', np.int64),
-    ('memoCrazy', np.float64),
-    ('memoNormal', np.float64),
-    ('tabNormal', np.float64),
-    ('recurseNormal', np.float64) 
-])
 
 class ComplexityExperiment:
     """
@@ -57,7 +50,7 @@ class ComplexityExperiment:
         :return: A numpy array where each column is [targetSum], [memoCrazy], [memoNormal], [tabNormal], and [recurseNormal] in that order, and named.
         """
         experiment = cls(size, genFileDir)
-        allResults = np.empty(21, dtype=ResultDType)
+        allResults = np.empty(21, dtype=RawResultsDType)
         for targetIndex in range(21):
             recurse = size <= 25
             currSize = experiment.getSumSizeTarget(targetIndex)
