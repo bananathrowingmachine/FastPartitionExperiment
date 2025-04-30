@@ -7,40 +7,33 @@ from experiment_code.versions.MemoizedCrazy import MemoizedCrazy
 from experiment_code.versions.MemoizedNormal import MemoizedNormal
 from experiment_code.versions.TabulatedNormal import TabulatedNormal
 from experiment_code.versions.RecursiveNormal import RecursiveNormal
-from data_processing_code.Types import RawResultsDType
+from data_processing_code.MiscDataCode import RawResultsDType, DisagreementData
 
-from multiprocessing import Pool, Lock, Process
+from multiprocessing import Pool, Process
 from functools import partial
 from typing import Tuple, Optional
 import numpy as np
-from pathlib import Path
 
 class ComplexityExperiment:
     """
     Class for running a complexity experiment. Not desinged for each class to be called seperately however some are more detachable than others but I give you 0 promises on any functionality outside of running it the expected way.
     To run it the expected way, call class method testProblemSize, and give it an integer that says how many integers should be in a randomized set given to each algorithm.
     """
-    def __init__(self, size: int, genFileDir: Path):
+    def __init__(self, size: int):
         """
         Experiment setup. Finds the sets of size n with the smallest possible and largest possible (with signed 32 bit int limit being the largest number added) absolute sums. Then finds the size each targetIndex should be.
         Designed to be run by calling the class method testProblemSize.
 
         :param size: The amount of integers that should be in each set.
-        :param genFileDir: The upper directory on where to record disagreements.
         """
         self.runRecurse = size <= 25
         self.setCount = size
         self.sumSizeTarget = [int for _ in range(21)]
         self.sumSizeBound = self.findAbsSumBounds() # The maximum allowed difference between the predetermined absolute sum (self.sumSize[i]) and the actual absolute sum.
         self.intSizeBound = round(self.sumSizeBound/self.setCount)
-        self.disagreDir = genFileDir / "solution conflicts"
-        self.disagreDir.mkdir(parents=True, exist_ok=True)
-        with open(self.disagreDir / "disgaree.txt", "w") as f:
-            f.write("Test disagree file!")
-        self.fileLock = Lock()
 
     @classmethod
-    def testProblemSize(cls, size: int, genFileDir: Path, runExample = False, rounds = 20) -> np.ndarray:
+    def testProblemSize(cls, size: int, runExample = False, rounds = 20) -> np.ndarray:
         """
         In a simple TLDR sense, will run a experiment (or example of one)
 
@@ -49,7 +42,7 @@ class ComplexityExperiment:
         :param rounds: The amount of times a test should be repeated. Defaults to 20 times.
         :return: A numpy array where each column is [targetSum], [memoCrazy], [memoNormal], [tabNormal], and [recurseNormal] in that order, and named.
         """
-        experiment = cls(size, genFileDir)
+        experiment = cls(size)
         allResults = np.empty(21, dtype=RawResultsDType)
         for targetIndex in range(21):
             recurse = size <= 25
@@ -220,7 +213,7 @@ class ComplexityExperiment:
         xnor = [memoCrazy[1], memoNormal[1], tabNormal[1]]
         if self.runRecurse: xnor.append(recurseNormal[1])
         if len(set(xnor)) > 1: # If there's a disagreement, make a non blocking call to record it.
-            Process(target=self.recordDisagreement, args=(xnor, targetIndex, testSet))
+            self.recordDisagreement(xnor, targetIndex, testSet)
         return (memoCrazy[0], memoNormal[0], tabNormal[0], recurseNormal[0])   
 
     def runSingleSize(self, targetIndex: int, rounds = 20) -> Tuple[np.float64, np.float64, np.float64, np.float64]:
@@ -242,27 +235,7 @@ class ComplexityExperiment:
 
     def recordDisagreement(self, xnor: list[bool], targetIndex: int, testedSet: set[int]):
         """
-        Records any disagreement between the algorithms. Since the tested sets can get pretty big, all data besides the set is recorded on one txt file, which records the experiment number and then will generate a txt file for each set.
-
-        :param xnor: The "xnor gate" that determined that not all the answers were the same. Used to figure out which algorithm is wrong.
-        :param targetIndex: The current target index being tested. Will be recorded along with the actual target sum.
-        :param testedSet: The set that was being tested on that caused a conflict.
+        Packages up all the necessary data for when a disagreement occured, and then send it to the data processors to be processed.
         """
-        algoNames = ["Memoized Crazy", "Memoized Normal", "Tabulated Normal", "Recursive Normal"]
-        culprits = []
-        if xnor[3] != None: # It's hard to really know who's right, so in the case recursive normal is running, it's always right, and otherwise, it's the majority opinion.
-            truth = xnor[3] 
-        else:
-            if xnor[0] == xnor[1]: truth = xnor[2]
-            if xnor[1] == xnor[2]: truth = xnor[0]
-            else: truth = xnor[1]
-        for i in range(len(xnor)):
-            if xnor[i] != truth:
-                culprits.append(algoNames[i])
-        with self.fileLock:
-            with open(self.disagreDir / "table.txt", "w") as f:
-                f.write("Test disagree file!")
-            # TODO: Write to 2 documents. First document will read the last recorded conflict number in /generated files/solution conflicts/all conflicts.txt then generate a new conflict message with conflict number + 1.
-            # TODO: With the conflict number of this conflict recorded, it will generate a file called /generated files/solution conflicts/problem sets/conflict # set.txt and paste the set.
             
 

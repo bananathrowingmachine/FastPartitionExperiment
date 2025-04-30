@@ -1,11 +1,33 @@
 """
-Collects and processes all the data from the complexity experiment. 
+Main orchestrator for all the moving parts. Is also where the main function is located and is therefore what needs to run to run the entire program.
+This program on a deeper level will delete the output subdirectories if they exist, recreate them (to clean out all old data), gets the necessary user input, then will run the data collector and processor, and move the data between the two.
+Both the data collector and the data processor run on independent threads, and the complexity experiment will actually run multiple parallel threads as well.
+
+Details on the data collector:
+Due to how the complexity tester was designed, this file also maintains how many integers should be in the sets tested, starting from 5, and in increments of 5 going up to 100, and sends that to the complexity tester.
+Additionally, it will send the complexity tester directory information for the small bit of output it produces, and if it should generate a quick example output or a full computationally expensive output.
+After the complexity tester has produced results, this program will take them, wrap them up with a few other useful bits of information, then send it to the data processor for processing.
+The entire process was designed to try and keep all computer science stuff away from the data processing as possible.
+
+Details on the data processor:
+The data processor will check for packaged data every 0.25 seconds, until the signal by the orchestrator that computation has stopped is sent. 
+It will then send the packaged data completely unmodified to the data processing code, along with the same directory information given to the data collector.
+Once in the data processing code, the processor will unpack the data, processes it, and then once done will return back to the orchestrator, waiting for another chunk of data.
+Was designed to have as little code as possible to help my non comp sci major friend who does know how to graph in python.
+
+Details on the project as a whole:
+Originally started because I wanted to see how fast my version of a partition algorithm was, I then remembered that python seemingly has good data collection, so I decided to make a program that fully tests, records, and charts the data.
+However since parition algorithms have a runtime dependent on 2 (mostly) independent variables (the absolute sum of a set can be influenced by it's integer count to a degree), this project very quickly spiraled as I was now desinging
+how to make sets with random numbers but absolute sums within good bounds, which in the end uses a gaussian distribution random number generator, a whole load of checks and verifications, tickers to prevent infinite loops and
+infinite recursion, readjusting standard deviations, percentile math to find a good absolute sum target, and quite a bit more. Designing a good random set builder with the constraints was quite the challenge.
+I also decided I wanted to multithread this just to show off I could do it, so there's that too. 
+And finally, while I don't know anything about graphing in python, I have a chemical engineering friend who does, so the challenge of making the graphing part take as comp sci schenanigans as possible is also present.
 
 Made by bananathrowingmachine on April 29th, 2025.
 """
 from experiment_code.ComplexityExperiment import ComplexityExperiment
 from data_processing_code.DataProcessor import DataProcessor
-from data_processing_code.Types import RawResultsDType, ResultsWrapper
+from data_processing_code.MiscDataCode import RawResultsDType, ResultsWrapper, DisagreementData, DisagreementProcessor
 from multiprocessing import Process, Queue, Event
 import numpy as np
 from inputimeout import TimeoutOccurred, inputimeout
@@ -27,6 +49,7 @@ def collectData(queue: Queue, example: bool):
             print(f"Expected shape (21,) with dtype {RawResultsDType}, got {results.shape} with dtype {results.dtype}. Terminating.")
             break
         queue.put(ResultsWrapper(IntCount=size, RawData=results, RanRecurse=(size <= 25)))
+    # TODO: If no disagreements were recorded, create a file that says that.
 
 def processData(queue: Queue):
     """
