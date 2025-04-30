@@ -1,6 +1,9 @@
 """
 Solves the partition problem using a recursive dynamic programming algorithm, however also does some crazy math.
 
+The subset sum subroutine was loosely inspried off of Jeff Erickson's version of subset sum in his free algorithms university textbook linked here: http://algorithms.wtf
+You can find the specific portion of it that inspired me in Chapter 3, page 116, 117.
+
 Made by bananathrowingmachine on Apr 24th, 2025.
 """
 class MemoizedCrazy:

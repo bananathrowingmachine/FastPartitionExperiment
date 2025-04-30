@@ -25,15 +25,19 @@ class DisagreeProcessor:
         self.disagreDir.mkdir(parents=True, exist_ok=True)
 
     @classmethod
-    def processBulkDisagreements(cls, genFileDir: Path, dataList: list[DisagreeData]):
+    def processBulkDisagreements(cls, genFileDir: Path, dataInput: list[DisagreeData] | str):
         """
-        Processes a group of disagreements, and their associated data.
+        Processes a group of disagreements, and their associated data. 
 
-        :param dataList: The list of each disagreement in it's named tuple format.
+        :param dataList: The list of each disagreement in it's named tuple format, or if given a string, the message to write in files notating that no disagreement was recorded.
         """
         processor = cls(genFileDir)
-        for disagreement in dataList:
-            processor.processDisagreement(disagreement)
+        if dataInput is list[DisagreeData]:
+            for disagreement in dataInput:
+                processor.processDisagreement(disagreement)
+        elif dataInput is str:
+            with open(processor.disagreDir / "disagree.txt", "a") as f:
+                f.write(dataInput)
 
     def processDisagreement(self, data: DisagreeData):
         """

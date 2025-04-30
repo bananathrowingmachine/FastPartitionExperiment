@@ -15,21 +15,12 @@ It will then send the packaged data completely unmodified to the data processing
 Once in the data processing code, the processor will unpack the data, processes it, and then once done will return back to the orchestrator, waiting for another chunk of data.
 Was designed to have as little code as possible to help my non comp sci major friend who does know how to graph in python.
 
-Details on the project as a whole:
-Originally started because I wanted to see how fast my version of a partition algorithm was, I then remembered that python seemingly has good data collection, so I decided to make a program that fully tests, records, and charts the data.
-However since parition algorithms have a runtime dependent on 2 (mostly) independent variables (the absolute sum of a set can be influenced by it's integer count to a degree), this project very quickly spiraled as I was now desinging
-how to make sets with random numbers but absolute sums within good bounds, which in the end uses a gaussian distribution random number generator, a whole load of checks and verifications, tickers to prevent infinite loops and
-infinite recursion, readjusting standard deviations, percentile math to find a good absolute sum target, and quite a bit more. Designing a good random set builder with the constraints was quite the challenge.
-I also decided I wanted to multithread this just to show off I could do it, so there's that too. 
-And finally, while I don't know anything about graphing in python, I have a chemical engineering friend who does, so the challenge of making the graphing part take as comp sci schenanigans as possible is also present.
-
-Made by bananathrowingmachine on April 29th, 2025.
+Made by bananathrowingmachine on April 30th, 2025.
 """
 from experiment_code.ComplexityExperiment import ComplexityExperiment
 from data_processing_code.DataProcessor import DataProcessor
 from data_processing_code.MiscDataCode import RawResultsDType, ResultsWrapper, DisagreeData, DisagreeProcessor
 from multiprocessing import Process, Queue, Event
-import numpy as np
 from inputimeout import TimeoutOccurred, inputimeout
 from shutil import rmtree
 from pathlib import Path
@@ -42,6 +33,7 @@ def collectData(queue: Queue, example: bool):
     :param queue: The data queue. Used to allow the computer to collect and process data simultaneously. Effectively the output of the method.
     :param example: Wether to generate a quick example set of data, since a real set is computationally expensive.
     """
+    noDisagrees = True
     for n in range(1, 21):
         size = n * 5
         fullResults = ComplexityExperiment.testProblemSize(size, genFilesDir, example)
@@ -52,8 +44,10 @@ def collectData(queue: Queue, example: bool):
         queue.put(ResultsWrapper(IntCount=size, RawData=results, RanRecurse=(size <= 25)))
         disagreeList = fullResults[1]
         if len(disagreeList) != 0:
+            noDisagrees = False
             queue.put(disagreeList)
-    # TODO: If no disagreements were recorded, create a file that says that.
+    if noDisagrees:
+        queue.put("There were no disagreements between any of the algorithms.")
 
 def processData(queue: Queue):
     """
@@ -66,7 +60,7 @@ def processData(queue: Queue):
             data = queue.get(timeout=0.25) # Attempts to process data every 0.25 seconds until the end of work signal of None is sent.
             if data is ResultsWrapper:
                 DataProcessor.processData(genFilesDir, data)
-            elif data is list[DisagreeData]:
+            elif data is list[DisagreeData] or str:
                 DisagreeProcessor.processBulkDisagreements(genFilesDir, data)
         except Empty:
             continue
@@ -108,5 +102,5 @@ processor = Process(target=processData, args=(queue,))
 collector.start()
 processor.start()
 collector.join()
-keepGoing.clear() # Signals end of work.
+keepGoing.clear() # Signals end of work to the data processor.
 processor.join()
