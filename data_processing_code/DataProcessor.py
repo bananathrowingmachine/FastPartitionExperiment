@@ -8,6 +8,9 @@ import numpy as np
 from pathlib import Path
 
 class DataProcessor:
+    """
+    Data processor class. In reality just a easy way to make the subdirectories for generated data and store the values easily.
+    """
     def __init__(self, genFileDir: Path):
         """
         Simple data processor object. Processes the data and stores them in subdirectories of the one given to it during construction.
@@ -23,21 +26,14 @@ class DataProcessor:
     @classmethod
     def processData(cls, genFileDir: Path, results: ResultsWrapper):
         """
-        Wraps up object construction and data processing into a convienient single method.
+        Processes the data. Uses a DataProcessor object to easily create and reference all graph and table directories.
 
         :param genFileDir: The upper directory for generated files to end up in. Will create sub directories if the ones it expects do not exist.
         :param data: The data to get processed. 
         """
-        processor = cls(genFileDir)
-        processor.createTablesAndGraphs(results)
-
-    def createTablesAndGraphs(self, results: ResultsWrapper):
-        """
-        Processes the data. Can reference itself for easy access to the directories on where to put graphs and data tables.
-
-        :param data: The data to be processed.
-        """
-        with open(self.graphDir / "graph.txt", "w") as f:
+        dirs = cls(genFileDir)
+        
+        with open(dirs.graphDir / "graph.txt", "w") as f:
             # To make life easy for you, all of the directory stuff is handeld by my code. Inside this method just write self.graphDir / "graphName" to access any graph, or make a new one.
             # As demonstrated below, the same works for self.tableDir, for all the data tables. 
             f.write("File written to (hopefully) the correct directory.")
@@ -49,7 +45,7 @@ class DataProcessor:
         # "RawData" is the 2D np.ndarray of size 21, with 5 elements, all of them accessible by row and by name, which is shown below. This has all of the data.
 
         # "IntCount" gives the amount of integers in the set tested. This will be each column in a data table or graph.
-        with open(self.tableDir / f"testedSetSize{results.IntCount}.txt", "w") as f:
+        with open(dirs.tableDir / f"testedSetSize{results.IntCount}.txt", "w") as f:
             
             # "RanRecurse" records data if Recursive Normal was run. The statement results.RanRecurse will always be True when Recursive Normal was run, and always be False when it is not.
             if results.RanRecurse:
@@ -66,7 +62,8 @@ class DataProcessor:
                     f.write(
                         f"{i}, {row['targetSum']}, {row[1]}, {row['memoNormal']}, {row[3]}, {row['recurseNormal']}\n")          
 
-            # This else statement records data if results.RanRecurse is false, or in other words when recurse is not run. Additionally Recursive Normal being off will fill in it's columns with np.nan, which is fine to slap on a chart too.
+            # This else statement records data if results.RanRecurse is false, or in other words when recurse is not run. Additionally Recursive Normal being off will fill in it's columns with np.nan.
+            # That is the only time np.nan will be encountered in the data, in which case always replace it with 2 ** results.IntCount when charting and graphing.
             else:
                 f.write("Sum Target Index, Absolute Sum Target, Memoized Crazy, Memoized Normal, Tabulated Normal\n")
                 for i in range(21):
@@ -75,7 +72,7 @@ class DataProcessor:
                     # Another mix of name-based and index-based access for the official data:
                     # 'targetSum' is index 0 and 'memoNormal' is index 2.
 
-                    f.write(f"{i}, {row[0]}, {row['memoCrazy']}, {row[2]}, {row['tabNormal']}\n")
+                    f.write(f"{i}, {row[0]}, {row['memoCrazy']}, {row[2]}, {row['tabNormal']}, {2 ** results.IntCount},\n")
 
             # Simply run Main.py and DON'T PRESS F, and then this file will generate some example data tables that are basic .txt files just to give you an example of what the data output after 1 collection looks like. 
             # Each generated .txt file is one round of data collection. You can find them (relative to the Main.py file) in "generated tables/data tables", which is a file directory.

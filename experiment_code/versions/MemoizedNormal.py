@@ -18,7 +18,7 @@ class MemoizedNormal:
         """
         self.iterationCount = 0
         self.inputList = inputList
-        self.answerMap: dict[tuple[int, int], bool] = {}
+        self.answerMap: dict[tuple[int, int], tuple[bool, bool]] = {}
         posSum = 0
         negSum = 0
         for num in self.inputList:
@@ -38,33 +38,35 @@ class MemoizedNormal:
         :return: A tuple containing the iteration count, and the computed answer.
         """
         solver = cls(inputList)
-        return (solver.iterationCount, solver.subsetSum(0, int(sum(inputList)/2)))
+        if sum(inputList) == 0:
+            return (solver.iterationCount, solver.subsetSum(0, int(sum(inputList)/2))[1])
+        return (solver.iterationCount, solver.subsetSum(0, int(sum(inputList)/2))[0])
     
-    def subsetSum(self, index, goal) -> bool:
+    def subsetSum(self, index, goal) -> tuple[bool, bool]:
         """
         Solves the partition problem recursively.
 
         :param index: The current index of the list the algorithm is considering.
         :param goal: The current goal the algorithm needs to reach to find a valid answer.
-        :return: A boolean of if the set (list) can be partitioned. 
+        :return: A boolean of if the set (list) can be partitioned, as well as a boolean for if at least one item has been taken.
         """
         self.iterationCount += 1
 
         if goal == 0:
-            return True
+            return True, False
         if index >= len(self.inputList):
-            return False
+            return False, False
         
         if goal - self.inputList[index] > self.posSum or goal - self.inputList[index] < self.negSum: # Bounds checking
             if (index + 1, goal-self.inputList[index]) not in self.answerMap:
-                withResult = self.subsetSum(index + 1, goal-self.inputList[index])
+                take = self.subsetSum(index + 1, goal-self.inputList[index])[0]
             else:
-                withResult = self.answerMap[(index + 1, goal-self.inputList[index])]
-        else: withResult = False
+                take = self.answerMap[(index + 1, goal-self.inputList[index])][0]
+        else: take = False
         if (index + 1, goal) not in self.answerMap:
-            withoutResult = self.subsetSum(index + 1, goal)
+            skip, notEmpty = self.subsetSum(index + 1, goal)
         else:
-            withoutResult = self.answerMap[(index + 1, goal)]
+            skip, notEmpty = self.answerMap[(index + 1, goal)]
         
-        self.answerMap[(index, goal)] = withResult or withoutResult
-        return withResult or withoutResult
+        self.answerMap[(index, goal)] = (take or skip, take or notEmpty)
+        return take or skip, take or notEmpty

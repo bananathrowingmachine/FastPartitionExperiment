@@ -150,7 +150,7 @@ class ComplexityExperiment:
         for _ in range(0, self.setCount):
             nextNum = None
             loops = 0
-            while nextNum == None or (nextNum in newSet and nextNum * -1 in newSet):
+            while nextNum == None or (nextNum in newSet and nextNum * -1 in newSet) or 0:
                 if loops > 20: # Infinite loop failsafe.
                     nextNum = mean
                     while nextNum in newSet and nextNum * -1 in newSet: # Impossible for this to be infinite.
@@ -200,9 +200,6 @@ class ComplexityExperiment:
             newSet.remove(victim)
             newSet.add(victim + 1)
             loops += 1
-
-        if 0 in newSet and sum(newSet) == 0: # Special case that is extremely trivial and will just cause an iteration count of 0.
-            return self.generateRandomSet(targetIndex, recurseLevel + 1)
 
         return newSet
 

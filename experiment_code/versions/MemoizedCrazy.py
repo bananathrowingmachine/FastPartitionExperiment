@@ -51,16 +51,16 @@ class MemoizedCrazy:
         if index >= len(self.absoluteList):
             return 0
         
-        if goal >= self.absoluteList[index]:
-            if (index + 1, goal-self.absoluteList[index]) not in self.answerMap:
-                withResult = self.subsetSum(index + 1, goal-self.absoluteList[index])
+        if goal >= self.absoluteList[index]: # Bounds checking, better than the others though as it can use the current goal.
+            if (index + 1, goal-self.absoluteList[index]) in self.answerMap:
+                take = self.answerMap[(index + 1, goal-self.absoluteList[index])]
             else:
-                withResult = self.answerMap[(index + 1, goal-self.absoluteList[index])]
-        else: withResult = 0
-        if (index + 1, goal) not in self.answerMap:
-            withoutResult = self.subsetSum(index + 1, goal)
+                take = self.subsetSum(index + 1, goal-self.absoluteList[index])
+        else: take = 0
+        if (index + 1, goal) in self.answerMap:
+            skip = self.answerMap[(index + 1, goal)]
         else:
-            withoutResult = self.answerMap[(index + 1, goal)]
+            skip = self.subsetSum(index + 1, goal)
         
-        self.answerMap[(index, goal)] = withResult + withoutResult
-        return withResult + withoutResult
+        self.answerMap[(index, goal)] = take + skip
+        return take + skip
