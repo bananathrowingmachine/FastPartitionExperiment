@@ -11,7 +11,6 @@ File Directory:
 =
 This is the expected file directory, relative to Main.py. Make sure the python files are where they need to be to make everything work. This also shows the output directory tree that the program will create, also relative to Main.py.
 ```bash
-.
 ├── data_processing_code
 │   ├── DataProcessor.py
 │   └── MiscDataCode.py

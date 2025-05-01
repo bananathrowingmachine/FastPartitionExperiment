@@ -38,7 +38,7 @@ class MemoizedNormal:
         :return: A tuple containing the iteration count, and the computed answer.
         """
         solver = cls(inputList)
-        if sum(inputList) == 0:
+        if solver.posSum == abs(solver.negSum):
             return (solver.iterationCount, solver.subsetSum(0, int(sum(inputList)/2))[1])
         return (solver.iterationCount, solver.subsetSum(0, int(sum(inputList)/2))[0])
     
@@ -58,15 +58,15 @@ class MemoizedNormal:
             return False, False
         
         if goal - self.inputList[index] > self.posSum or goal - self.inputList[index] < self.negSum: # Bounds checking
-            if (index + 1, goal-self.inputList[index]) not in self.answerMap:
-                take = self.subsetSum(index + 1, goal-self.inputList[index])[0]
-            else:
+            if (index + 1, goal-self.inputList[index]) in self.answerMap:
                 take = self.answerMap[(index + 1, goal-self.inputList[index])][0]
+            else:
+                take = self.subsetSum(index + 1, goal-self.inputList[index])[0]
         else: take = False
-        if (index + 1, goal) not in self.answerMap:
-            skip, notEmpty = self.subsetSum(index + 1, goal)
-        else:
+        if (index + 1, goal) in self.answerMap:
             skip, notEmpty = self.answerMap[(index + 1, goal)]
-        
+        else:
+            skip, notEmpty = self.subsetSum(index + 1, goal)
+
         self.answerMap[(index, goal)] = (take or skip, take or notEmpty)
         return take or skip, take or notEmpty

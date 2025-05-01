@@ -31,36 +31,35 @@ class MemoizedCrazy:
         :return: A tuple containing the iteration count, and the computed answer.
         """
         solver = cls(inputList)
-        answer = solver.subsetSum(0, int(sum(solver.absoluteList)/2))
         if sum(inputList) == 0:
-            return (solver.iterationCount,  answer > 2)
-        return (solver.iterationCount, answer > 0)
+            return (solver.iterationCount, solver.subsetSum(0, int(sum(inputList)/2))[1])
+        return (solver.iterationCount, solver.subsetSum(0, int(sum(inputList)/2))[0])
 
-    def subsetSum(self, index, goal) -> int:
+    def subsetSum(self, index, goal) -> tuple[bool, bool]:
         """
         Recursively solves the subset sum problem with inputs for partition. 
 
         :param index: The current index of the list the algorithm is considering.
         :param goal: The current goal the algorithm needs to reach to find a valid answer.
-        :return: A int of how many different solutions have been found to successfully partitioning the set (list).
+        :return: A boolean of if the set (list) can be partitioned, as well as a boolean for if at least one item has been taken.
         """
         self.iterationCount += 1
 
         if goal == 0:
-            return 1
+            return True
         if index >= len(self.absoluteList):
-            return 0
+            return False
         
         if goal >= self.absoluteList[index]: # Bounds checking, better than the others though as it can use the current goal.
             if (index + 1, goal-self.absoluteList[index]) in self.answerMap:
-                take = self.answerMap[(index + 1, goal-self.absoluteList[index])]
+                take = self.answerMap[(index + 1, goal-self.absoluteList[index])][0]
             else:
-                take = self.subsetSum(index + 1, goal-self.absoluteList[index])
-        else: take = 0
+                take = self.subsetSum(index + 1, goal-self.absoluteList[index])[0]
+        else: take = False
         if (index + 1, goal) in self.answerMap:
-            skip = self.answerMap[(index + 1, goal)]
+            skip, notEmpty = self.answerMap[(index + 1, goal)]
         else:
-            skip = self.subsetSum(index + 1, goal)
+            skip, notEmpty = self.subsetSum(index + 1, goal)
         
-        self.answerMap[(index, goal)] = take + skip
-        return take + skip
+        self.answerMap[(index, goal)] = take or skip, take or notEmpty
+        return take or skip, take or notEmpty

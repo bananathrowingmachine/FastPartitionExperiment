@@ -44,7 +44,7 @@ def partition(inputList: list[int], posSum: int, negSum: int) -> tuple[int, bool
                 resultsTable[i][j] = resultsTable[i+1][j] or resultsTable[i+1][j-inputList[i]]
 
     iterations = sumRange * len(inputList) # The iterations count will almost always be exactly the size of the tabulation table, unless the set has a sum of 0, in which case up to an extra n iterations will be added.
-    if sum(inputList) == 0:
+    if posSum == abs(negSum):
         for sumRow in resultsTable:
             iterations += 1
             if sumRow[0]:
