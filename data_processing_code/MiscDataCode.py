@@ -15,29 +15,31 @@ RawResultsDType = dtype([
     ('recurseNormal', float64) 
 ])
 
-ResultsWrapper = namedtuple('ResultsWrapper', ['IntCount', 'RawData', 'RanRecurse'])
+ResultsWrapper = namedtuple('ResultsWrapper', ['IntCount', 'RawData', 'RecurseEstimate'])
 
-DisagreeData = namedtuple('DisagreementData', ['AlgoOutputs', 'IntCount', 'TargetIndex', 'TargetSum', 'Current Set'])
+DisagreeData = namedtuple('DisagreementData', ['AlgoOutputs', 'IntCount', 'TargetIndex', 'TargetSum', 'CurrentSet'])
 
 class DisagreeProcessor:
-    def __init__(self, genFileDir: Path):
-        self.disagreDir = genFileDir / "solution conflicts"
+    def __init__(self, genFilesDir: Path):
+        """
+        Simple disagreement data processor object. Processes the data and stores it in a subdirectory of the one given to it during construction.
+
+        :param genFilesDir: The directory for all generated files.
+        """
+        self.disagreDir = genFilesDir / "solution conflicts"
         self.disagreDir.mkdir(parents=True, exist_ok=True)
 
     @classmethod
-    def processBulkDisagreements(cls, genFileDir: Path, dataInput: list[DisagreeData] | str):
+    def processBulkDisagreements(cls, genFilesDir: Path, dataInput: list[DisagreeData]):
         """
         Processes a group of disagreements, and their associated data. 
 
-        :param dataList: The list of each disagreement in it's named tuple format, or if given a string, the message to write in files notating that no disagreement was recorded.
+        :param genFilesDir: The directory for all generated files.
+        :param dataList: The list of each disagreement are the conditions were it arised in DisagreeData named tuple format.
         """
-        processor = cls(genFileDir)
-        if dataInput is list[DisagreeData]:
-            for disagreement in dataInput:
-                processor.processDisagreement(disagreement)
-        elif dataInput is str:
-            with open(processor.disagreDir / "disagree.txt", "a") as f:
-                f.write(dataInput)
+        processor = cls(genFilesDir)
+        for disagreement in dataInput:
+            processor.processDisagreement(disagreement)
 
     def processDisagreement(self, data: DisagreeData):
         """

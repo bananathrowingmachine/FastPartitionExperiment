@@ -18,13 +18,16 @@ Was designed to have as little code as possible to help my non comp sci major fr
 Made by bananathrowingmachine on April 30th, 2025.
 """
 from experiment_code.ComplexityExperiment import ComplexityExperiment
-from data_processing_code.DataProcessor import DataProcessor
+from data_processing_code.MainDataProcessor import DataProcessor
 from data_processing_code.MiscDataCode import RawResultsDType, ResultsWrapper, DisagreeData, DisagreeProcessor
+
 from multiprocessing import Process, Queue, Event
 from inputimeout import TimeoutOccurred, inputimeout
 from shutil import rmtree
 from pathlib import Path
 from queue import Empty
+import numpy as np
+import sys
 
 def collectData(queue: Queue, example: bool):
     """
@@ -36,18 +39,18 @@ def collectData(queue: Queue, example: bool):
     noDisagrees = True
     for n in range(1, 21):
         size = n * 5
-        fullResults = ComplexityExperiment.testProblemSize(size, genFilesDir, example)
+        fullResults = ComplexityExperiment.testProblemSize(size, example)
         results = fullResults[0]
         if results.dtype != RawResultsDType or results.shape != (21,):
-            print(f"Expected shape (21,) with dtype {RawResultsDType}, got {results.shape} with dtype {results.dtype}. Terminating.")
-            break
-        queue.put(ResultsWrapper(IntCount=size, RawData=results, RanRecurse=(size <= 25)))
+            print(f"Expected shape (21,) with dtype {RawResultsDType}, but got {results.shape} with dtype {results.dtype}. Terminating.")
+            sys.exit(1)
+        queue.put(ResultsWrapper(size, results, np.nan if size <= 25 else 2 ** size))
         disagreeList = fullResults[1]
         if len(disagreeList) != 0:
             noDisagrees = False
             queue.put(disagreeList)
     if noDisagrees:
-        queue.put("There were no disagreements between any of the algorithms.")
+        queue.put(None)
 
 def processData(queue: Queue):
     """
@@ -55,12 +58,17 @@ def processData(queue: Queue):
 
     :param queue: The data queue. Used to allow the computer to collect and process data simultaneously. Effectively the input of the method. Instantly calls the data processor when data is made available.
     """
-    while keepGoing.is_set() and queue.empty():
+    while keepGoing.is_set() or not queue.empty():
         try: 
             data = queue.get(timeout=0.25) # Attempts to process data every 0.25 seconds until the end of work signal of None is sent.
-            if data is ResultsWrapper:
+            if data is None:
+                disagreDir = genFilesDir / "solution conflicts"
+                disagreDir.mkdir(parents=True)
+                with open(disagreDir / "disagree.txt", "x") as f:
+                    f.write("No disagreements were recorded during data collection.")
+            elif isinstance(data, ResultsWrapper):
                 DataProcessor.processData(genFilesDir, data)
-            elif data is list[DisagreeData] or str:
+            elif isinstance(data, list) and all(isinstance(item, DisagreeData) for item in data):
                 DisagreeProcessor.processBulkDisagreements(genFilesDir, data)
         except Empty:
             continue
@@ -71,8 +79,7 @@ The main method. Starts up the threads, flags, and gets everything moving. This 
 Do note that this program will also wipe all previously generated graphs, data tables, and recorded solution conflicts when run.
 """
 queue = Queue()
-scriptDir = Path(__file__).parent
-genFilesDir = scriptDir / "generated files"
+genFilesDir = Path(__file__).parent / "generated files"
 if genFilesDir.exists():
     rmtree(genFilesDir)
 genFilesDir.mkdir()
@@ -94,6 +101,8 @@ try:
                answer = "e"
         except TimeoutOccurred:
             print("Full data collection has commenced.")
+    else:
+        print("A set of example data will be provided.") 
 except TimeoutOccurred:
     print("Input timeout occured. Defaulting to example data.")
     answer = "e"
@@ -103,4 +112,7 @@ collector.start()
 processor.start()
 collector.join()
 keepGoing.clear() # Signals end of work to the data processor.
+print("Data collection has finished. Finishing up processing.")
 processor.join()
+print("All processing has been completed. Closing.")
+sys.exit(0)
