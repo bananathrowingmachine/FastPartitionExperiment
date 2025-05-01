@@ -4,11 +4,12 @@ Stores types used across multiple files to organize data transfer, as well as ma
 Made by bananathrowingmachine on Apr 30th, 2025
 """
 from collections import namedtuple
-from numpy import dtype, int64, float64
+from numpy import dtype, uint64, float64
 from pathlib import Path
 
+# Float64 max values = finfo(resolution=1e-15, min=-1.7976931348623157e+308, max=1.7976931348623157e+308, dtype=float64)
 RawResultsDType = dtype([
-    ('targetSum', int64),
+    ('targetSum', uint64),
     ('memoCrazy', float64), 
     ('memoNormal', float64), 
     ('tabNormal', float64), 
