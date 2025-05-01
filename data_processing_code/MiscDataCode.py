@@ -4,21 +4,34 @@ Stores types used across multiple files to organize data transfer, as well as ma
 Made by bananathrowingmachine on Apr 30th, 2025
 """
 from collections import namedtuple
-from numpy import dtype, uint64, float64
+from dataclasses import dataclass, field
+import numpy as np
 from pathlib import Path
 
 # Float64 max values = finfo(resolution=1e-15, min=-1.7976931348623157e+308, max=1.7976931348623157e+308, dtype=float64)
-RawResultsDType = dtype([
-    ('targetSum', uint64),
-    ('memoCrazy', float64), 
-    ('memoNormal', float64), 
-    ('tabNormal', float64), 
-    ('recurseNormal', float64) 
+RawResultsDType = np.dtype([
+    ('targetSum', np.uint64),
+    ('memoCrazy', np.float64), 
+    ('memoNormal', np.float64), 
+    ('tabNormal', np.float64), 
+    ('recurseNormal', np.float64) 
 ])
 
 ResultsWrapper = namedtuple('ResultsWrapper', ['IntCount', 'RawData', 'RecurseEstimate'])
 
-DisagreeData = namedtuple('DisagreementData', ['AlgoOutputs', 'IntCount', 'TargetIndex', 'TargetSum', 'CurrentSet'])
+@dataclass(frozen=True)
+class ResultsWrapper:
+    IntCount: int
+    RecurseEstimate: int
+    RawData: np.ndarray = field(default_factory=lambda: np.empty(21, dtype=RawResultsDType))
+
+@dataclass(frozen=True)
+class DisagreeData:
+    AlgoOutputs: list[bool]
+    IntCount: int
+    TargetIndex: int
+    TargetSum: int
+    CurrentSet: list[int]
 
 class DisagreeProcessor:
     def __init__(self, genFilesDir: Path):
@@ -52,7 +65,7 @@ class DisagreeProcessor:
         xnor = data.AlgoOutputs
         algoNames = ["Memoized Crazy", "Memoized Normal", "Tabulated Normal", "Recursive Normal"]
         culprits = []
-        if xnor[3] != None: # It's hard to really know who's right, so in the case recursive normal is running, it's always right, and otherwise, it's the majority opinion.
+        if len(xnor) > 3: # It's hard to really know who's right, so in the case recursive normal is running, it's always right, and otherwise, it's the majority opinion.
             truth = xnor[3] 
         else:
             if xnor[0] == xnor[1]: truth = xnor[2]
@@ -62,6 +75,6 @@ class DisagreeProcessor:
             if xnor[i] != truth:
                 culprits.append(algoNames[i])
         with open(self.disagreDir / "disagree.txt", "a") as f:
-            f.write("Test disagree file!")
+            f.write("Disagreement was recorded!\n")
         # TODO: Write to 2 documents. First document will read the last recorded conflict number in /generated files/solution conflicts/all conflicts.txt then generate a new conflict message with conflict number + 1.
         # TODO: With the conflict number of this conflict recorded, it will generate a file called /generated files/solution conflicts/problem sets/conflict # set.txt and paste the set.

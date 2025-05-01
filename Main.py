@@ -26,7 +26,6 @@ from inputimeout import TimeoutOccurred, inputimeout
 from shutil import rmtree
 from pathlib import Path
 from queue import Empty
-import numpy as np
 import sys
 
 def collectData(queue: Queue, example: bool):
@@ -44,7 +43,7 @@ def collectData(queue: Queue, example: bool):
         if results.dtype != RawResultsDType or results.shape != (21,):
             print(f"Expected shape (21,) with dtype {RawResultsDType}, but got {results.shape} with dtype {results.dtype}. Terminating.")
             sys.exit(1)
-        queue.put(ResultsWrapper(size, results, None if size <= 25 else 2 ** size))
+        queue.put(ResultsWrapper(size, None if size <= 25 else 2 ** size, results))
         disagreeList = fullResults[1]
         if len(disagreeList) != 0:
             noDisagrees = False

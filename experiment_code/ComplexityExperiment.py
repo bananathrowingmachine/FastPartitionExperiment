@@ -44,15 +44,16 @@ class ComplexityExperiment:
         """
         experiment = cls(size)
         allRegResults = np.empty(21, dtype=RawResultsDType)
+        if runExample: disagreeVictim = np.random.default_rng().integers(0, 21)
         for targetIndex in range(21):
             if runExample: 
-                r = experiment.generateSampleOutput(targetIndex)
+                r = experiment.generateSampleOutput(targetIndex, targetIndex == disagreeVictim)
             else:
                 r = experiment.runSingleSize(targetIndex)
             allRegResults[targetIndex] = (experiment.sumSizeTarget[targetIndex], r[0], r[1], r[2], r[3])
         return allRegResults, experiment.disagreeList
     
-    def generateSampleOutput(self, targetIndex: int) -> tuple[np.float64, np.float64, np.float64, np.float64]:
+    def generateSampleOutput(self, targetIndex: int, disgareement: bool) -> tuple[np.float64, np.float64, np.float64, np.float64]:
         """
         Returns a set of quickly generated example data to test the data processing.
 
@@ -64,12 +65,12 @@ class ComplexityExperiment:
         exampleBound = self.sumSizeTarget[20] - self.sumSizeTarget[0]
         output = (random.normal(currSize, exampleBound / 2), random.normal(currSize, exampleBound / 4), random.normal(currSize, exampleBound / 8), random.normal(currSize, exampleBound / 16) if self.runRecurse else np.nan)
 
-        if random.uniform(0, 52) == 0: 
-            truth = random.uniform(0, 2) == 0
-            xnor = [truth for _ in range(0, 3 if self.runRecurse else 2)]
-            victim = random.uniform(0, 4 if self.runRecurse else 3)
-            xnor[victim] != xnor[victim]
-            self.recordDisagreement(xnor, targetIndex, self.generateRandomSet(targetIndex))
+        if disgareement:
+            truth = random.integers(0, 2) == 0
+            xnor = [truth for _ in range(0, 4 if self.runRecurse else 3)]
+            victim = random.integers(0, 4 if self.runRecurse else 3)
+            xnor[victim] = not xnor[victim]
+            self.recordDisagreement(xnor, targetIndex, list(self.generateRandomSet(targetIndex)))
 
         return output
 
@@ -233,15 +234,15 @@ class ComplexityExperiment:
                 results[i] = result
         return (np.mean(results[:, 0]), np.mean(results[:, 1]), np.mean(results[:, 2]), np.mean(results[:, 3]) if self.runRecurse else np.nan)
 
-    def recordDisagreement(self, xnor: list[bool], targetIndex: int, testedSet: set[int]):
+    def recordDisagreement(self, xnor: list[bool], targetIndex: int, testedList: list[int]):
         """
         Packages up all the necessary data for when a disagreement occured, and appends it to the objects disagreements list to be returns with the main data.
 
         :param xnor: The list essentially used as a xnor gate to determine if all the algorithms returned the same boolean.
         :param targetIndex: The target index being tested.
-        :param testedSet: The set that caused the disagreement.
+        :param testedList: The set that caused the disagreement (however in list form).
         """
-        data = DisagreeData(xnor, self.setCount, targetIndex, self.sumSizeTarget[targetIndex], testedSet)
+        data = DisagreeData(xnor, self.setCount, targetIndex, self.sumSizeTarget[targetIndex], testedList)
         self.disagreeLock.acquire()
         self.disagreeList.append(data)
         self.disagreeLock.release()
