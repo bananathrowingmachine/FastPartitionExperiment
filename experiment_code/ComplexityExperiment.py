@@ -1,11 +1,11 @@
 """
 Runs an experiment of integer count size for all versions of the algorithm.
 
-Written by bananathrowingmachine, Apr 29th, 2025.
+Written by bananathrowingmachine, May 1st, 2025.
 """
 from experiment_code.versions.MemoizedCrazy import MemoizedCrazy
 from experiment_code.versions.MemoizedNormal import MemoizedNormal
-from experiment_code.versions.TabulatedNormal import TabulatedNormal
+import experiment_code.versions.TabulatedNormal as TabulatedNormal
 from experiment_code.versions.RecursiveNormal import RecursiveNormal
 from data_processing_code.MiscDataCode import RawResultsDType, DisagreeData
 
@@ -201,6 +201,9 @@ class ComplexityExperiment:
             newSet.add(victim + 1)
             loops += 1
 
+        if 0 in newSet and sum(newSet) == 0: # Special case that is extremely trivial and will just cause an iteration count of 0.
+            return self.generateRandomSet(targetIndex, recurseLevel + 1)
+
         return newSet
 
     def runSingleTest(self, targetIndex: int) -> Tuple[int, int, int, Optional[int]]:
@@ -211,19 +214,20 @@ class ComplexityExperiment:
         :param targetIndex: The size target index of the set. Can be from 0->20 inclusive where 0 is smallest possible, 20 is largest possible, and everything else is increments of 5%.
         :return: A tuple with each variations results in order <memoized crazy, memoized normal, tabulated normal, recursive normal>. Will return None for recursive normal if the amount of ints in the set it too high (> 25).
         """
-        testSet = self.generateRandomSet(self.sumSizeTarget[targetIndex])
+        testList = list(self.generateRandomSet(self.sumSizeTarget[targetIndex])) # While the problem officially call for sets, using a list just makes more sense, especially for speed.
 
         # If problem size is small enough for basic recursion, run it, if not, make it's results var a tuple of None, None
         with Pool(processes=4 if self.runRecurse else 3) as pool:
-            memoCrazy = pool.apply_async(MemoizedCrazy.testIterations, (testSet,)).get()
-            memoNormal = pool.apply_async(MemoizedNormal.testIterations, (testSet,)).get()
-            tabNormal = pool.apply_async(TabulatedNormal.testIterations, (testSet,)).get()
-            recurseNormal = pool.apply_async(RecursiveNormal.testIterations, (testSet,)).get() if self.runRecurse else (None, None)
+            memoCrazy = pool.apply_async(MemoizedCrazy.testIterations, (testList,)).get()
+            memoNormal = pool.apply_async(MemoizedNormal.testIterations, (testList,)).get()
+            tabNormal = pool.apply_async(TabulatedNormal.testIterations, (testList,)).get()
+            recurseNormal = pool.apply_async(RecursiveNormal.testIterations, (testList,)).get() if self.runRecurse else (None, None)
 
-        xnor = [memoCrazy[1], memoNormal[1], tabNormal[1]]
+        xnor = [memoCrazy[1], memoNormal[1], tabNormal[1]] # Detect and record all disagreements between algorithms.
         if self.runRecurse: xnor.append(recurseNormal[1])
-        if len(set(xnor)) > 1: # Record all disagreements between algorithms.
-            self.recordDisagreement(xnor, targetIndex, testSet)
+        if len(set(xnor)) > 1: 
+            self.recordDisagreement(xnor, targetIndex, testList)
+        
         return (memoCrazy[0], memoNormal[0], tabNormal[0], recurseNormal[0])   
 
     def runSingleSize(self, targetIndex: int, rounds = 20) -> Tuple[np.float64, np.float64, np.float64, np.float64]:
@@ -240,8 +244,7 @@ class ComplexityExperiment:
             worker = partial(self.runSingleTest, targetIndex)
             for i, result in enumerate(pool.imap_unordered(worker, range(rounds))):
                 results[i] = result
-        avg4 = np.mean(results[:, 3]) if self.runRecurse else np.nan
-        return (np.mean(results[:, 0]), np.mean(results[:, 1]), np.mean(results[:, 2]), avg4)
+        return (np.mean(results[:, 0]), np.mean(results[:, 1]), np.mean(results[:, 2]), np.mean(results[:, 3]) if self.runRecurse else np.nan)
 
     def recordDisagreement(self, xnor: list[bool], targetIndex: int, testedSet: set[int]):
         """
