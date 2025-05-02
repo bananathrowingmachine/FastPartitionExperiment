@@ -30,6 +30,7 @@ class DisagreeData:
     AlgoOutputs: list[bool]
     IntCount: int
     TargetIndex: int
+    TestNum: int
     TargetSum: int
     CurrentList: list[int]
 

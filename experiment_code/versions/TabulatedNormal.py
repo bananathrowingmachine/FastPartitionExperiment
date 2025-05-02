@@ -32,7 +32,7 @@ def partition(inputList: list[int], posSum: int, negSum: int) -> tuple[int, bool
     :return: A tuple containing the iteration count, and the computed answer.
     """
     sumRange = posSum + abs(negSum) + 1
-    resultsTable = list[list[bool]] = [[None for _ in range(sumRange)] for _ in range(len(inputList))]
+    resultsTable = [[False for _ in range(sumRange)] for _ in range(len(inputList))]
     resultsTable.append([False for _ in range(sumRange)])
     resultsTable[len(inputList)][0] = True
     
@@ -51,4 +51,4 @@ def partition(inputList: list[int], posSum: int, negSum: int) -> tuple[int, bool
                 return (iterations, True)
         return (iterations, False)
 
-    return (iterations, resultsTable[0, int((posSum - negSum) / 2)]) 
+    return (iterations, resultsTable[0][int((posSum - negSum) / 2)]) 
