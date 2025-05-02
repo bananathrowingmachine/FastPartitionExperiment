@@ -31,7 +31,7 @@ class DisagreeData:
     IntCount: int
     TargetIndex: int
     TargetSum: int
-    CurrentSet: list[int]
+    CurrentList: list[int]
 
 class DisagreeProcessor:
     def __init__(self, genFilesDir: Path):

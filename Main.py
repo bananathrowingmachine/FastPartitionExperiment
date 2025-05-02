@@ -36,7 +36,7 @@ def collectData(queue: Queue, example: bool):
     :param example: Wether to generate a quick example set of data, since a real set is computationally expensive.
     """
     noDisagrees = True
-    for n in range(1, 21):
+    for n in range(5, 6):
         size = n * 5
         fullResults = ComplexityExperiment.testProblemSize(size, example)
         results = fullResults[0]
@@ -92,7 +92,7 @@ try:
     answer = inputimeout(prompt="That being said, press f to generate a full set of data, and press anything else to generate an example set. ", timeout=10)
     if answer.lower() == "f":
         try:
-            fallBack = inputimeout(prompt="Full data collection will commence in 10 seconds if no further inputs are recieved. Press f again to reconfirm quickly.", timeout=10)
+            fallBack = inputimeout(prompt="Full data collection will commence in 10 seconds if no further inputs are recieved. Press f again to reconfirm quickly. ", timeout=10)
             if fallBack.lower() == "f":
                 print("Full data collection has commenced.")
             else:

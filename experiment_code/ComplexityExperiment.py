@@ -9,7 +9,7 @@ import experiment_code.versions.TabulatedNormal as TabulatedNormal
 from experiment_code.versions.RecursiveNormal import RecursiveNormal
 
 from data_processing_code.MiscDataCode import RawResultsDType, DisagreeData
-from multiprocessing import Pool, Lock
+import multiprocessing as mp
 from functools import partial
 import numpy as np
 
@@ -27,11 +27,12 @@ class ComplexityExperiment:
         """
         self.runRecurse = size <= 25
         self.setCount = size
-        self.sumSizeTarget = [-1 for _ in range(21)]
+        self.sumSizeTarget = [None for _ in range(21)]
         self.sumSizeBound = self.findAbsSumBounds() # The maximum allowed difference between the predetermined absolute sum (self.sumSize[i]) and the actual absolute sum.
         self.intSizeBound = round(self.sumSizeBound/self.setCount)
-        self.disagreeList: list[DisagreeData] = []
-        self.disagreeLock = Lock()
+        manager = mp.Manager()
+        self.disagreeList: list[DisagreeData] = manager.list()
+        self.disagreeLock = manager.Lock()
 
     @classmethod
     def testProblemSize(cls, size: int, runExample = False) -> tuple[np.ndarray, list[DisagreeData]]:
@@ -51,6 +52,7 @@ class ComplexityExperiment:
             else:
                 r = experiment.runSingleSize(targetIndex)
             allRegResults[targetIndex] = (experiment.sumSizeTarget[targetIndex], r[0], r[1], r[2], r[3])
+        
         return allRegResults, experiment.disagreeList
     
     def generateSampleOutput(self, targetIndex: int, disgareement: bool) -> tuple[np.float64, np.float64, np.float64, np.float64]:
@@ -70,7 +72,7 @@ class ComplexityExperiment:
             xnor = [truth for _ in range(0, 4 if self.runRecurse else 3)]
             victim = random.integers(0, 4 if self.runRecurse else 3)
             xnor[victim] = not xnor[victim]
-            self.recordDisagreement(xnor, targetIndex, list(self.generateRandomSet(targetIndex)))
+            self.disagreeList.append(DisagreeData(xnor, self.setCount, targetIndex, self.sumSizeTarget[targetIndex], 1, list(self.generateRandomSet(self.sumSizeTarget[targetIndex]))))
 
         return output
 
@@ -91,7 +93,7 @@ class ComplexityExperiment:
             bigBound += biggest 
             if toggleChange: smallest += 1
             else: biggest -= 1
-            toggleChange != toggleChange
+            toggleChange = not toggleChange
         self.sumSizeTarget[0] = smallBound
         self.sumSizeTarget[20] = bigBound
         percent5inc = (bigBound - smallBound)/20
@@ -195,7 +197,7 @@ class ComplexityExperiment:
 
         return newSet
 
-    def runSingleTest(self, targetIndex: int) -> tuple[int, int, int, int | None]:
+    def runSingleTest(self, targetIndex: int, _=None) -> tuple[int, int, int, int]:
         """
         Runs each algorithm once. Verifies all algorithms returned the same bool, and will record the parameters and which algorithm disagrees if not. Also returns the iteration count of each.
         Uses a python multithreading pool to run each version at the same time.
@@ -205,17 +207,18 @@ class ComplexityExperiment:
         """
         testList = list(self.generateRandomSet(self.sumSizeTarget[targetIndex])) # While the problem officially call for sets, using a list just makes more sense, especially for speed.
 
-        # If problem size is small enough for basic recursion, run it, if not, make it's results var a tuple of None, None
-        with Pool(processes=4 if self.runRecurse else 3) as pool:
+        # If problem size is small enough for basic recursion, run it, if not, make it's results var a tuple of np.nan, None.
+        with mp.Pool(processes=4 if self.runRecurse else 3) as pool:
             memoCrazy = pool.apply_async(MemoizedCrazy.testIterations, (testList,)).get()
             memoNormal = pool.apply_async(MemoizedNormal.testIterations, (testList,)).get()
             tabNormal = pool.apply_async(TabulatedNormal.testIterations, (testList,)).get()
-            recurseNormal = pool.apply_async(RecursiveNormal.testIterations, (testList,)).get() if self.runRecurse else (None, None)
+            recurseNormal = pool.apply_async(RecursiveNormal.testIterations, (testList,)).get() if self.runRecurse else (np.nan, None)
 
         xnor = [memoCrazy[1], memoNormal[1], tabNormal[1]] # Detect and record all disagreements between algorithms.
         if self.runRecurse: xnor.append(recurseNormal[1])
         if len(set(xnor)) > 1: 
-            self.recordDisagreement(xnor, targetIndex, testList)
+            with self.disagreeLock:
+                self.disagreeList.append(DisagreeData(xnor, self.setCount, targetIndex, self.sumSizeTarget[targetIndex], testList))
         
         return (memoCrazy[0], memoNormal[0], tabNormal[0], recurseNormal[0])   
 
@@ -228,23 +231,7 @@ class ComplexityExperiment:
         :return: A tuple with each variations average results in order <memoized crazy, memoized normal, tabulated normal, recursive normal>. Will return np.nan for recursive normal if integer count is above 25.
         """
         results = np.empty((20, 4), dtype=np.int64)
-        with Pool(processes=3 if self.runRecurse else 4) as pool:
-            worker = partial(self.runSingleTest, targetIndex)
-            for i, result in enumerate(pool.imap_unordered(worker, range(20))):
-                results[i] = result
+        tasks = [(targetIndex,) for _ in range(20)]
+        with mp.Pool(processes=3 if self.runRecurse else 4) as pool:
+            results = np.array(pool.starmap(self.runSingleTest, tasks))
         return (np.mean(results[:, 0]), np.mean(results[:, 1]), np.mean(results[:, 2]), np.mean(results[:, 3]) if self.runRecurse else np.nan)
-
-    def recordDisagreement(self, xnor: list[bool], targetIndex: int, testedList: list[int]):
-        """
-        Packages up all the necessary data for when a disagreement occured, and appends it to the objects disagreements list to be returns with the main data.
-
-        :param xnor: The list essentially used as a xnor gate to determine if all the algorithms returned the same boolean.
-        :param targetIndex: The target index being tested.
-        :param testedList: The set that caused the disagreement (however in list form).
-        """
-        data = DisagreeData(xnor, self.setCount, targetIndex, self.sumSizeTarget[targetIndex], testedList)
-        self.disagreeLock.acquire()
-        self.disagreeList.append(data)
-        self.disagreeLock.release()
-            
-
