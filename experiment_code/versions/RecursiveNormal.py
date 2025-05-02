@@ -36,7 +36,7 @@ class RecursiveNormal:
         :param inputList: The inputted list to solve the partition question on.
         :return: A tuple containing the iteration count, and the computed answer.
         """
-        solver = cls()
+        solver = cls(inputList)
         if solver.posSum == abs(solver.negSum):
             return (solver.iterationCount, solver.subsetSum(0, int(sum(inputList)/2))[1])
         return (solver.iterationCount, solver.subsetSum(0, int(sum(inputList)/2))[0])

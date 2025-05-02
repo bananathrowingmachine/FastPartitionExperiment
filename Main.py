@@ -89,10 +89,10 @@ print("Therefore, by default this program will generate and graph a set of compu
 print("Only generate a full legitimate set of data if your understand it will take a while, and will use all of your PC's resources.")
 print(" ")
 try:
-    answer = inputimeout(prompt="That being said, press f to generate a full set of data, and press anything else to generate an example set. ", timeout=10)
+    answer = inputimeout("That being said, press f to generate a full set of data, and press anything else to generate an example set. ", 10)
     if answer.lower() == "f":
         try:
-            fallBack = inputimeout(prompt="Full data collection will commence in 10 seconds if no further inputs are recieved. Press f again to reconfirm quickly. ", timeout=10)
+            fallBack = inputimeout("Full data collection will commence in 10 seconds if no further inputs are recieved. Press f again to reconfirm quickly. ", 10)
             if fallBack.lower() == "f":
                 print("Full data collection has commenced.")
             else:

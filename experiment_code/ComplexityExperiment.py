@@ -9,8 +9,8 @@ import experiment_code.versions.TabulatedNormal as TabulatedNormal
 from experiment_code.versions.RecursiveNormal import RecursiveNormal
 
 from data_processing_code.MiscDataCode import RawResultsDType, DisagreeData
-import multiprocessing as mp
-from functools import partial
+from concurrent.futures import ProcessPoolExecutor, as_completed
+from multiprocessing import Manager
 import numpy as np
 
 class ComplexityExperiment:
@@ -30,7 +30,7 @@ class ComplexityExperiment:
         self.sumSizeTarget = [None for _ in range(21)]
         self.sumSizeBound = self.findAbsSumBounds() # The maximum allowed difference between the predetermined absolute sum (self.sumSize[i]) and the actual absolute sum.
         self.intSizeBound = round(self.sumSizeBound/self.setCount)
-        manager = mp.Manager()
+        manager = Manager()
         self.disagreeList: list[DisagreeData] = manager.list()
         self.disagreeLock = manager.Lock()
 
@@ -72,7 +72,7 @@ class ComplexityExperiment:
             xnor = [truth for _ in range(0, 4 if self.runRecurse else 3)]
             victim = random.integers(0, 4 if self.runRecurse else 3)
             xnor[victim] = not xnor[victim]
-            self.disagreeList.append(DisagreeData(xnor, self.setCount, targetIndex, self.sumSizeTarget[targetIndex], 1, list(self.generateRandomSet(self.sumSizeTarget[targetIndex]))))
+            self.disagreeList.append(DisagreeData(xnor, self.setCount, targetIndex, self.sumSizeTarget[targetIndex], 1, list(self.generateRandomSet(targetIndex))))
 
         return output
 
@@ -197,7 +197,7 @@ class ComplexityExperiment:
 
         return newSet
 
-    def runSingleTest(self, targetIndex: int, _=None) -> tuple[int, int, int, int]:
+    def runSingleTest(self, targetIndex: int) -> tuple[np.int64, np.int64, np.int64, np.int64]:
         """
         Runs each algorithm once. Verifies all algorithms returned the same bool, and will record the parameters and which algorithm disagrees if not. Also returns the iteration count of each.
         Uses a python multithreading pool to run each version at the same time.
@@ -205,22 +205,23 @@ class ComplexityExperiment:
         :param targetIndex: The size target index of the set. Can be from 0->20 inclusive where 0 is smallest possible, 20 is largest possible, and everything else is increments of 5%.
         :return: A tuple with each variations results in order <memoized crazy, memoized normal, tabulated normal, recursive normal>. Will return None for recursive normal if the amount of ints in the set it too high (> 25).
         """
-        testList = list(self.generateRandomSet(self.sumSizeTarget[targetIndex])) # While the problem officially call for sets, using a list just makes more sense, especially for speed.
+        testList = list(self.generateRandomSet(targetIndex))
+    
+        with ProcessPoolExecutor(max_workers=4 if self.runRecurse else 3) as innerPool:
+            futures = {innerPool.submit(MemoizedCrazy.testIterations, testList): "memoCrazy", innerPool.submit(MemoizedNormal.testIterations, testList): "memoNormal", innerPool.submit(TabulatedNormal.testIterations, testList): "tabNormal"}
+            if self.runRecurse: futures[innerPool.submit(RecursiveNormal.testIterations, testList)] = "recurseNormal"
+            results = {}
+            for future in as_completed(futures):
+                results[futures[future]] = future.result()
 
-        # If problem size is small enough for basic recursion, run it, if not, make it's results var a tuple of np.nan, None.
-        with mp.Pool(processes=4 if self.runRecurse else 3) as pool:
-            memoCrazy = pool.apply_async(MemoizedCrazy.testIterations, (testList,)).get()
-            memoNormal = pool.apply_async(MemoizedNormal.testIterations, (testList,)).get()
-            tabNormal = pool.apply_async(TabulatedNormal.testIterations, (testList,)).get()
-            recurseNormal = pool.apply_async(RecursiveNormal.testIterations, (testList,)).get() if self.runRecurse else (np.nan, None)
-
-        xnor = [memoCrazy[1], memoNormal[1], tabNormal[1]] # Detect and record all disagreements between algorithms.
-        if self.runRecurse: xnor.append(recurseNormal[1])
-        if len(set(xnor)) > 1: 
+        xnor = [results["memoCrazy"][1], results["memoNormal"][1], results["tabNormal"][1]]
+        if self.runRecurse: 
+            xnor.append(results["recurseNormal"][1])
+        if len(set(xnor)) > 1:
             with self.disagreeLock:
                 self.disagreeList.append(DisagreeData(xnor, self.setCount, targetIndex, self.sumSizeTarget[targetIndex], testList))
         
-        return (memoCrazy[0], memoNormal[0], tabNormal[0], recurseNormal[0])   
+        return (results["memoCrazy"][0], results["memoNormal"][0], results["tabNormal"][0], results["recurseNormal"][0]) 
 
     def runSingleSize(self, targetIndex: int) -> tuple[np.float64, np.float64, np.float64, np.float64]:
         """
@@ -231,7 +232,9 @@ class ComplexityExperiment:
         :return: A tuple with each variations average results in order <memoized crazy, memoized normal, tabulated normal, recursive normal>. Will return np.nan for recursive normal if integer count is above 25.
         """
         results = np.empty((20, 4), dtype=np.int64)
-        tasks = [(targetIndex,) for _ in range(20)]
-        with mp.Pool(processes=3 if self.runRecurse else 4) as pool:
-            results = np.array(pool.starmap(self.runSingleTest, tasks))
+        with ProcessPoolExecutor(max_workers=3 if self.runRecurse else 4) as outerPool:
+            futures = [outerPool.submit(self.runSingleTest, targetIndex) for _ in range(20)]
+            for i, future in enumerate(as_completed(futures)):
+                results[i] = future.result()
+        
         return (np.mean(results[:, 0]), np.mean(results[:, 1]), np.mean(results[:, 2]), np.mean(results[:, 3]) if self.runRecurse else np.nan)

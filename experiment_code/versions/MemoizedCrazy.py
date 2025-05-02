@@ -46,9 +46,9 @@ class MemoizedCrazy:
         self.iterationCount += 1
 
         if goal == 0:
-            return True
+            return True, False
         if index >= len(self.absoluteList):
-            return False
+            return False, False
         
         if goal >= self.absoluteList[index]: # Bounds checking, better than the others though as it can use the current goal.
             if (index + 1, goal-self.absoluteList[index]) in self.answerMap:
