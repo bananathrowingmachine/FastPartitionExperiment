@@ -1,7 +1,7 @@
 """
 Runs an experiment of integer count size for all versions of the algorithm.
 
-Written by bananathrowingmachine, May 1st, 2025.
+Written by bananathrowingmachine, May 2nd, 2025.
 """
 from experiment_code.versions.MemoizedCrazy import MemoizedCrazy
 from experiment_code.versions.MemoizedNormal import MemoizedNormal
@@ -9,21 +9,48 @@ import experiment_code.versions.TabulatedNormal as TabulatedNormal
 from experiment_code.versions.RecursiveNormal import RecursiveNormal
 
 from data_processing_code.MiscDataCode import RawResultsDType, DisagreeData
-import concurrent.futures as mp
+import concurrent.futures as ThreadPool
 from multiprocessing import Manager
 import numpy as np
+from enum import IntEnum
+
+class OutLevel(IntEnum):
+    """
+    An enum for the console output level of the complexity tester. Each level will output what is describe as well as what is before it.
+    """
+    NONE = 0
+    """
+    No console output.
+    """
+    SUITE = 1
+    """
+    Will output each time the next int count has started or finished testing (the class method being called or returning).
+    """
+    SUM = 2
+    """
+    Will output each time the next sum size has started or finished testing.
+    """
+    BATCH = 3
+    """
+    Will output each time the next batch of 4 algorithms has started or finished testing.
+    """
+    ALL = 4
+    """
+    Will output each time a single algorithm has finished testing.
+    """
 
 class ComplexityExperiment:
     """
     Class for running a complexity experiment. Not desinged for each class to be called seperately however some are more detachable than others but I give you 0 promises on any functionality outside of running it the expected way.
     To run it the expected way, call class method testProblemSize, and give it an integer that says how many integers should be in a randomized set given to each algorithm.
     """
-    def __init__(self, size: int):
+    def __init__(self, size: int, outLevel: OutLevel):
         """
         Experiment setup. Finds the sets of size n with the smallest possible and largest possible (with signed 32 bit int limit being the largest number added) absolute sums. Then finds the size each targetIndex should be.
         Designed to be run by calling the class method testProblemSize.
 
         :param size: The amount of integers that should be in each set.
+        :param outLevel: The amount of console output the app should produce. I don't plan on making this modifiable by user input.
         """
         self.runRecurse = size <= 25
         self.setCount = size
@@ -31,8 +58,9 @@ class ComplexityExperiment:
         self.sumSizeBound = self.findAbsSumBounds() # The maximum allowed difference between the predetermined absolute sum (self.sumSize[i]) and the actual absolute sum.
         self.intSizeBound = round(self.sumSizeBound/self.setCount)
         self.disagreeList: list[DisagreeData] = []
-
         self.disagreeLock = Manager().Lock()
+
+        self.outputLevel = outLevel
 
     @classmethod
     def testProblemSize(cls, size: int, runExample = False) -> tuple[np.ndarray, list[DisagreeData]]:
@@ -43,12 +71,12 @@ class ComplexityExperiment:
         :param example: Return an example set of data without blowing up your pc. Defaults to false.
         :return: A numpy array where each column is [targetSum], [memoCrazy], [memoNormal], [tabNormal], and [recurseNormal] in that order, and named, as well as the list of all recorded disagreements between algorithms.
         """
-        experiment = cls(size)
+        experiment = cls(size, OutLevel.BATCH)
         allRegResults = np.empty(21, dtype=RawResultsDType)
         if runExample: 
             disagreeVictim = np.random.default_rng().integers(0, 21)
-        else:
-            print(f"|[==>>--:>  Started entire test suite for set integer count {size:3}. This will take awhile.  <:--<<==]|")
+        elif experiment.outputLevel > 0:
+            print(f"|[==>>--:>-  Started entire test suite for set integer count {size:3}. This will take awhile.  -<:--<<==]|")
         for targetIndex in range(21):
             if runExample: 
                 r = experiment.generateSampleOutput(targetIndex, targetIndex == disagreeVictim)
@@ -56,7 +84,9 @@ class ComplexityExperiment:
                 r = experiment.runSingleSize(targetIndex)
             allRegResults[targetIndex] = (experiment.sumSizeTarget[targetIndex], r[0], r[1], r[2], r[3])
         
-        if not runExample: print(f"|[==>>--:> Finished entire test suite for set integer count {size:3}. Results have been sent. <:--<<==]|")
+        if not runExample and experiment.outputLevel > 0: 
+            print(f"|[==>>--:>- Finished entire test suite for set integer count {size:3}. Results have been sent. -<:--<<==]|")
+            print("|[==>>--:>- ================================================================================== -<:--<<==]|")
         return allRegResults, experiment.disagreeList
     
     def generateSampleOutput(self, targetIndex: int, disgareement: bool) -> tuple[np.float64, np.float64, np.float64, np.float64]:
@@ -201,23 +231,26 @@ class ComplexityExperiment:
 
         return newSet
 
-    def runSingleTest(self, targetIndex: int, testNum: int) -> tuple[np.int64, np.int64, np.int64, np.int64]:
+    def runSingleTest(self, targetIndex: int, testNum: int) -> tuple[int, tuple[np.int64, np.int64, np.int64, np.int64]]:
         """
         Runs each algorithm once. Verifies all algorithms returned the same bool, and will record the parameters and which algorithm disagrees if not. Also returns the iteration count of each.
         Uses a python multithreading pool to run each version at the same time.
 
         :param targetIndex: The size target index of the set. Can be from 0->20 inclusive where 0 is smallest possible, 20 is largest possible, and everything else is increments of 5%.
-        :return: A tuple with each variations results in order <memoized crazy, memoized normal, tabulated normal, recursive normal>. Will return None for recursive normal if the amount of ints in the set it too high (> 25).
+        :return: A tuple of the testNum, and a inner tuple of the results in order Memoized Crazy, Memoized Normal, Tabulated Normal, and Recursive Normal, with np.nan given if Recursive Normal is too high.
         """
-        print(f":>  Started test {testNum:2} for specs {self.setCount:3} and {targetIndex:2}. <:")
+        if self.outputLevel > 2: print(f":>-  Started test take {testNum:2} for specs {self.setCount:3} and {targetIndex:2}. -<:")
         testList = list(self.generateRandomSet(targetIndex))
+        officialNames = {"memoCrazy": "  Memoized Crazy", "memoNormal": " Memoized Normal", "tabNormal": "Tabulated Normal", "recurseNormal": "Recursive Normal"}
     
-        with mp.ProcessPoolExecutor(max_workers=4 if self.runRecurse else 3) as innerPool:
+        with ThreadPool.ProcessPoolExecutor(max_workers=4 if self.runRecurse else 3) as innerPool:
             futures = {innerPool.submit(MemoizedCrazy.testIterations, testList): "memoCrazy", innerPool.submit(MemoizedNormal.testIterations, testList): "memoNormal", innerPool.submit(TabulatedNormal.testIterations, testList): "tabNormal"}
             if self.runRecurse: futures[innerPool.submit(RecursiveNormal.testIterations, testList)] = "recurseNormal"
             results = {}
-            for future in mp.as_completed(futures):
-                results[futures[future]] = future.result()
+            for future in ThreadPool.as_completed(futures):
+                name = futures[future]
+                if self.outputLevel > 3: print(f"- Finished test for {officialNames[name]} take {testNum:2}. -")
+                results[name] = future.result()
 
         xnor = [results["memoCrazy"][1], results["memoNormal"][1], results["tabNormal"][1]]
         if self.runRecurse: 
@@ -226,8 +259,8 @@ class ComplexityExperiment:
             with self.disagreeLock:
                 self.disagreeList.append(DisagreeData(xnor, self.setCount, targetIndex, testNum, self.sumSizeTarget[targetIndex], testList))
         
-        print(f":> Finished test {testNum:2} for specs {self.setCount:3} and {targetIndex:2}. <:")
-        return (results["memoCrazy"][0], results["memoNormal"][0], results["tabNormal"][0], results["recurseNormal"][0]) 
+        if self.outputLevel > 2: print(f":>- Finished test take {testNum:2} for specs {self.setCount:3} and {targetIndex:2}. -<:")
+        return testNum, (results["memoCrazy"][0], results["memoNormal"][0], results["tabNormal"][0], results["recurseNormal"][0] if self.runRecurse else np.nan) 
 
     def runSingleSize(self, targetIndex: int) -> tuple[np.float64, np.float64, np.float64, np.float64]:
         """
@@ -237,12 +270,25 @@ class ComplexityExperiment:
         :param targetIndex: The index for the sum size target. Ranges from 0->20 inclusive.
         :return: A tuple with each variations average results in order <memoized crazy, memoized normal, tabulated normal, recursive normal>. Will return np.nan for recursive normal if integer count is above 25.
         """
-        print(f">>--:>  Started tests for integer count {self.setCount:3} and absolute sum target index {targetIndex:2}. <:--<<")
+        if self.outputLevel > 1: print(f">>--:>-  Started tests for integer count {self.setCount:3} and absolute sum target index {targetIndex:2}. -<:--<<")
         results = np.empty((20, 4), dtype=np.int64)
-        with mp.ProcessPoolExecutor(max_workers=3 if self.runRecurse else 4) as outerPool:
-            futures = [outerPool.submit(self.runSingleTest, targetIndex, i + 1) for i in range(20)]
-            for i, future in enumerate(mp.as_completed(futures)):
-                results[i] = future.result()
         
-        print(f">>--:> Finished tests for integer count {self.setCount:3} and absolute sum target index {targetIndex:2}. <:--<<")
-        return (np.mean(results[:, 0]), np.mean(results[:, 1]), np.mean(results[:, 2]), np.mean(results[:, 3]) if self.runRecurse else np.nan)
+        maxWorkers = 3 if self.runRecurse else 4
+        with ThreadPool.ProcessPoolExecutor(max_workers=maxWorkers) as outerPool:
+            tasks = [i + 1 for i in reversed(range(20))]
+            activeTests = set()
+            try:
+                while len(tasks) != 0 or len(activeTests) != 0:
+                    while len(activeTests) < maxWorkers and len(tasks) != 0:
+                        activeTests.add(outerPool.submit(self.runSingleTest, targetIndex, tasks.pop()))
+                    completedTest = next(ThreadPool.as_completed(activeTests))
+                    activeTests.remove(completedTest)
+                    testResult = completedTest.result()
+                    results[testResult[0] - 1] = testResult[1]
+
+                outerPool.shutdown(wait=True)
+                if self.outputLevel > 1: print(f">>--:>- Finished tests for integer count {self.setCount:3} and absolute sum target index {targetIndex:2}. -<:--<<")
+                return (np.mean(results[:, 0]), np.mean(results[:, 1]), np.mean(results[:, 2]), np.mean(results[:, 3]) if self.runRecurse else np.nan)
+            except KeyboardInterrupt:
+                outerPool.shutdown(wait=False, cancel_futures=True)
+                raise

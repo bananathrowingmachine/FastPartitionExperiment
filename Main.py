@@ -15,7 +15,7 @@ It will then send the packaged data completely unmodified to the data processing
 Once in the data processing code, the processor will unpack the data, processes it, and then once done will return back to the orchestrator, waiting for another chunk of data.
 Was designed to have as little code as possible to help my non comp sci major friend who does know how to graph in python.
 
-Made by bananathrowingmachine on April 30th, 2025.
+Made by bananathrowingmachine on May 2nd, 2025.
 """
 from experiment_code.ComplexityExperiment import ComplexityExperiment
 from data_processing_code.MainDataProcessor import DataProcessor
@@ -36,11 +36,15 @@ def collectData(queue: Queue, example: bool):
     :param example: Wether to generate a quick example set of data, since a real set is computationally expensive.
     """
     noDisagrees = True
-    for n in range(1, 21):
+    for n in range(5, 21):
         size = n * 5
-        fullResults = ComplexityExperiment.testProblemSize(size, example)
+        try:
+            fullResults = ComplexityExperiment.testProblemSize(size, example)
+        except:
+            print("Test process crashed. Terminating.")
+            raise
         results = fullResults[0]
-        if results.dtype != RawResultsDType or results.shape != (21,):
+        if results.dtype != RawResultsDType or results.shape != (21,): # I doubt this will ever happen.
             print(f"Expected shape (21,) with dtype {RawResultsDType}, but got {results.shape} with dtype {results.dtype}. Terminating.")
             sys.exit(1)
         queue.put(ResultsWrapper(size, None if size <= 25 else 2 ** size, results))
@@ -105,13 +109,18 @@ try:
 except TimeoutOccurred:
     print("Input timeout occured. Defaulting to example data.")
     answer = "e"
-collector = Process(target=collectData, args=(queue, answer.lower() != "f"))
-processor = Process(target=processData, args=(queue,))
-collector.start()
-processor.start()
-collector.join()
-keepGoing.clear() # Signals end of work to the data processor.
-print("Data collection has finished. Finishing up processing.")
-processor.join()
-print("All processing has been completed. Closing.")
-sys.exit(0)
+try:
+    collector = Process(target=collectData, args=(queue, answer.lower() != "f"))
+    processor = Process(target=processData, args=(queue,))
+except KeyboardInterrupt:
+    keepGoing.clear()
+    raise
+else:
+    collector.start()
+    processor.start()
+    collector.join()
+    keepGoing.clear() # Signals end of work to the data processor.
+    print("Data collection has finished. Finishing up processing.")
+    processor.join()
+    print("All processing has been completed. Closing.")
+    sys.exit(0)
