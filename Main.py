@@ -18,7 +18,7 @@ Was designed to have as little code as possible to help my non comp sci major fr
 Made by bananathrowingmachine on May 2nd, 2025.
 """
 from experiment_code.ComplexityExperiment import ComplexityExperiment
-from data_processing_code.MainDataProcessor import DataProcessor
+from data_processing_code.MainDataProcessor import MainDataProcessor
 from data_processing_code.MiscDataCode import RawResultsDType, ResultsWrapper, DisagreeData, DisagreeProcessor
 
 from multiprocessing import Process, Queue, Event
@@ -36,7 +36,7 @@ def collectData(queue: Queue, example: bool):
     :param example: Wether to generate a quick example set of data, since a real set is computationally expensive.
     """
     noDisagrees = True
-    for n in range(5, 21):
+    for n in range(1, 21):
         size = n * 5
         try:
             fullResults = ComplexityExperiment.testProblemSize(size, example)
@@ -65,14 +65,13 @@ def processData(queue: Queue):
         try: 
             data = queue.get(timeout=0.25) # Attempts to process data every 0.25 seconds until the end of work signal of None is sent.
             if data is None:
-                disagreDir = genFilesDir / "solution conflicts"
-                disagreDir.mkdir(parents=True)
-                with open(disagreDir / "disagree.txt", "x") as f:
-                    f.write("No disagreements were recorded during data collection.")
+                DisagreeProcessor.noDisagreements(genFilesDir)
             elif isinstance(data, ResultsWrapper):
-                DataProcessor.processData(genFilesDir, data)
+                MainDataProcessor.processData(genFilesDir, data)
             elif isinstance(data, list) and all(isinstance(item, DisagreeData) for item in data):
-                DisagreeProcessor.processBulkDisagreements(genFilesDir, data)
+                global disgareeCount
+                DisagreeProcessor.processBulkDisagreements(genFilesDir, data, disgareeCount)
+                disgareeCount += len(data)
         except Empty:
             continue
 
@@ -88,6 +87,7 @@ if genFilesDir.exists():
 genFilesDir.mkdir()
 keepGoing = Event()
 keepGoing.set()
+disgareeCount = 1
 print("This program requires a lot of computation to run effectively. If the device you are running this on is not particularly good, you might run into issues.")
 print("Therefore, by default this program will generate and graph a set of computationally cheap example data, however that data will be mostly randomly generated nonsense.")
 print("Only generate a full legitimate set of data if your understand it will take a while, and will use all of your PC's resources.")

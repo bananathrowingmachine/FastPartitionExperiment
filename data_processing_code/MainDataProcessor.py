@@ -8,7 +8,7 @@ import numpy as np
 import pandas as pd
 from pathlib import Path
 
-class DataProcessor:
+class MainDataProcessor:
     """
     Data processor class. In reality just a easy way to make the subdirectories for generated data and store the values easily.
     """

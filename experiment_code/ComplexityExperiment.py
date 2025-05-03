@@ -74,12 +74,11 @@ class ComplexityExperiment:
         experiment = cls(size, OutLevel.BATCH)
         allRegResults = np.empty(21, dtype=RawResultsDType)
         if runExample: 
-            disagreeVictim = np.random.default_rng().integers(0, 21)
-        elif experiment.outputLevel > 0:
-            print(f"|[==>>--:>-  Started entire test suite for set integer count {size:3}. This will take awhile.  -<:--<<==]|")
+            disagreeVictim = np.random.default_rng().integers(0, 21), np.random.default_rng().integers(0, 21)
+        elif experiment.outputLevel > 0: print(f"|[==>>--:>-  Started entire test suite for set integer count {size:3}. This will take awhile.  -<:--<<==]|")
         for targetIndex in range(21):
             if runExample: 
-                r = experiment.generateSampleOutput(targetIndex, targetIndex == disagreeVictim)
+                r = experiment.generateSampleOutput(targetIndex, targetIndex == disagreeVictim[0] or targetIndex == disagreeVictim[1])
             else:
                 r = experiment.runSingleSize(targetIndex)
             allRegResults[targetIndex] = (experiment.sumSizeTarget[targetIndex], r[0], r[1], r[2], r[3])
