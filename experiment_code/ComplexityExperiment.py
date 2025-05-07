@@ -105,7 +105,7 @@ class ComplexityExperiment:
             xnor = [truth for _ in range(0, 4 if self.runRecurse else 3)]
             victim = random.integers(0, 4 if self.runRecurse else 3)
             xnor[victim] = not xnor[victim]
-            self.disagreeList.append(DisagreeData(xnor, self.setCount, targetIndex, self.sumSizeTarget[targetIndex], 1, list(self.generateRandomSet(targetIndex))))
+            self.disagreeList.append(DisagreeData(xnor, self.setCount, targetIndex, 1, self.sumSizeTarget[targetIndex], list(self.generateRandomSet(targetIndex))))
 
         return output
 

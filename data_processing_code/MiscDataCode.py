@@ -99,9 +99,10 @@ class DisagreeProcessor:
             document.add_heading("Complete Algorithms Disgareement Record")
             document.add_heading("This document has all recorded instances where the different partition algorithms disagreed on the answer for a given set. It is procedurally generated as the experiment runs.", 3)
 
-        paragraph = document.add_paragraph(f"    ")
-        paragraph.add_run(f"This is disagreement number {idNum}.").bold = True
-        paragraph.add_run().add_break()
+        header = document.add_paragraph(f"    ")
+        header.add_run(f"Disagreement number {idNum}:").bold = True
+        
+        paragraph = document.add_paragraph()
         if len(culprits) == 1:
             paragraph.add_run(f"The algorithm {culprits[0]} claimed that the answer was {not truth} when every other algorithm running claimed that it was {truth}.")
         elif len(culprits) == 2:
@@ -109,17 +110,17 @@ class DisagreeProcessor:
         else:
             paragraph.add_run(f"Every other algorithm claimed that the answer was {not truth} while Recursive Normal which is assumed to always be correct claimed that it was {truth}.")
         paragraph.add_run().add_break()
-        paragraph.add_run(f"    The specific enviornment being tested when this disagreement occured is shown below:").add_break()
+        paragraph.add_run(f"The specific enviornment being tested when this disagreement occured is shown below:").add_break()
 
         if data.TestNum > 3: numSuffix = "th"
         elif data.TestNum == 3: numSuffix = "rd"
         elif data.TestNum == 2: numSuffix = "nd"
         else: numSuffix = "st"
-        paragraph.add_run(f"    This was the {data.TestNum}{numSuffix} repeat test for this specific set of independent variables.").add_break()
-        paragraph.add_run(f"    The amount of integers per set was {data.IntCount}.").add_break()
-        paragraph.add_run(f"    The current target index was {data.TargetIndex} which corresponds to a target sum of {data.TargetSum}.").add_break()
-        paragraph.add_run(f"    The specific set that was tested has a sum of {sum(data.CurrentList)}. It is shown below:").add_break()
-        paragraph.add_run(f"    {data.CurrentList}")
-            
+        paragraph.add_run(f"This was the {data.TestNum}{numSuffix} repeat test for this specific set of independent variables.").add_break()
+        paragraph.add_run(f"The amount of integers per set was {data.IntCount}.").add_break()
+        paragraph.add_run(f"The current target index was {data.TargetIndex} which corresponds to a target sum of {data.TargetSum}.").add_break()
+        paragraph.add_run(f"The specific set that was tested has a sum of {sum(data.CurrentList)}. It is shown below:").add_break()
+        paragraph.add_run(f"{data.CurrentList}")
+    
         document.save(self.disagreeDir / "DisagreementRecord.docx")
         
