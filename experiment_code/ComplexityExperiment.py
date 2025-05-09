@@ -85,7 +85,7 @@ class ComplexityExperiment:
         
         if not runExample and experiment.outputLevel > 0: 
             print(f"|[==>>--:>- Finished entire test suite for set integer count {size:3}. Results have been sent. -<:--<<==]|")
-            print("|[==>>--:>- ================================================================================== -<:--<<==]|")
+            print("|[==>>--:>- ============================================================================= -<:--<<==]|")
         return allRegResults, experiment.disagreeList
     
     def generateSampleOutput(self, targetIndex: int, disgareement: bool) -> tuple[np.float64, np.float64, np.float64, np.float64]:

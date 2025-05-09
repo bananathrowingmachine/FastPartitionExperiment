@@ -37,9 +37,7 @@ class RecursiveNormal:
         :return: A tuple containing the iteration count, and the computed answer.
         """
         solver = cls(inputList)
-        if solver.posSum == abs(solver.negSum):
-            return (solver.iterationCount, solver.subsetSum(0, int(sum(inputList)/2))[1])
-        return (solver.iterationCount, solver.subsetSum(0, int(sum(inputList)/2))[0])
+        return (solver.iterationCount, solver.subsetSum(0, int(sum(inputList)/2))[1 if sum(inputList) == 0 else 0])
 
     def subsetSum(self, index, goal) -> tuple[bool, bool]:
         """
