@@ -38,7 +38,8 @@ class MemoizedNormal:
         :return: A tuple containing the iteration count, and the computed answer.
         """
         solver = cls(inputList)
-        return (solver.iterationCount, solver.subsetSum(0, int(sum(inputList)/2))[1 if solver.posSum == abs(solver.negSum) else 0])
+        result = solver.subsetSum(0, int(sum(inputList)/2))[1 if sum(inputList) == 0 else 0]
+        return solver.iterationCount, result
     
     def subsetSum(self, index, goal) -> tuple[bool, bool]:
         """
