@@ -67,10 +67,11 @@ class DisagreeProcessor:
         :param genFilesDir: The directory for the generated file.
         """
         directory = cls(genFilesDir)
-        mainDoc = Document()
-        mainDoc.add_heading("Complete Algorithms Disgareement Record")
-        mainDoc.add_paragraph("There were no recorded disagreements throughout running the entire experiment. Therefore, there is nothing else here to see.")
-        mainDoc.save(directory / "DisagreementRecord.docx")
+        document = Document()
+        document.add_heading("Complete Algorithms Disgareement Record")
+        document.add_heading("This document has all recorded instances where the different partition algorithms disagreed on the answer for a given set. It is procedurally generated as the experiment runs.", 3)
+        document.add_paragraph("There were no recorded disagreements throughout running the entire experiment. Therefore, there is nothing else here to see.")
+        document.save(directory.disagreeDir / "DisagreementRecord.docx")
 
     def processDisagreement(self, data: DisagreeData, idNum: int):
         """
