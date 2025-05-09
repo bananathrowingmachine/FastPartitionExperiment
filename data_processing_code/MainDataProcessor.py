@@ -1,7 +1,7 @@
 """
 Processes all of the data into data tables and graphs. 
 
-Made by bananathrowingmachine and Earthquakeshaker2 on [insert final date here].
+Made by bananathrowingmachine and Earthquakeshaker2 on May 9th, 2025.
 """
 from data_processing_code.MiscDataCode import ResultsWrapper
 import numpy as np

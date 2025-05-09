@@ -4,7 +4,7 @@ Solves the partition problem by inputting half the inputs sum into a Subset Sum 
 This is literally just Jeff Erickson's Subset Sum recursive formula with a single condition change from goal below 0 to goal out of bounds 
 His algorithm can be found in Chapter 2, page 77 and Chapter 3, page 116 in his free online algorithms textbook located here: https://www.algorithms.wtf/
 
-Made by bananathrowingmachine on May 1st, 2025.
+Made by bananathrowingmachine on May 8st, 2025.
 """
 class RecursiveNormal:
     """

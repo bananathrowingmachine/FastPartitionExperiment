@@ -4,7 +4,7 @@ Solves the partition problem using a bottom up dynamic programming algorithm, wh
 This is heavily inspired from Jeff Erickson's Subset Sum algorithm but it has a few notable changes, mainly in handing negative numbers and the changes needed to do that effectively as well as solve specifically for partition.
 His algorithm can be found in Chapter 3, page 117 in his free online algorithms textbook located here: https://www.algorithms.wtf/
 
-Made by bananathrowingmachine on May 1st, 2025.
+Made by bananathrowingmachine on May 8st, 2025.
 """
 def testIterations(inputList: list[int]) -> tuple[int, bool]:
     """

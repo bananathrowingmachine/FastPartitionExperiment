@@ -6,7 +6,7 @@ Out of all the versions of partition, this is the one that is the most my own, t
 This partition algorithm is mostly just Jeff Erickson's Subset Sum algorithm with a reverse memoization order, like 2 extra things, then the crazy math translation into a solution to partition.
 His version can be found in Chapter 3, pages 116 and 117 in his free online algorithms textbook located here: https://www.algorithms.wtf/
 
-Made by bananathrowingmachine on May 1st, 2025.
+Made by bananathrowingmachine on May 8st, 2025.
 """
 class MemoizedCrazy:
     """
