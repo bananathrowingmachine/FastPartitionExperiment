@@ -36,7 +36,7 @@ def collectData(queue: Queue, example: bool):
     :param example: Wether to generate a quick example set of data, since a real set is computationally expensive.
     """
     noDisagrees = True
-    for n in range(1, 2):
+    for n in range(1, 21):
         size = n * 5
         try:
             fullResults = ComplexityExperiment.testProblemSize(size, example)
