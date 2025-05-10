@@ -65,8 +65,8 @@ class ComplexityExperiment:
         self.outputLevel = outLevel
 
         # Raw data debug, remove when done
-        rawDataDebug = genFilesDir / "raw data debug"
-        rawDataDebug.mkdir(parents=True, exist_ok=True)
+        self.rawDataDebug = genFilesDir / "raw data debug"
+        self.rawDataDebug.mkdir(parents=True, exist_ok=True)
 
     @classmethod
     def testProblemSize(cls, size: int, genFilesDir: Path, runExample = False) -> tuple[np.ndarray, list[DisagreeData]]:
@@ -292,13 +292,13 @@ class ComplexityExperiment:
                     results[testResult[0] - 1] = testResult[1]
 
                     # Raw data debug, remove when done
-                    open(f"rawData{self.setCount}_{targetIndex}.txt", "a").write(str(results[testResult[0] - 1]) + "\n")
+                    open(self.rawDataDebug / f"rawData{self.setCount}_{targetIndex}.txt", "a").write(str(results[testResult[0] - 1]) + "\n")
 
                 outerPool.shutdown(wait=True)
                 if self.outputLevel > 1: print(f">>--:>- Finished tests for integer count {self.setCount:3} and absolute sum target index {targetIndex:2}. -<:--<<")
 
                 # Raw data debug, remove when done
-                open(f"rawData{self.setCount}_{targetIndex}.txt", "a").write(str((np.mean(results[:, 0]), np.mean(results[:, 1]), np.mean(results[:, 2]), np.mean(results[:, 3]) if self.runRecurse else np.nan)) + "\n")
+                open(self.rawDataDebug / f"rawData{self.setCount}_{targetIndex}.txt", "a").write(str((np.mean(results[:, 0]), np.mean(results[:, 1]), np.mean(results[:, 2]), np.mean(results[:, 3]) if self.runRecurse else np.nan)) + "\n")
 
                 return (np.mean(results[:, 0]), np.mean(results[:, 1]), np.mean(results[:, 2]), np.mean(results[:, 3]) if self.runRecurse else np.nan)
             except KeyboardInterrupt:

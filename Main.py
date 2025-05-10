@@ -39,7 +39,7 @@ def collectData(queue: Queue, example: bool):
     for n in range(1, 21):
         size = n * 5
         try:
-            fullResults = ComplexityExperiment.testProblemSize(size, example, genFilesDir)
+            fullResults = ComplexityExperiment.testProblemSize(size, genFilesDir, example)
         except:
             print("Test process crashed. Terminating.")
             raise
