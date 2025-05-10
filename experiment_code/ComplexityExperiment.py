@@ -46,7 +46,7 @@ class ComplexityExperiment:
     Class for running a complexity experiment. Not desinged for each class to be called seperately however some are more detachable than others but I give you 0 promises on any functionality outside of running it the expected way.
     To run it the expected way, call class method testProblemSize, and give it an integer that says how many integers should be in a randomized set given to each algorithm.
     """
-    def __init__(self, size: int, outLevel: OutLevel, genFilesDir: Path):
+    def __init__(self, size: int, outLevel: OutLevel):
         """
         Experiment setup. Finds the sets of size n with the smallest possible and largest possible (with signed 32 bit int limit being the largest number added) absolute sums. Then finds the size each targetIndex should be.
         Designed to be run by calling the class method testProblemSize.
@@ -64,12 +64,8 @@ class ComplexityExperiment:
 
         self.outputLevel = outLevel
 
-        # Raw data debug, remove when done
-        self.rawDataDebug = genFilesDir / "raw data debug"
-        self.rawDataDebug.mkdir(parents=True, exist_ok=True)
-
     @classmethod
-    def testProblemSize(cls, size: int, genFilesDir: Path, runExample = False) -> tuple[np.ndarray, list[DisagreeData]]:
+    def testProblemSize(cls, size: int, runExample = False) -> tuple[np.ndarray, list[DisagreeData]]:
         """
         In a simple TLDR sense, will run a experiment (or example of one).
 
@@ -77,7 +73,7 @@ class ComplexityExperiment:
         :param example: Return an example set of data without blowing up your pc. Defaults to false.
         :return: A numpy array where each column is [targetSum], [memoCrazy], [memoNormal], [tabNormal], and [recurseNormal] in that order, and named, as well as the list of all recorded disagreements between algorithms.
         """
-        experiment = cls(size, OutLevel.BATCH, genFilesDir)
+        experiment = cls(size, OutLevel.BATCH)
         allRegResults = np.empty(21, dtype=RawResultsDType)
         if runExample: 
             disagreeVictim = np.random.default_rng().integers(0, 21), np.random.default_rng().integers(0, 21)
@@ -294,15 +290,8 @@ class ComplexityExperiment:
                     testResult = completedTest.result()
                     results[testResult[0] - 1] = testResult[1]
 
-                    # Raw data debug, remove when done
-                    open(self.rawDataDebug / f"rawData{self.setCount}_{targetIndex}.txt", "a").write(str(results[testResult[0] - 1]) + "\n")
-
                 outerPool.shutdown(wait=True)
                 if self.outputLevel > 1: print(f">>--:>- Finished tests for integer count {self.setCount:3} and absolute sum target index {targetIndex:2}. -<:--<<")
-
-                # Raw data debug, remove when done
-                open(self.rawDataDebug / f"rawData{self.setCount}_{targetIndex}.txt", "a").write(str((np.mean(results[:, 0]), np.mean(results[:, 1]), np.mean(results[:, 2]), np.mean(results[:, 3]) if self.runRecurse else np.nan)) + "\n")
-
                 return (np.mean(results[:, 0]), np.mean(results[:, 1]), np.mean(results[:, 2]), np.mean(results[:, 3]) if self.runRecurse else np.nan)
             except KeyboardInterrupt:
                 outerPool.shutdown(wait=False, cancel_futures=True)

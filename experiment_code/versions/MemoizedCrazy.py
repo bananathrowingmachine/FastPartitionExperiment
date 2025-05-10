@@ -31,7 +31,7 @@ class MemoizedCrazy:
         """
         solver = cls(inputList)
         result = solver.subsetSum(0, int(sum(inputList)/2))
-        return len(solver.answerMap), result
+        return len(solver.answerMap), result # Since the answer map is added to each recursive call, it's length is an iteration count.
 
     def subsetSum(self, index, goal) -> bool:
         """

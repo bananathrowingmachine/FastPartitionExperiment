@@ -38,7 +38,7 @@ class MemoizedNormal:
         """
         solver = cls(inputList)
         result = solver.subsetSum(0, int(sum(inputList)/2))
-        return len(solver.answerMap), result
+        return len(solver.answerMap), result # Since the answer map is added to each recursive call, it's length is an iteration count.
     
     def subsetSum(self, index, goal) -> bool:
         """
@@ -53,7 +53,7 @@ class MemoizedNormal:
         if index >= len(self.inputList):
             return False
         
-        if goal - self.inputList[index] < self.posSum or goal - self.inputList[index] > self.negSum: # Bounds checking
+        if goal - self.inputList[index] < self.posSum and goal - self.inputList[index] > self.negSum: # Bounds checking
             if (index + 1, goal-self.inputList[index]) in self.answerMap:
                 take = self.answerMap[(index + 1, goal-self.inputList[index])]
             else:

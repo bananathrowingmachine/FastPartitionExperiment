@@ -36,10 +36,10 @@ def collectData(queue: Queue, example: bool):
     :param example: Wether to generate a quick example set of data, since a real set is computationally expensive.
     """
     noDisagrees = True
-    for n in range(1, 21):
+    for n in range(1, 6):
         size = n * 5
         try:
-            fullResults = ComplexityExperiment.testProblemSize(size, genFilesDir, example)
+            fullResults = ComplexityExperiment.testProblemSize(size, example)
         except:
             print("Test process crashed. Terminating.")
             raise
