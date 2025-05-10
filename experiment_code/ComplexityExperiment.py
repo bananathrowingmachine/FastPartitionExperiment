@@ -234,6 +234,9 @@ class ComplexityExperiment:
             newSet.add(victim + 1)
             loops += 1
 
+        if sum(newSet) == 0: # The sum being equal to 0 is just base casey for each algorithm, so make a new set in said case.
+            return self.generateRandomSet(targetIndex, recurseLevel + 1)
+
         return newSet
 
     def runSingleTest(self, targetIndex: int, testNum: int) -> tuple[int, tuple[np.int64, np.int64, np.int64, np.int64]]:

@@ -37,24 +37,24 @@ class RecursiveNormal:
         :return: A tuple containing the iteration count, and the computed answer.
         """
         solver = cls(inputList)
-        result = solver.subsetSum(0, int(sum(inputList)/2))[1 if sum(inputList) == 0 else 0]
+        result = solver.subsetSum(0, int(sum(inputList)/2))
         return solver.iterationCount, result
 
-    def subsetSum(self, index, goal) -> tuple[bool, bool]:
+    def subsetSum(self, index, goal) -> bool:
         """
         Solves the partition problem recursively.
 
         :param index: The current index of the list the algorithm is considering.
         :param goal: The current goal the algorithm needs to reach to find a valid answer.
-        :return: A boolean of if the set (list) can be partitioned, as well as a boolean for if at least one item has been taken.
+        :return: A boolean of if the set (list) can be partitioned.
         """
-        self.iterationCount += 1 # Due to the bounds checking this won't exactly be 2^n and in reality be a little smaller but it'll be close enough that if n > 25 we will just record 2^n and not wait for this to complete.
         if goal == 0:
-            return True, False
+            return True
         if index >= len(self.inputList):
-            return False, False
+            return False
+        self.iterationCount += 1 # Due to the bounds checking this won't exactly be 2^n and in reality be a little smaller, however since it'll still take ages estimations will be used passed n > 25.
         if goal - self.inputList[index] > self.posSum or goal - self.inputList[index] < self.negSum: # Bounds checking
             return self.subsetSum(index + 1, goal)
-        take = self.subsetSum(index + 1, goal - self.inputList[index])[0]
-        skip, notEmpty = self.subsetSum(index + 1, goal)
-        return take or skip, take or notEmpty
+        take = self.subsetSum(index + 1, goal - self.inputList[index])
+        skip = self.subsetSum(index + 1, goal)
+        return take or skip
