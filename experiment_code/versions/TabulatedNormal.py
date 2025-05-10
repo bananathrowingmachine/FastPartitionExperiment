@@ -2,7 +2,7 @@
 Solves the partition problem using a bottom up dynamic programming algorithm, which is an algorithm that iteratively fills a list of subproblems in reverse order to then end at the answer.
 
 This is heavily inspired from Jeff Erickson's Subset Sum algorithm but it has a few notable changes, mainly in handing negative numbers and the changes needed to do that effectively as well as solve specifically for partition.
-His algorithm can be found in Chapter 3, page 117 in his free online algorithms textbook located here: https://www.algorithms.wtf/
+His algorithm can be found in Chapter 3, page 117 in his free online algorithms textbook located here: http://algorithms.wtf/
 
 Made by bananathrowingmachine on May 9th, 2025.
 """
@@ -32,7 +32,7 @@ def partition(inputList: list[int], posSum: int, negSum: int) -> tuple[int, bool
     :return: A tuple containing the iteration count, and the computed answer.
     """
     sumRange = posSum + abs(negSum) + 1
-    resultsTable = [[False for _ in range(sumRange)] for _ in range(len(inputList))]
+    resultsTable = [[None for _ in range(sumRange)] for _ in range(len(inputList))]
     resultsTable.append([False for _ in range(sumRange)])
     resultsTable[len(inputList)][0] = True
     
@@ -43,4 +43,4 @@ def partition(inputList: list[int], posSum: int, negSum: int) -> tuple[int, bool
             else:
                 resultsTable[i][j] = resultsTable[i+1][j] or resultsTable[i+1][j-inputList[i]]
 
-    return (sumRange * len(inputList), resultsTable[0][int((posSum - negSum) / 2)]) # The iterations count will always be exactly the size of the tabulation table.
+    return (sumRange * len(inputList), resultsTable[0][int((posSum - negSum) / 2)]) # The iterations count will always be exactly the size of the tabulation table that is not predetermined (aka not a edge case bound).
