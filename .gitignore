@@ -1,5 +1,2 @@
-experiment_code/__pycache__/*
-experiment_code/versions/__pycache__/*
-__pycache__/*
 generated files/*
-data_processing_code/__pycache__/*
+**/__pycache__/

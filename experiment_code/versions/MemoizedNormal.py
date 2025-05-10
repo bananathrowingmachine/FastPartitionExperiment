@@ -4,7 +4,7 @@ Solves the partition problem using a top down dynamic programming algorithm, whi
 I literally just copied RecursiveNormal.py and slapped on a answer map (revolutionary stuff over here guys). Therefore the same credit to Jeff Erickson from RecursiveNormal.py applies.
 His algorithm can be found in Chapter 2, page 77 and Chapter 3, page 116 in his free online algorithms textbook located here: https://www.algorithms.wtf/
 
-Made by bananathrowingmachine on May 9st, 2025.
+Made by bananathrowingmachine on May 9th, 2025.
 """
 class MemoizedNormal:
     """
