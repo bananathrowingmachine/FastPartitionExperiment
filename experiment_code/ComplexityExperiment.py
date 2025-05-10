@@ -275,11 +275,11 @@ class ComplexityExperiment:
         :return: A tuple with each variations average results in order <memoized crazy, memoized normal, tabulated normal, recursive normal>. Will return np.nan for recursive normal if integer count is above 25.
         """
         if self.outputLevel > 1: print(f">>--:>-  Started tests for integer count {self.setCount:3} and absolute sum target index {targetIndex:2}. -<:--<<")
-        results = np.empty((20, 4), dtype=np.int64)
+        results = np.empty((50, 4), dtype=np.int64)
         
         maxWorkers = 3 if self.runRecurse else 4
         with ThreadPool.ProcessPoolExecutor(max_workers=maxWorkers) as outerPool:
-            tasks = [i + 1 for i in reversed(range(20))]
+            tasks = [i + 1 for i in reversed(range(50))]
             activeTests = set()
             try:
                 while len(tasks) != 0 or len(activeTests) != 0:

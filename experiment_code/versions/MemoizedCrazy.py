@@ -1,7 +1,7 @@
 """
 Solves the partition problem using a top down dynamic programming algorithm, which is an algorithm that recurses but it stores results of solved subproblems and refers back to them if needed.
-However this version also does some crazy math to speed things up (or at least that's what I'm testing and making this entire project for) so it's a bit more odd.
-Out of all the versions of partition, this is the one that is the most my own, the others are practically straight copies. 
+This version however uses some crazy math I discovered to help speed things up (or that's at least what I'm creating the entire complexity experiment to test). 
+Out of all the versions of partition, this is the one that is the most my own, as the crazy math is my own, the others are relatively straight copies with minor modification.
 
 This partition algorithm is mostly just Jeff Erickson's Subset Sum algorithm with a reverse memoization order, like 2 extra things, then the crazy math translation into a solution to partition.
 His version can be found in Chapter 3, pages 116 and 117 in his free online algorithms textbook located here: https://www.algorithms.wtf/
