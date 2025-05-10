@@ -15,7 +15,7 @@ def testIterations(inputList: list[int]) -> tuple[int, bool]:
     :param inputList: The inputted list to solve the partition question on.
     :return: A tuple containing the iteration count, and the computed answer.
     """
-    absList = map(abs, inputList)
+    absList = list(map(abs, inputList))
     return partition(absList)
 
 def partition(inputList: list[int]) -> tuple[int, bool]:
@@ -26,14 +26,15 @@ def partition(inputList: list[int]) -> tuple[int, bool]:
     :return: A tuple containing the iteration count, and the computed answer.
     """
     goal = int(sum(inputList) / 2)
-    resultsTable = [[None for _ in range(goal)] for _ in range(len(inputList))]
-    resultsTable.append([False for _ in range(goal)])
+    resultsTable = [[None for _ in range(goal + 1)] for _ in range(len(inputList))]
+    resultsTable.append([False for _ in range(goal + 1)])
     resultsTable[len(inputList)][0] = True
     
     for i in reversed(range(0, len(inputList))):
-        for j in range(0, inputList[i] - 1):
+        resultsTable[i][0] = True
+        for j in range(1, inputList[i]):
             resultsTable[i][j] = resultsTable[i+1][j]
-        for j in range(inputList[i] - 1, goal):
+        for j in range(inputList[i], goal + 1):
             resultsTable[i][j] = resultsTable[i+1][j] or resultsTable[i+1][j-inputList[i]]
-    
+
     return (goal * len(inputList), resultsTable[0][goal]) # The iterations count will always be exactly the size of the tabulation table that is not predetermined (aka not a edge case bound).
