@@ -14,6 +14,7 @@ RawResultsDType = np.dtype([
     ('targetSum', np.uint64),
     ('memoCrazy', np.float64), 
     ('memoNormal', np.float64), 
+    ('tabCrazy', np.float64),
     ('tabNormal', np.float64), 
     ('recurseNormal', np.float64) 
 ])
@@ -82,7 +83,7 @@ class DisagreeProcessor:
         :param idNum: The disagreement number.
         """
         xnor = data.AlgoOutputs
-        algoNames = ["Memoized Crazy", "Memoized Normal", "Tabulated Normal"]
+        algoNames = ["Memoized Crazy", "Memoized Normal", "Tabulated Normal", "Tabulated Crazy"]
         culprits = []
         if len(xnor) > 3: # It's hard to really know who's right, so in the case recursive normal is running, it's always right, and otherwise, it's the majority opinion.
             truth = xnor[3] 

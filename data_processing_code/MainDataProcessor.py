@@ -53,7 +53,7 @@ class MainDataProcessor:
         # "IntCount" gives the amount of integers in the set tested. This will be each column in a data table or graph.
         with open(dirs.singleAlgTablesDir / f"testedSetSize{results.IntCount}.txt", "w") as f:
 
-            f.write("Sum Target Index, Absolute Sum Target, Memoized Crazy, Memoized Normal, Tabulated Normal, Recursive Normal\n")
+            f.write("Sum Target Index, Absolute Sum Target, Memoized Crazy, Memoized Normal, Tabulated Crazy, Tabulated Normal, Recursive Normal\n")
 
             # Additionally, the logic for recursive normal is rather easy by using results.RecurseEstimate. It will either be a number or None, and will always be the opposite of the results for Recursive Normal.
             # Why is that? Well first, results.RecurseEstimate is None is very simply logic that tells you if Recursive Normal was run. Take a look below for a example.
@@ -71,9 +71,9 @@ class MainDataProcessor:
                 row = rawData[i]
 
                 # Mix of name-based and index-based access for the official data:
-                # 'memoCrazy' is index 1, and 'tabNormal' is index 3. Using both interchangably is completely fine.
+                # 'memoCrazy' is index 1, and 'tabCrazy' is index 3. Using both interchangably is completely fine.
 
-                f.write(f"{i}, {row['targetSum']}, {row[1]}, {row['memoNormal']}, {row[3]}, {row['recurseNormal'] if results.RecurseEstimate is None else results.RecurseEstimate}\n")
+                f.write(f"{i}, {row['targetSum']}, {row[1]}, {row['memoNormal']}, {row[3]}, {row['tabNormal']}, {row['recurseNormal'] if results.RecurseEstimate is None else results.RecurseEstimate}\n")
 
         # Simply run Main.py and DON'T PRESS F, and then this file will generate some example data tables that are basic .txt files just to give you an example of what the data output after 1 collection looks like. 
         # Each generated .txt file is one round of data collection. You can find them (relative to the Main.py file) in "generated tables/data tables", which is a file directory.
