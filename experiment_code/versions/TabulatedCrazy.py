@@ -32,9 +32,7 @@ def partition(inputList: list[int]) -> tuple[int, bool]:
     
     for i in reversed(range(0, len(inputList))):
         resultsTable[i][0] = True
-        for j in range(1, inputList[i]):
-            resultsTable[i][j] = resultsTable[i+1][j]
-        for j in range(inputList[i], goal + 1):
-            resultsTable[i][j] = resultsTable[i+1][j] or resultsTable[i+1][j-inputList[i]]
+        for j in range(1, goal + 1):
+            resultsTable[i][j] = resultsTable[i+1][j] or (inputList[i] <= j and resultsTable[i+1][j-inputList[i]])
 
     return (goal * len(inputList), resultsTable[0][goal]) # The iterations count will always be exactly the size of the tabulation table that is not predetermined (aka not a edge case bound).
