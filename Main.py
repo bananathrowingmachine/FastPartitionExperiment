@@ -55,7 +55,7 @@ def collectData(queue: Queue, example: bool):
     if noDisagrees:
         queue.put(None)
 
-def processData(queue: Queue):
+def processData(queue: Queue, keepGoing, genFilesDir: Path):
     """
     Allows data processing to happen in a seperate thread. Takes data inputted into the queue and heads off to processes it. Will wait idly until data arrives.
 
@@ -80,52 +80,58 @@ The main method. Starts up the threads, flags, and gets everything moving. This 
 
 Do note that this program will also wipe all previously generated graphs, data tables, and recorded solution conflicts when run.
 """
-if sys.platform == 'win32':
-    import os
-    import time
-queue = Queue()
-genFilesDir = Path(__file__).resolve().parent / "generated_files"
-if genFilesDir.exists():
-    rmtree(genFilesDir)
-    if sys.platform == 'win32': time.sleep(1)
-genFilesDir.mkdir(parents=True, exist_ok=True)
-if sys.platform == 'win32': os.chmod(genFilesDir, 0o777)
-keepGoing = Event()
-keepGoing.set()
-disgareeCount = 1
-print("This program requires a lot of computation to run effectively. If the device you are running this on is not particularly good, you might run into issues.")
-print("Therefore, by default this program will generate and graph a set of computationally cheap example data, however that data will be mostly randomly generated nonsense.")
-print("Only generate a full legitimate set of data if your understand it will take a while, and will use all of your PC's resources.")
-print(" ")
-try:
-    answer = inputimeout("That being said, press f to generate a full set of data, and press anything else to generate an example set. ", 10)
-    if answer.lower() == "f":
-        try:
-            fallBack = inputimeout("Full data collection will commence in 10 seconds if no further inputs are recieved. Press f again to reconfirm quickly. ", 10)
-            if fallBack.lower() == "f":
+def main():
+    queue = Queue()
+    genFilesDir = Path(__file__).resolve().parent / "generated_files"
+    if genFilesDir.exists():
+        rmtree(genFilesDir)
+        if sys.platform == 'win32': time.sleep(1)
+    genFilesDir.mkdir(parents=True, exist_ok=True)
+    if sys.platform == 'win32': os.chmod(genFilesDir, 0o777)
+    keepGoing = Event()
+    keepGoing.set()
+    disgareeCount = 1
+    print("This program requires a lot of computation to run effectively. If the device you are running this on is not particularly good, you might run into issues.")
+    print("Therefore, by default this program will generate and graph a set of computationally cheap example data, however that data will be mostly randomly generated nonsense.")
+    print("Only generate a full legitimate set of data if your understand it will take a while, and will use all of your PC's resources.")
+    print(" ")
+    try:
+        answer = inputimeout("That being said, press f to generate a full set of data, and press anything else to generate an example set. ", 10)
+        if answer.lower() == "f":
+            try:
+                fallBack = inputimeout("Full data collection will commence in 10 seconds if no further inputs are recieved. Press f again to reconfirm quickly. ", 10)
+                if fallBack.lower() == "f":
+                    print("Full data collection has commenced.")
+                else:
+                    print("Full data collection has been cancelld. Will use example data instead.") 
+                answer = "e"
+            except TimeoutOccurred:
                 print("Full data collection has commenced.")
-            else:
-               print("Full data collection has been cancelld. Will use example data instead.") 
-               answer = "e"
-        except TimeoutOccurred:
-            print("Full data collection has commenced.")
+        else:
+            print("A set of example data will be provided.") 
+    except TimeoutOccurred:
+        print("Input timeout occured. Defaulting to example data.")
+        answer = "e"
+    try:
+        collector = Process(target=collectData, args=(queue, answer.lower() != "f"))
+        processor = Process(target=processData, args=(queue, keepGoing, genFilesDir))
+    except KeyboardInterrupt:
+        keepGoing.clear()
+        raise
     else:
-        print("A set of example data will be provided.") 
-except TimeoutOccurred:
-    print("Input timeout occured. Defaulting to example data.")
-    answer = "e"
-try:
-    collector = Process(target=collectData, args=(queue, answer.lower() != "f"))
-    processor = Process(target=processData, args=(queue,))
-except KeyboardInterrupt:
-    keepGoing.clear()
-    raise
-else:
-    collector.start()
-    processor.start()
-    collector.join()
-    keepGoing.clear() # Signals end of work to the data processor.
-    print("Data collection has finished. Finishing up processing.")
-    processor.join()
-    print("All processing has been completed. Closing.")
-    sys.exit(0)
+        collector.start()
+        processor.start()
+        collector.join()
+        keepGoing.clear() # Signals end of work to the data processor.
+        print("Data collection has finished. Finishing up processing.")
+        processor.join()
+        print("All processing has been completed. Closing.")
+        sys.exit(0)
+
+if __name__ == '__main__':
+    if sys.platform == 'win32':
+        from multiprocessing import freeze_support
+        freeze_support()
+        import os
+        import time
+    main()
