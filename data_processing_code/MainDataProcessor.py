@@ -20,19 +20,17 @@ class MainDataProcessor:
         """
         graphsDir = genFilesDir / "graphs"
         graphsDir.mkdir(parents=True, exist_ok=True)
-        self.singleAlgGraphsDir = graphsDir / "single algorithm graphs"
-        self.otherGraphsDir = graphsDir / "other graphs"
+        self.singleAlgGraphsDir = graphsDir / "single_algorithm_graphs"
+        self.otherGraphsDir = graphsDir / "other_graphs"
         self.singleAlgGraphsDir.mkdir(parents=True, exist_ok=True)
         self.otherGraphsDir.mkdir(parents=True, exist_ok=True)
 
-        tablesDir = genFilesDir / "data tables"
+        tablesDir = genFilesDir / "data_tables"
         tablesDir.mkdir(parents=True, exist_ok=True)
-        self.singleAlgTablesDir = tablesDir / "single algorithm tables"
-        self.otherTablesDir = tablesDir / "other tables"
-        self.percentTablesDir = tablesDir / "percentage tables"
+        self.singleAlgTablesDir = tablesDir / "single_algorithm_tables"
+        self.otherTablesDir = tablesDir / "other_tables"
         self.singleAlgTablesDir.mkdir(parents=True, exist_ok=True)
         self.otherTablesDir.mkdir(parents=True, exist_ok=True)
-        self.percentTablesDir.mkdir(parents=True, exist_ok=True)
 
     @classmethod
     def processData(cls, genFilesDir: Path, results: ResultsWrapper):

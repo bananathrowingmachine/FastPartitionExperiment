@@ -81,10 +81,13 @@ The main method. Starts up the threads, flags, and gets everything moving. This 
 Do note that this program will also wipe all previously generated graphs, data tables, and recorded solution conflicts when run.
 """
 queue = Queue()
-genFilesDir = Path(__file__).parent / "generated files"
+genFilesDir = Path(__file__).resolve().parent / "generated_files"
 if genFilesDir.exists():
     rmtree(genFilesDir)
-genFilesDir.mkdir()
+genFilesDir.mkdir(parents=True, exist_ok=True)
+if sys.platform == 'win32':
+    os.chmod(genFilesDir, 0o777)
+    time.sleep(0.5)
 keepGoing = Event()
 keepGoing.set()
 disgareeCount = 1

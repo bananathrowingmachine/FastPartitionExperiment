@@ -43,7 +43,7 @@ class DisagreeProcessor:
 
         :param genFilesDir: The directory for all generated files.
         """
-        self.disagreeDir = genFilesDir / "solution conflicts"
+        self.disagreeDir = genFilesDir / "solution_conflicts"
         self.disagreeDir.mkdir(parents=True, exist_ok=True)
 
     @classmethod
