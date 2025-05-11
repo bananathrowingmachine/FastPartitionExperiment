@@ -15,7 +15,7 @@ It will then send the packaged data completely unmodified to the data processing
 Once in the data processing code, the processor will unpack the data, processes it, and then once done will return back to the orchestrator, waiting for another chunk of data.
 Was designed to have as little code as possible to help my non comp sci major friend who does know how to graph in python.
 
-Made by bananathrowingmachine on May 9th, 2025.
+Made by bananathrowingmachine on May 11th, 2025.
 """
 from experiment_code.ComplexityExperiment import ComplexityExperiment
 from data_processing_code.MainDataProcessor import MainDataProcessor
@@ -80,14 +80,16 @@ The main method. Starts up the threads, flags, and gets everything moving. This 
 
 Do note that this program will also wipe all previously generated graphs, data tables, and recorded solution conflicts when run.
 """
+if sys.platform == 'win32':
+    import os
+    import time
 queue = Queue()
 genFilesDir = Path(__file__).resolve().parent / "generated_files"
 if genFilesDir.exists():
     rmtree(genFilesDir)
+    if sys.platform == 'win32': time.sleep(1)
 genFilesDir.mkdir(parents=True, exist_ok=True)
-if sys.platform == 'win32':
-    os.chmod(genFilesDir, 0o777)
-    time.sleep(0.5)
+if sys.platform == 'win32': os.chmod(genFilesDir, 0o777)
 keepGoing = Event()
 keepGoing.set()
 disgareeCount = 1
