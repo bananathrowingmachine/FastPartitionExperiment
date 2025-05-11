@@ -1,7 +1,7 @@
 """
 Runs an experiment of integer count size for all versions of the algorithm.
 
-Written by bananathrowingmachine, May 9th, 2025.
+Written by bananathrowingmachine, May 10th, 2025.
 """
 from experiment_code.versions.MemoizedCrazy import MemoizedCrazy
 from experiment_code.versions.MemoizedNormal import MemoizedNormal
@@ -76,10 +76,12 @@ class ComplexityExperiment:
         """
         experiment = cls(size, OutLevel.BATCH)
         allRegResults = np.empty(21, dtype=RawResultsDType)
-        if experiment.outputLevel > 0: print(f"|[==>>--:>-  Started entire test suite for set integer count {size:3}. This will take awhile.  -<:--<<==]|")
+        if runExample: 
+            disagreeVictim = np.random.default_rng().integers(0, 21), np.random.default_rng().integers(0, 21)
+        elif experiment.outputLevel > 0: print(f"|[==>>--:>-  Started entire test suite for set integer count {size:3}. This will take awhile.  -<:--<<==]|")
         for targetIndex in range(21):
             if runExample: 
-                r = experiment.generateSampleOutput(targetIndex)
+                r = experiment.generateSampleOutput(targetIndex, targetIndex == disagreeVictim[0] or targetIndex == disagreeVictim[1])
             else:
                 r = experiment.runSingleSize(targetIndex)
             allRegResults[targetIndex] = (experiment.sumSizeTarget[targetIndex], r[0], r[1], r[2], r[3], r[4])
@@ -89,11 +91,12 @@ class ComplexityExperiment:
             print("|[==>>--:>- ============================================================================= -<:--<<==]|")
         return allRegResults, experiment.disagreeList
     
-    def generateSampleOutput(self, targetIndex: int) -> tuple[np.float64, np.float64, np.float64, np.float64, np.float64]:
+    def generateSampleOutput(self, targetIndex: int, disagreement: bool) -> tuple[np.float64, np.float64, np.float64, np.float64, np.float64]:
         """
         Returns a set of quickly generated example data to test the data processing.
 
         :param targetIndex: The target index to get the example sum from.
+        :param disagreement: Wether to record a disgareement here.
         :return: The sum size target, used for recording the specifics somewhere.
         """
         currSize = self.sumSizeTarget[targetIndex]
@@ -101,6 +104,11 @@ class ComplexityExperiment:
         exampleBound = self.sumSizeTarget[20] - self.sumSizeTarget[0]
         output = (random.normal(currSize, exampleBound / 2), random.normal(currSize, exampleBound / 4), random.normal(currSize, exampleBound / 6), 
                   random.normal(currSize, exampleBound / 8), random.normal(currSize, exampleBound / 10) if self.runRecurse else np.nan)
+        
+        if disagreement:
+            xnor = [random.integers(0, 2) == 0, random.integers(0, 2) == 0, random.integers(0, 2) == 0, random.integers(0, 2) == 0]
+            if self.runRecurse: xnor.append(random.integers(0, 2) == 0)
+            self.disagreeList.append(DisagreeData(xnor, self.setCount, targetIndex, 1, self.sumSizeTarget[targetIndex], self.generateRandomSet(targetIndex)))
         return output
 
     def findAbsSumBounds(self) -> int:

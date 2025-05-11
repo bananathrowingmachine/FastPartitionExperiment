@@ -1,7 +1,7 @@
 """
 Stores types used across multiple files to organize data transfer, as well as manages recording disagreements without causing race conditions.
 
-Made by bananathrowingmachine on May 2nd, 2025
+Made by bananathrowingmachine on May 10th, 2025
 """
 from collections import namedtuple
 from dataclasses import dataclass, field
@@ -83,17 +83,7 @@ class DisagreeProcessor:
         :param idNum: The disagreement number.
         """
         xnor = data.AlgoOutputs
-        algoNames = ["Memoized Crazy", "Memoized Normal", "Tabulated Normal", "Tabulated Crazy"]
-        culprits = []
-        if len(xnor) > 3: # It's hard to really know who's right, so in the case recursive normal is running, it's always right, and otherwise, it's the majority opinion.
-            truth = xnor[3] 
-        else:
-            if xnor[0] == xnor[1]: truth = xnor[0]
-            if xnor[1] == xnor[2]: truth = xnor[1]
-            else: truth = xnor[2]
-        for i in range(len(xnor)):
-            if xnor[i] != truth:
-                culprits.append(algoNames[i])
+        algoNames = ["Memoized Crazy: ", ", Memoized Normal: ", ", Tabulated Crazy: ", ("," if data.IntCount <= 25 else " and") + " Tabulated Normal: ", " and Recursive Normal: "]
         try:
             document = Document(self.disagreeDir / "DisagreementRecord.docx")
         except FileNotFoundError:
@@ -101,16 +91,14 @@ class DisagreeProcessor:
             document.add_heading("Complete Algorithms Disgareement Record")
             document.add_heading("This document has all recorded instances where the different partition algorithms disagreed on the answer for a given set. It is procedurally generated as the experiment runs.", 3)
 
-        header = document.add_paragraph(f"    ")
-        header.add_run(f"Disagreement number {idNum}:").bold = True
+        document.add_paragraph().add_run(f"Disagreement number {idNum}:").bold = True
         
         paragraph = document.add_paragraph()
-        if len(culprits) == 1:
-            paragraph.add_run(f"The algorithm {culprits[0]} claimed that the answer was {not truth} when every other algorithm running claimed that it was {truth}.")
-        elif len(culprits) == 2:
-            paragraph.add_run(f"The algorithms {culprits[0]} and {culprits[1]} claimed that the answer was {not truth} while Recursive Normal which is assumed to always be correct claimed that it was {truth}.")
-        else:
-            paragraph.add_run(f"Every other algorithm claimed that the answer was {not truth} while Recursive Normal which is assumed to always be correct claimed that it was {truth}.")
+        resultString = ""
+        for i in range(len(xnor)):
+            resultString += algoNames[i] + str(xnor[i])
+        
+        paragraph.add_run(f"The results from each algorithm are; {resultString}.")
         paragraph.add_run().add_break()
         paragraph.add_run(f"The specific enviornment being tested when this disagreement occured is shown below:").add_break()
 
