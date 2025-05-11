@@ -90,6 +90,7 @@ def main():
     if sys.platform == 'win32': os.chmod(genFilesDir, 0o777)
     keepGoing = Event()
     keepGoing.set()
+    global disgareeCount
     disgareeCount = 1
     print("This program requires a lot of computation to run effectively. If the device you are running this on is not particularly good, you might run into issues.")
     print("Therefore, by default this program will generate and graph a set of computationally cheap example data, however that data will be mostly randomly generated nonsense.")
