@@ -28,6 +28,8 @@ from pathlib import Path
 from queue import Empty
 import sys
 
+disagreeCount = 1
+
 def collectData(queue: Queue, example: bool):
     """
     Allows data collection to happen in a seperate thread. Takes data and inputs it into the queue.
@@ -69,9 +71,9 @@ def processData(queue: Queue, keepGoing, genFilesDir: Path):
             elif isinstance(data, ResultsWrapper):
                 MainDataProcessor.processData(genFilesDir, data)
             elif isinstance(data, list) and all(isinstance(item, DisagreeData) for item in data):
-                global disgareeCount
-                DisagreeProcessor.processBulkDisagreements(genFilesDir, data, disgareeCount)
-                disgareeCount += len(data)
+                global disagreeCount
+                DisagreeProcessor.processBulkDisagreements(genFilesDir, data, disagreeCount)
+                disagreeCount += len(data)
         except Empty:
             continue
 
@@ -90,8 +92,6 @@ def main():
     if sys.platform == 'win32': os.chmod(genFilesDir, 0o777)
     keepGoing = Event()
     keepGoing.set()
-    global disgareeCount
-    disgareeCount = 1
     print("This program requires a lot of computation to run effectively. If the device you are running this on is not particularly good, you might run into issues.")
     print("Therefore, by default this program will generate and graph a set of computationally cheap example data, however that data will be mostly randomly generated nonsense.")
     print("Only generate a full legitimate set of data if your understand it will take a while, and will use all of your PC's resources.")
