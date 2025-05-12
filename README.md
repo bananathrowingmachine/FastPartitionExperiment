@@ -20,16 +20,16 @@ This is the expected file directory, relative to Main.py. Make sure the python f
 │       ├── MemoizedCrazy.py
 │       ├── MemoizedNormal.py
 │       ├── RecursiveNormal.py
+│       ├── TabulatedCrazy.py
 │       └── TabulatedNormal.py
-├── generated files
-│   ├── data tables
-│   │   ├── other tables
-│   │   ├── percentage tables
-│   │   └── single algorithm tables
+├── generated_files
+│   ├── data_tables
+│   │   ├── other_tables
+│   │   └── single_algorithm_tables
 │   ├── graphs
-│   │   ├── other graphs
-│   │   └── single algorithm graphs
-│   └── solution conflicts
+│   │   ├── other_graphs
+│   │   └── single_algorithm_graphs
+│   └── solution_conflicts
 └── Main.py
 ```
 
@@ -49,16 +49,18 @@ Low level operations of the entire project:
 =
 This entire project has 4 main sections, going from top to bottom. At the very top is the orchestrator, also known as Main.py. This file is what starts the program, manages the running of the collector and the processors, manages data transfer between the collector and the processors, and everything else linking those 2 sections of the program together, and does so running both on different threads, where it divides the collectors work in a way that means it doesn't do too much work over and over, while also giving the processors chunks at a time so that the graphs can be built while data is being collected and have it not take up all my memory.
 
-Next are the data processors, and the data collector on an equal level, so I'll start with the data processors, which is mostly DataProcessor.py with a little bit of special rare data processed by MiscDataCode.py, which also packages the data for easier use in DataProcessor.py. These take the (mostly) raw data, and coverts it into data tables, charts, graphs, statistics, and basically everything revolving around displaying the data. The only thing they don't do is that they recieve the average of 20 runs per algorithm per set of conditions. The actual raw numbers would be too much, so they are averaged right away in the collector but that is all the data not processed by the processors. 
+Next are the data processors, and the data collector on an equal level, so I'll start with the data processors, which is mostly DataProcessor.py with a little bit of special rare data processed by MiscDataCode.py, which also packages the data for easier use in DataProcessor.py. These take the (mostly) raw data, and coverts it into data tables, charts, graphs, statistics, and basically everything revolving around displaying the data. The only thing they don't do is that they recieve the average of 50 runs per algorithm per set of conditions. The actual raw numbers would be too much, so they are averaged right away in the collector but that is all the data not processed by the processors. 
 
-After that is the data collector. This section collects the data from the raw algorithms at the final layer. However since the algorithms being tested also all need inputs to run on, the collector is also what creates the problem sets for each algorithm by using a bunch of math to create randomly generated sets with absolute sums near a certain benchmark using a gaussian distribution of numbers with a constantly adjusting deviation, that it also determines. Since determining the benchmarks over and over would be a waste, this part does things in integer count batches, where it will run all the tests for 1 integer count of sets, put all of that data into a neat 2D numpy array, and send it to the orchestrator, which gives it to the thread that runs the processors. To also help speed things up, this file will split into 12 independent active threads all at once, 1 for each algorithm, and then 3 to 4 for each individual test (if the basic recursive algorithm is being run, it's 3 individual tests running at once, if not, it's 4), where an individual test specifically means running the same generated set (which therefore has the same conditions) on all active algorithms (again, since the basic recursive algorithm in shut off early). 
+After that is the data collector. This section collects the data from the raw algorithms at the final layer. However since the algorithms being tested also all need inputs to run on, the collector is also what creates the problem sets for each algorithm by using a bunch of math to create randomly generated sets with absolute sums near a certain benchmark using a gaussian distribution of numbers with a constantly adjusting deviation, that it also determines. Since determining the benchmarks over and over would be a waste, this part does things in integer count batches, where it will run all the tests for 1 integer count of sets, put all of that data into a neat 2D numpy array, and send it to the orchestrator, which gives it to the thread that runs the processors. To also help speed things up, this file will split into 12-15 independent active threads all at once, 1 for each algorithm, and then 3 for each individual test, where an individual test specifically means running the same generated set (which therefore has the same conditions) on all active algorithms. 
 
-Finally, it's the algorithms layer. This has all 4 variations of the partition algorithm that I am testing. They will all take in a set given to them, and determine if it can be partitioned into 2 equal subsets. Each variation also counts their iteration counts, to see which one is asymptotically faster in x given conditions. The 4 variations are:
+Finally, it's the algorithms layer. This has all 5 variations of the partition algorithm that I am testing. They will all take in a set given to them, and determine if it can be partitioned into 2 equal subsets. Each variation also counts their iteration counts, to see which one is asymptotically faster in x given conditions. The 5 variations are:
 
-Memoized Crazy, which is a recursive algorithm that records previously solved problems so it doesn't do them again, and uses some crazy math to make things go even faster.
+Memoized Normal, which is a recursive algorithm that records previously solved problems so it doesn't solve them again.
 
-Memoized Normal, which is like above but without the crazy math.
+Memoized Crazy, which is Memoized Normal with the abs-value trick added on top to include extremely aggressive pruning.
 
-Tabulated Normal, which uses a bottom up tabulation approach.
+Tabulated Normal, which uses a bottom up iterative tabulation approach.
 
-Recursive Normal, which is a basic exponential time recursive algorithm. This one is hard coded to shut off after a set has more then 25 integers.
+Tabulated Crazy, which is Tabulated Normal with the same hueristics as Memoized Crazy.
+
+Recursive Normal, which is a basic exponential time recursive algorithm. This one is hard coded to shut off after a set has more then 25 integers to save time.

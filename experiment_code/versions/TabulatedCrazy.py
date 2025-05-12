@@ -1,6 +1,6 @@
 """
 Solves the partition problem using a bottom up dynamic programming algorithm, which is an algorithm that iteratively fills a list of subproblems in reverse order to then end at the answer.
-This version however uses some crazy math I discovered to help speed things up (or that's at least what I'm creating the entire complexity experiment to test). 
+This version however uses a "abs-value trick" that I independently discovered to help speed things up (or that's at least what I'm creating the entire complexity experiment to test). 
 Out of all the versions of partition, this is a lot more my own than the others, as the crazy math is my own, while the general partition/subset sum algorithm itself is written by Jeff Erickson and then translated for this experiment.
 
 This partition algorithm is mostly just Jeff Erickson's Subset Sum algorithm, with a small driver to translate partition into subset sum with the crazy math.

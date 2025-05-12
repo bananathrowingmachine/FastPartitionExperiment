@@ -1,7 +1,7 @@
 """
 Runs an experiment of integer count size for all versions of the algorithm.
 
-Written by bananathrowingmachine, May 10th, 2025.
+Written by bananathrowingmachine, May 12th, 2025.
 """
 from experiment_code.versions.MemoizedCrazy import MemoizedCrazy
 from experiment_code.versions.MemoizedNormal import MemoizedNormal
@@ -14,8 +14,6 @@ import concurrent.futures as ThreadPool
 from multiprocessing import Manager
 import numpy as np
 from enum import IntEnum
-
-from pathlib import Path
 
 class OutLevel(IntEnum):
     """
@@ -136,40 +134,15 @@ class ComplexityExperiment:
             self.sumSizeTarget[i] = round(percent5inc + self.sumSizeTarget[i-1])
         return round(percent5inc/5)
 
-    def generateRandomSet(self, targetIndex: int, recurseLevel = 0) -> set[int]:
+    def generateRandomSet(self, targetIndex: int) -> set[int]:
         """
         Generates a set of random ints of size n and absolute sum +-1% of sumSize[targetIndex]. The absolute sum will also not be above sumSize[21] or below sumSize[0], and will always be even.
         Uses numpy gaussian distribution to generate the sets.
 
         :param targetIndex: The size target index of the set. Can be from 0->20 inclusive where 0 is smallest possible, 20 is largest possible, and everything else is increments of 5%.
-        :param recurseLevel: Used internally to prevent infinite recursion. Defaults to 0, unless you are ABSOLUTELY SURE (you aren't) you want to set it to something else, keep it at the default.
         :return: A randomized set with a sum that has an absolute value within 1% of the 5% increment given to it through targetIndex.
         """
         currentAbsSum = 0
-
-        if recurseLevel > 5: # Infinite recursion failsafe. Generates a predetermined set similar to how the lower and upper bounds of set sums were calculated.
-            newList = []
-            nextNum = round(self.sumSizeTarget[targetIndex]/self.setCount)
-            newList.append(nextNum)
-            nextNum *= -1
-            newList.append(nextNum)
-            currentAbsSum = nextNum * -2
-            next4 = [nextNum * -1 + 1, nextNum - 1, nextNum * -1 - 1, nextNum + 1]
-            next4copy = list(next4)
-            while len(newList) != self.setCount: # Impossible for this to be infinite.
-                if len(next4copy) != 0:
-                    nextNum = next4copy.pop(0)
-                    currentAbsSum += abs(nextNum)
-                    newList.append(nextNum)
-                else:
-                    next4copy = [next4[0] + 1, next4[1] - 1, next4[2] - 1, next4[3] + 1]
-                    next4 = list(next4copy)
-            if currentAbsSum % 2 == 1:
-                if newList[-1] + 1 in newList: # Both options cannot be in the list
-                    newList[-1] -= 1
-                else:
-                    newList[-1] += 1
-            return set(newList)
 
         newSet = set()
         mean = round(self.sumSizeTarget[targetIndex]/self.setCount) # Target abs sum / size of set
@@ -177,61 +150,45 @@ class ComplexityExperiment:
 
         random = np.random.default_rng()
         for _ in range(0, self.setCount):
-            nextNum = None
-            loops = 0
-            while nextNum == None or (nextNum in newSet and nextNum * -1 in newSet) or 0:
-                if loops > 20: # Infinite loop failsafe.
-                    nextNum = mean
-                    while nextNum in newSet and nextNum * -1 in newSet: # Impossible for this to be infinite.
-                        nextNum += 1
-                else:
-                    nextNum = abs(round(random.normal(mean, standardDeviation)))
-                    if nextNum > 32767:
-                        nextNum = nextNum - (nextNum - 32767)*2 # Wraps numbers that are too big around, similar to absolute value for negatives
-                    loops += 1
+            nextNum = abs(round(random.normal(mean, standardDeviation)))
+            if nextNum > 32767: nextNum = nextNum - (nextNum - 32767) * 2 # Wraps numbers that are too big around, similar to absolute value for negative
+            while nextNum in newSet or -nextNum in newSet:
+                nextNum = abs(round(random.normal(mean, standardDeviation)))
+                if nextNum > 32767: nextNum = nextNum - (nextNum - 32767) * 2 # Wraps numbers that are too big around, similar to absolute value for negatives
             currentAbsSum += nextNum
-            if nextNum in newSet or nextNum * -1 in newSet:
-                nextNum = nextNum * -1 if nextNum in newSet else nextNum
-            elif random.integers(0, 2) == 1: nextNum *= -1
+            if random.integers(0, 2) == 1: nextNum *= -1
             newSet.add(int(nextNum))
             devDiv = (14 - len(newSet) / self.setCount * 10)
             standardDeviation = (6 * (2 * self.intSizeBound - abs(abs(nextNum) - mean))) / devDiv # Self adjusting standard deviation. Based on how far the last number was from the bounds, and how many numbers are left until set is filled.
             if standardDeviation <= 0: # Rarely happens, will set the deviation to slightly lower than full with the current standard deviation.
                 standardDeviation = (self.intSizeBound * 1.5) / devDiv
 
-        loops = 0
-        while currentAbsSum > self.sumSizeBound + self.sumSizeTarget[targetIndex] or currentAbsSum < self.sumSizeTarget[targetIndex] - self.sumSizeBound: # Exceedingly rare (happens 0-2 times in 420 sets built which is one full experiment), but failsafe just in case.
-            if loops > 5: # Had extremely long loops happen once every few tests, this attempts to stop that by just recursively making a new set, with a recursion level fail safe for the SUPER EXTREMELY rare.
-                return self.generateRandomSet(targetIndex, recurseLevel + 1)
+        if currentAbsSum > self.sumSizeBound + self.sumSizeTarget[targetIndex] or currentAbsSum < self.sumSizeTarget[targetIndex] - self.sumSizeBound: # Exceedingly rare, but failsafe just in case.
             if currentAbsSum > self.sumSizeBound + self.sumSizeTarget[targetIndex]:
                 neededChange = (currentAbsSum - (self.sumSizeBound + self.sumSizeTarget[targetIndex])) * 2
             else:
                 neededChange = ((self.sumSizeBound + self.sumSizeTarget[targetIndex]) - currentAbsSum) * 2
                 neededChange *= -1
-            victim = int(random.choice(list(newSet)))
-            if victim > 0 and (victim - neededChange) not in newSet: # Positive integers (not including 0).
-                newSet.remove(victim)
-                newSet.add(victim - neededChange)
-                currentAbsSum -= neededChange
-            elif victim < 0 and (victim + neededChange) not in newSet: # Negative integers (not including 0).
-                newSet.remove(victim)
-                newSet.add(victim + neededChange)
-                currentAbsSum -= neededChange      
-            loops += 1
+            while currentAbsSum > self.sumSizeBound + self.sumSizeTarget[targetIndex] or currentAbsSum < self.sumSizeTarget[targetIndex] - self.sumSizeBound:
+                victim = newSet.pop()
+                if victim > 0 and (victim - neededChange) not in newSet: # Positive integers (not including 0).
+                    newSet.add(victim - neededChange)
+                    currentAbsSum -= neededChange
+                elif victim < 0 and (victim + neededChange) not in newSet: # Negative integers (not including 0).
+                    newSet.add(victim + neededChange)
+                    currentAbsSum -= neededChange
+                else:
+                    newSet.add(victim)   
 
-        loops = 0
-        if currentAbsSum % 2 == 1: # Make sure it has a absolute sum that is even
-            if loops > 5: # Since I implemented the failsafe above, I put it here too.
-                return self.generateRandomSet(targetIndex, recurseLevel + 1)
-            victim = None
-            while victim == None or victim + 1 in newSet:
-                victim = int(random.choice(list(newSet)))
-            newSet.remove(victim)
-            newSet.add(victim + 1)
-            loops += 1
+        if sum(newSet) == 0: # The sum being equal to 0 is trivial and uninteresting, therefore try again.
+            return self.generateRandomSet(targetIndex)
 
-        if sum(newSet) == 0: # The sum being equal to 0 is just base casey for each algorithm, so make a new set in said case.
-            return self.generateRandomSet(targetIndex, recurseLevel + 1)
+        while currentAbsSum % 2 == 1: # The sum being odd is trivial and uninteresting, therefore make it even.
+            victim = newSet.pop()
+            if victim + 1 not in newSet:
+                newSet.add(victim + 1)
+            else:
+                newSet.add(victim)
 
         return newSet
 
