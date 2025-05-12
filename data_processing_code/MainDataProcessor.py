@@ -7,6 +7,8 @@ from data_processing_code.MiscDataCode import ResultsWrapper
 import numpy as np
 import pandas as pd
 from pathlib import Path
+from tabulate import tabulate
+
 
 class MainDataProcessor:
     """
@@ -63,16 +65,38 @@ class MainDataProcessor:
             else:
                 f.write("Too big for recursive normal, used a prediction instead.\n")
             
-            for i in range(21):
+            with open("raw_output.txt", "w") as f:
+                for i in range(21):
 
                 # Each row of the rawData can be extracted like this.
-                row = rawData[i]
+                    row = rawData[i]
 
                 # Mix of name-based and index-based access for the official data:
                 # 'memoCrazy' is index 1, and 'tabCrazy' is index 3. Using both interchangably is completely fine.
 
-                f.write(f"{i}, {row['targetSum']}, {row[1]}, {row['memoNormal']}, {row[3]}, {row['tabNormal']}, {row['recurseNormal'] if results.RecurseEstimate is None else results.RecurseEstimate}\n")
+                    f.write(f"{i}, {row['targetSum']}, {row[1]}, {row['memoNormal']}, {row[3]}, {row['tabNormal']}, {row['recurseNormal'] if results.RecurseEstimate is None else results.RecurseEstimate}\n")
+                    pretty_rows = []
+                    
+                    # getting the data table ready 
+                    pretty_rows.append([
+                          i,
+                        row['targetSum'],
+                        row[1],
+                         row['memoNormal'],
+                         row[3],
+                         row['tabNormal'],
+                        row['recurseNormal'] if results.RecurseEstimate is None else results.RecurseEstimate
+                    ])
+            # After the loop: create the formatted table
+            headers = ["i", "targetSum", "row[1]", "memoNormal", "row[3]", "tabNormal", "recurseNormal"]
+
+            with open("pretty_table.txt", "w") as f_pretty:
+                f_pretty.write(tabulate(pretty_rows, headers=headers, tablefmt="fancy_grid"))   
+                
+                
+            
 
         # Simply run Main.py and DON'T PRESS F, and then this file will generate some example data tables that are basic .txt files just to give you an example of what the data output after 1 collection looks like. 
         # Each generated .txt file is one round of data collection. You can find them (relative to the Main.py file) in "generated tables/data tables", which is a file directory.
         # If those file directories don't exist, the program will make them for you. Simply run it and it will create them if needed, as well as wipe all old data currently there.
+        
