@@ -15,7 +15,7 @@ It will then send the packaged data completely unmodified to the data processing
 Once in the data processing code, the processor will unpack the data, processes it, and then once done will return back to the orchestrator, waiting for another chunk of data.
 Was designed to have as little code as possible to help my non comp sci major friend who does know how to graph in python.
 
-Made by bananathrowingmachine on May 11th, 2025.
+Made by bananathrowingmachine on May 12th, 2025.
 """
 from experiment_code.ComplexityExperiment import ComplexityExperiment
 from data_processing_code.MainDataProcessor import MainDataProcessor
@@ -38,7 +38,7 @@ def collectData(queue: Queue, example: bool):
     :param example: Wether to generate a quick example set of data, since a real set is computationally expensive.
     """
     noDisagrees = True
-    for n in range(1, 21):
+    for n in range(6, 21):
         size = n * 5
         try:
             fullResults = ComplexityExperiment.testProblemSize(size, example)
@@ -96,6 +96,7 @@ def main():
     print("Therefore, by default this program will generate and graph a set of computationally cheap example data, however that data will be mostly randomly generated nonsense.")
     print("Only generate a full legitimate set of data if your understand it will take a while, and will use all of your PC's resources.")
     print(" ")
+    example = True
     try:
         answer = inputimeout("That being said, press f to generate a full set of data, and press anything else to generate an example set. ", 10)
         if answer.lower() == "f":
@@ -103,18 +104,21 @@ def main():
                 fallBack = inputimeout("Full data collection will commence in 10 seconds if no further inputs are recieved. Press f again to reconfirm quickly. ", 10)
                 if fallBack.lower() == "f":
                     print("Full data collection has commenced.")
+                    example = False
                 else:
                     print("Full data collection has been cancelld. Will use example data instead.") 
-                answer = "e"
+                    example = True
             except TimeoutOccurred:
                 print("Full data collection has commenced.")
+                example = False
         else:
             print("A set of example data will be provided.") 
+            example = True
     except TimeoutOccurred:
         print("Input timeout occured. Defaulting to example data.")
-        answer = "e"
+        example = True
     try:
-        collector = Process(target=collectData, args=(queue, answer.lower() != "f"))
+        collector = Process(target=collectData, args=(queue, example))
         processor = Process(target=processData, args=(queue, keepGoing, genFilesDir))
     except KeyboardInterrupt:
         keepGoing.clear()
@@ -130,6 +134,9 @@ def main():
         sys.exit(0)
 
 if __name__ == '__main__':
+    """
+    Prepares all the extra stuff needed to run this on windows.
+    """
     if sys.platform == 'win32':
         from multiprocessing import freeze_support
         freeze_support()

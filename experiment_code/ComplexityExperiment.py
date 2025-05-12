@@ -64,15 +64,15 @@ class ComplexityExperiment:
         self.outputLevel = outLevel
 
     @classmethod
-    def testProblemSize(cls, size: int, runExample = False) -> tuple[np.ndarray, list[DisagreeData]]:
+    def testProblemSize(cls, size: int, runExample: bool) -> tuple[np.ndarray, list[DisagreeData]]:
         """
         In a simple TLDR sense, will run a experiment (or example of one).
 
         :param size: The amount of seperate integers should be in a set sent to the algorithms. Commonly referred to as size. Stays constant throughtout a single class of the method.
-        :param example: Return an example set of data without blowing up your pc. Defaults to false.
+        :param example: Return an example set of data without blowing up your pc.
         :return: A numpy array where each column is [targetSum], [memoCrazy], [memoNormal], [tabCrazy], [tabNormal], and [recurseNormal] in that order, and named, as well as the list of all recorded disagreements between algorithms.
         """
-        experiment = cls(size, OutLevel.BATCH)
+        experiment = cls(size, OutLevel.ALL)
         allRegResults = np.empty(21, dtype=RawResultsDType)
         if runExample: 
             disagreeVictim = np.random.default_rng().integers(0, 21), np.random.default_rng().integers(0, 21)
@@ -155,6 +155,7 @@ class ComplexityExperiment:
             while nextNum in newSet or -nextNum in newSet:
                 nextNum = abs(round(random.normal(mean, standardDeviation)))
                 if nextNum > 32767: nextNum = nextNum - (nextNum - 32767) * 2 # Wraps numbers that are too big around, similar to absolute value for negatives
+                standardDeviation += 1 
             currentAbsSum += nextNum
             if random.integers(0, 2) == 1: nextNum *= -1
             newSet.add(int(nextNum))
@@ -169,7 +170,10 @@ class ComplexityExperiment:
             else:
                 neededChange = ((self.sumSizeBound + self.sumSizeTarget[targetIndex]) - currentAbsSum) * 2
                 neededChange *= -1
+            loops = 0
             while currentAbsSum > self.sumSizeBound + self.sumSizeTarget[targetIndex] or currentAbsSum < self.sumSizeTarget[targetIndex] - self.sumSizeBound:
+                if loops > 5: # Had extremely long loops happen once every few tests, this attempts to stop that by just recursively making a new set.
+                    return self.generateRandomSet(targetIndex)
                 victim = newSet.pop()
                 if victim > 0 and (victim - neededChange) not in newSet: # Positive integers (not including 0).
                     newSet.add(victim - neededChange)
@@ -179,14 +183,16 @@ class ComplexityExperiment:
                     currentAbsSum -= neededChange
                 else:
                     newSet.add(victim)   
+                loops += 1
 
-        if sum(newSet) == 0: # The sum being equal to 0 is trivial and uninteresting, therefore try again.
+        if sum(newSet) == 0: # The sum being equal to 0 is trivial and uninteresting, therefore try again if this happens.
             return self.generateRandomSet(targetIndex)
 
-        while currentAbsSum % 2 == 1: # The sum being odd is trivial and uninteresting, therefore make it even.
+        while currentAbsSum % 2 == 1: # The sum being odd is trivial and uninteresting, therefore make it even if this happens.
             victim = newSet.pop()
             if victim + 1 not in newSet:
                 newSet.add(victim + 1)
+                currentAbsSum += 1
             else:
                 newSet.add(victim)
 
@@ -248,10 +254,9 @@ class ComplexityExperiment:
                     activeTests.remove(completedTest)
                     testResult = completedTest.result()
                     results[testResult[0]-1] = testResult[1]
-
-                outerPool.shutdown(wait=True)
-                if self.outputLevel > 1: print(f">>--:>- Finished tests for integer count {self.setCount:3} and absolute sum target index {targetIndex:2}. -<:--<<")
-                return (np.mean(results[:, 0]), np.mean(results[:, 1]), np.mean(results[:, 2]), np.mean(results[:, 3]), np.mean(results[:, 4]) if self.runRecurse else np.nan)
             except KeyboardInterrupt:
                 outerPool.shutdown(wait=False, cancel_futures=True)
                 raise
+        
+        if self.outputLevel > 1: print(f">>--:>- Finished tests for integer count {self.setCount:3} and absolute sum target index {targetIndex:2}. -<:--<<")
+        return (np.mean(results[:, 0]), np.mean(results[:, 1]), np.mean(results[:, 2]), np.mean(results[:, 3]), np.mean(results[:, 4]) if self.runRecurse else np.nan)

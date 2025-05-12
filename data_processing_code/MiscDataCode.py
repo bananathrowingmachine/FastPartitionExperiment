@@ -108,8 +108,8 @@ class DisagreeProcessor:
         else: numSuffix = "st"
         paragraph.add_run(f"This was the {data.TestNum}{numSuffix} repeat test for this specific set of independent variables.").add_break()
         paragraph.add_run(f"The amount of integers per set was {data.IntCount}.").add_break()
-        paragraph.add_run(f"The current target index was {data.TargetIndex} which corresponds to a target sum of {data.TargetSum}.").add_break()
-        paragraph.add_run(f"The specific set that was tested has a sum of {sum(data.CurrentList)}. It is shown below:").add_break()
+        paragraph.add_run(f"The current target index was {data.TargetIndex} which corresponds to a target absolute sum of {data.TargetSum}.").add_break()
+        paragraph.add_run(f"The specific set that was tested has a sum of {sum(data.CurrentList)}, and a absolute sum of {sum(map(abs, data.CurrentList))}. It is shown below:").add_break()
         paragraph.add_run(f"{data.CurrentList}")
     
         document.save(self.disagreeDir / "DisagreementRecord.docx")
