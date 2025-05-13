@@ -52,9 +52,7 @@ class RecursiveNormal:
             return True
         if index >= len(self.inputList):
             return False
-        self.iterationCount += 1 # Due to the bounds checking this won't exactly be 2^n and in reality be a little smaller, however since it'll still take ages estimations will be used passed n > 25.
+        self.iterationCount += 1 # Due to the bounds checking and OR short circuiting this won't exactly be 2^n and in reality be a little smaller, however since it'll still take ages 2^n will be used if n > 25.
         if goal - self.inputList[index] > self.posSum or goal - self.inputList[index] < self.negSum: # Bounds checking
             return self.subsetSum(index + 1, goal)
-        take = self.subsetSum(index + 1, goal - self.inputList[index])
-        skip = self.subsetSum(index + 1, goal)
-        return take or skip
+        return self.subsetSum(index + 1, goal - self.inputList[index]) or self.subsetSum(index + 1, goal)

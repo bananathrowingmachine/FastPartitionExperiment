@@ -58,7 +58,10 @@ class MemoizedNormal:
                 take = self.answerMap[(index + 1, goal-self.inputList[index])]
             else:
                 take = self.subsetSum(index + 1, goal-self.inputList[index])
-        else: take = False
+            if take == True: # This causes OR short circuiting behavior. 
+                self.answerMap[(index, goal)] = True
+                return True
+            
         if (index + 1, goal) in self.answerMap:
             skip = self.answerMap[(index + 1, goal)]
         else:

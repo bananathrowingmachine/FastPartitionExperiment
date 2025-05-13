@@ -230,7 +230,7 @@ class ComplexityExperiment:
                 self.disagreeList.append(DisagreeData(xnor, self.setCount, targetIndex, testNum, self.sumSizeTarget[targetIndex], testList))
         
         if self.outputLevel > 2: print(f":>- Finished test take {testNum:2} for specs {self.setCount:3} and {targetIndex:2}. -<:")
-        return testNum, (results["memoCrazy"][0], results["memoNormal"][0], results["tabCrazy"][0], results["tabNormal"][0], results["recurseNormal"][0] if self.runRecurse else np.nan) 
+        return testNum, (results["memoCrazy"][0], results["memoNormal"][0], results["tabCrazy"][0], results["tabNormal"][0], results["recurseNormal"][0] if self.runRecurse else -1) 
 
     def runSingleSize(self, targetIndex: int) -> tuple[np.float64, np.float64, np.float64, np.float64, np.float64]:
         """

@@ -1,12 +1,12 @@
 """
 Solves the partition problem using a top down dynamic programming algorithm, which is an algorithm that recurses but it stores results of solved subproblems and refers back to them if needed.
-This version however uses a "abs-value trick" that I independently discovered to help speed things up (or that's at least what I'm creating the entire complexity experiment to test). 
+This version however uses a "abs-value trick" that I discovered to help speed things up, as well as only checking skip if take is False.
 Out of all the versions of partition, this is the one that is the most my own, as the crazy math is my own, while the general partition/subset sum algorithm itself is written by Jeff Erickson and then translated for this experiment.
 
 This partition algorithm is mostly just Jeff Erickson's Subset Sum algorithm with a reverse memoization order, like 2 extra things, then the crazy math translation into a solution to partition.
 His version can be found in Chapter 3, pages 116 and 117 in his free online algorithms textbook located here: http://algorithms.wtf/
 
-Made by bananathrowingmachine on May 9th, 2025.
+Made by bananathrowingmachine on May 12th, 2025.
 """
 class MemoizedCrazy:
     """
@@ -51,11 +51,14 @@ class MemoizedCrazy:
                 take = self.answerMap[(index + 1, goal-self.absoluteList[index])]
             else:
                 take = self.subsetSum(index + 1, goal-self.absoluteList[index])
-        else: take = False
+            if take == True: # This causes OR short circuiting behavior. 
+                self.answerMap[(index, goal)] = True
+                return True
+
         if (index + 1, goal) in self.answerMap:
             skip = self.answerMap[(index + 1, goal)]
         else:
             skip = self.subsetSum(index + 1, goal)
         
-        self.answerMap[(index, goal)] = take or skip
-        return take or skip
+        self.answerMap[(index, goal)] = skip
+        return skip
