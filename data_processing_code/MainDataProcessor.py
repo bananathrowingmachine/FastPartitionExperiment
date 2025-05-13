@@ -65,7 +65,7 @@ class MainDataProcessor:
             else:
                 f.write("Too big for recursive normal, used a prediction instead.\n")
             
-            with open("raw_output.txt", "w") as f:
+            with open(dirs.singleAlgTablesDir / "raw_output.txt", "w", encoding="utf-8") as f:
                 for i in range(21):
 
                 # Each row of the rawData can be extracted like this.
@@ -90,8 +90,10 @@ class MainDataProcessor:
             # After the loop: create the formatted table
             headers = ["i", "targetSum", "row[1]", "memoNormal", "row[3]", "tabNormal", "recurseNormal"]
 
-            with open("pretty_table.txt", "w") as f_pretty:
-                f_pretty.write(tabulate(pretty_rows, headers=headers, tablefmt="fancy_grid"))   
+                
+            with open(dirs.singleAlgTablesDir / "pretty_table.txt", "w", encoding="utf-8") as f_pretty:
+                for i in range(21):
+                    f_pretty.write(tabulate(pretty_rows, headers=headers, tablefmt="fancy_grid"))   
                 
                 
             
