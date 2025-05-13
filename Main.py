@@ -38,7 +38,7 @@ def collectData(queue: Queue, example: bool):
     :param example: Wether to generate a quick example set of data, since a real set is computationally expensive.
     """
     noDisagrees = True
-    for n in range(6, 21):
+    for n in range(1, 21):
         size = n * 5
         try:
             fullResults = ComplexityExperiment.testProblemSize(size, example)
@@ -63,13 +63,14 @@ def processData(queue: Queue, keepGoing, genFilesDir: Path):
 
     :param queue: The data queue. Used to allow the computer to collect and process data simultaneously. Effectively the input of the method. Instantly calls the data processor when data is made available.
     """
+    DataProcessor = MainDataProcessor(genFilesDir)
     while keepGoing.is_set() or not queue.empty():
         try: 
             data = queue.get(timeout=0.25) # Attempts to process data every 0.25 seconds until the end of work signal of None is sent.
             if data is None:
                 DisagreeProcessor.noDisagreements(genFilesDir)
             elif isinstance(data, ResultsWrapper):
-                MainDataProcessor.processData(genFilesDir, data)
+                DataProcessor.appendData(data)
             elif isinstance(data, list) and all(isinstance(item, DisagreeData) for item in data):
                 global disagreeCount
                 DisagreeProcessor.processBulkDisagreements(genFilesDir, data, disagreeCount)
