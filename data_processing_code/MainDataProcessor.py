@@ -57,18 +57,6 @@ class MainDataProcessor:
                 sheetName = self.zNames[zNameShort]
                 dataFrame.T.to_excel(writer, sheet_name=sheetName)
                 worksheet = writer.sheets[sheetName]
-
-                rowCount, colCount = dataFrame.T.shape
-                emptyRow = rowCount + 1  
-                for column in range(1, colCount + 1):
-                    worksheet.write(emptyRow, column, "")
-                    worksheet.write(emptyRow + 1, column, f'{np.min(rawData[f'{zNameShort}'])}')
-                    worksheet.write(emptyRow + 2, column, f'{np.max(rawData[f'{zNameShort}'])}')
-                    worksheet.write(emptyRow + 3, column, f'{np.mean(rawData[f'{zNameShort}'])}')
-                
-                worksheet.write(emptyRow + 1, 0, "Minimum:")
-                worksheet.write(emptyRow + 2, 0, "Maximum:")
-                worksheet.write(emptyRow + 3, 0, "Average:")
                         
                 for colIndex, column in enumerate(dataFrame.columns):
                     maxLength = max((len(f"{x:.15g}") for x in dataFrame[column]), default=0)
