@@ -7,6 +7,8 @@ from data_processing_code.MiscDataCode import ResultsWrapper
 import numpy as np
 import pandas as pd
 from pathlib import Path
+import matplotlib.pyplot as plt
+from mpl_toolkits.mplot3d import Axes3D
 
 class MainDataProcessor:
     """
@@ -61,5 +63,33 @@ class MainDataProcessor:
                     maxLength = max(maxLength, len(str(column)))
                     newWidth = min(maxLength, 20) + 2
                     worksheet.set_column(colIndex, colIndex, newWidth)
+                
+        # Sample data
+        x = np.array([1, 2, 3, 4])
+        y = np.array([1, 2, 3])
+        x, y = np.meshgrid(x, y)
+        x = x.ravel()
+        y = y.ravel()
+        z = np.zeros_like(x)
+
+        # Height of the bars
+        dx = dy = 0.4
+        dz = np.random.randint(1, 10, size=len(x))
+
+        # Create 3D plot
+        fig = plt.figure()
+        ax = fig.add_subplot(111, projection='3d')
+
+        # Plot bars
+        ax.bar3d(x, y, z, dx, dy, dz, color='skyblue', edgecolor='black')
+
+        # Labels
+        ax.set_xlabel('X Axis')
+        ax.set_ylabel('Y Axis')
+        ax.set_zlabel('Z Axis')
+        ax.set_title('3D Bar Graph Example')
+
+        plt.show()
+
 
                 
