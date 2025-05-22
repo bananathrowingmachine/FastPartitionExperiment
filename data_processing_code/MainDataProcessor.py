@@ -73,7 +73,7 @@ class MainDataProcessor:
         z =rawData['memoCrazy']
 
         # Height of the bars
-        dx = dy = 0.4
+        dx = dy = 10
         dz = np.random.randint(1, 10, size=len(x))
 
         # Create 3D plot
