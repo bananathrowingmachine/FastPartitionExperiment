@@ -66,23 +66,23 @@ class MainDataProcessor:
         # Sample data
         for zNameShort in self.zNames.keys():
             if zNameShort != 'targetSum':
-                x = results.IntCount
-                y = np.arange(0, 21)
+                x = self.xValues
+                y = self.yValues
                 x, y = np.meshgrid(x, y)
                 x = x.ravel()
                 y = y.ravel()
-                z = rawData[zNameShort] if zNameShort != 'recurseNormal' or results.RecurseEstimate == None else [results.RecurseEstimate for _ in range(21)]
+                z = 
 
                 # Height of the bars
-                dx = dy = 10
-                dz = np.random.randint(1, 10, size=len(x))
+                dx = dy = 5
+                dz = self.dataTables[zNameShort]
 
                 # Create 3D plot
                 fig = plt.figure()
-                ax = fig.add_subplot(111, projection='3d')
+                ax = fig.add_subplot(111, projection = '3d')
 
                 # Plot bars
-                ax.bar3d(x, y, z, dx, dy, dz, color='skyblue', edgecolor='black')
+                ax.bar3d(x, y, z, dx, dy, dz, color = 'skyblue', edgecolor='black')
 
                 # Labels
                 ax.set_xlabel('Set Integer Count')
@@ -90,7 +90,7 @@ class MainDataProcessor:
                 ax.set_zlabel('Average Iteration Count')
                 ax.set_title(f'{self.zNames[zNameShort]} Graph')
 
-                if sys.platform == 'win32': plt.show()
+                if sys.platform == 'win32' and results.IntCount == 100: plt.show()
 
                 plt.savefig(self.graphsDir / f'{self.zNames[zNameShort]} Graph.png')  
                 plt.close()  
