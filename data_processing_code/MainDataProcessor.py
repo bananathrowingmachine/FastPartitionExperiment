@@ -65,12 +65,12 @@ class MainDataProcessor:
                     worksheet.set_column(colIndex, colIndex, newWidth)
                 
         # Sample data
-        x = np.array([1, 2, 3, 4])
-        y = np.array([1, 2, 3])
+        x = results.IntCount
+        y = np.arange(0, 21)
         x, y = np.meshgrid(x, y)
         x = x.ravel()
         y = y.ravel()
-        z = np.zeros_like(x)
+        z = 'targetSum'
 
         # Height of the bars
         dx = dy = 0.4
