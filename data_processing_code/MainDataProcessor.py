@@ -37,6 +37,7 @@ class MainDataProcessor:
     def appendData(self, results: ResultsWrapper) -> None:
         """
         Appends a new chunk of data to the appropriate x rows for each algorithm.
+        Regenerates the data tables and graphs each time in case the program is stopped before it completes.
 
         :param data: The data to get processed, wrapped up with the x index and estimated exponential time value.
         """
@@ -87,11 +88,11 @@ class MainDataProcessor:
                 ax.set_xlabel('Set Integer Count')
                 ax.set_ylabel('Absolute Sum Target Index')
                 ax.set_zlabel('Average Iteration Count')
-                ax.set_title('3D Bar Graph Example')
+                ax.set_title(f'{self.zNames[zNameShort]} Graph')
 
                 if sys.platform == 'win32': plt.show()
 
-                plt.savefig(self.graphsDir / f'{self.zNames[zNameShort]} Output.png')  
+                plt.savefig(self.graphsDir / f'{self.zNames[zNameShort]} Graph.png')  
                 plt.close()  
 
 
