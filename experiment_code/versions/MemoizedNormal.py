@@ -67,5 +67,5 @@ class MemoizedNormal:
         else:
             skip = self.subsetSum(index + 1, goal)
 
-        self.answerMap[(index, goal)] = take or skip
-        return take or skip
+        self.answerMap[(index, goal)] = skip
+        return skip
