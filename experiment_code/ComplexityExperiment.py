@@ -1,7 +1,7 @@
 """
 Runs an experiment of integer count size for all versions of the algorithm.
 
-Written by bananathrowingmachine, May 12th, 2025.
+Written by bananathrowingmachine, May 22th, 2025.
 """
 from experiment_code.versions.MemoizedCrazy import MemoizedCrazy
 from experiment_code.versions.MemoizedNormal import MemoizedNormal
@@ -100,8 +100,8 @@ class ComplexityExperiment:
         currSize = self.sumSizeTarget[targetIndex]
         random = np.random.default_rng()
         exampleBound = self.sumSizeTarget[20] - self.sumSizeTarget[0]
-        output = (random.normal(currSize, exampleBound / 2), random.normal(currSize, exampleBound / 4), random.normal(currSize, exampleBound / 6), 
-                  random.normal(currSize, exampleBound / 8), random.normal(currSize, exampleBound / 10) if self.runRecurse else np.nan)
+        output = (abs(random.normal(currSize, exampleBound / 2)), abs(random.normal(currSize, exampleBound / 4)), abs(random.normal(currSize, exampleBound / 6)), 
+                  abs(random.normal(currSize, exampleBound / 8)), abs(random.normal(currSize, exampleBound / 10)) if self.runRecurse else np.nan)
         
         if disagreement:
             xnor = [random.integers(0, 2) == 0, random.integers(0, 2) == 0, random.integers(0, 2) == 0, random.integers(0, 2) == 0]

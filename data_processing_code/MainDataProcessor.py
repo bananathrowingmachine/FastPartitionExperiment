@@ -1,7 +1,7 @@
 """
 Processes all of the data into data tables and graphs. 
 
-Made by bananathrowingmachine and Earthquakeshaker2 on May 19th, 2025.
+Made by bananathrowingmachine and Earthquakeshaker2 on May 22th, 2025.
 """
 from data_processing_code.MiscDataCode import ResultsWrapper
 import numpy as np
@@ -9,6 +9,7 @@ import pandas as pd
 from pathlib import Path
 import matplotlib.pyplot as plt
 from mpl_toolkits.mplot3d import Axes3D
+import sys
 
 class MainDataProcessor:
     """
@@ -20,13 +21,10 @@ class MainDataProcessor:
 
         :param genFilesDir: The directory to store generated processed data in. Will create the sub directories for graphs and data tables if they do not exist.
         """
-        graphsDir = genFilesDir / "graphs"
-        self.singleAlgGraphsDir = graphsDir / "single_algorithm_graphs"
-        self.otherGraphsDir = graphsDir / "other_graphs"
-
+        self.graphsDir = genFilesDir / "graphs"
         self.tablesDir = genFilesDir / "data_tables"
 
-        for directory in [graphsDir, self.singleAlgGraphsDir, self.otherGraphsDir, self.tablesDir]:
+        for directory in [self.graphsDir, self.tablesDir]:
             directory.mkdir(parents=True, exist_ok=True)
 
         self.xValues = [f'{i}' for i in range(5, 101, 5)]
@@ -65,31 +63,36 @@ class MainDataProcessor:
                     worksheet.set_column(colIndex, colIndex, newWidth)
                 
         # Sample data
-        x = results.IntCount
-        y = np.arange(0, 21)
-        x, y = np.meshgrid(x, y)
-        x = x.ravel()
-        y = y.ravel()
-        z =rawData['memoCrazy']
+        for zNameShort in self.zNames.keys():
+            if zNameShort != 'targetSum':
+                x = results.IntCount
+                y = np.arange(0, 21)
+                x, y = np.meshgrid(x, y)
+                x = x.ravel()
+                y = y.ravel()
+                z = rawData[zNameShort] if zNameShort != 'recurseNormal' or results.RecurseEstimate == None else [results.RecurseEstimate for _ in range(21)]
 
-        # Height of the bars
-        dx = dy = 10
-        dz = np.random.randint(1, 10, size=len(x))
+                # Height of the bars
+                dx = dy = 10
+                dz = np.random.randint(1, 10, size=len(x))
 
-        # Create 3D plot
-        fig = plt.figure()
-        ax = fig.add_subplot(111, projection='3d')
+                # Create 3D plot
+                fig = plt.figure()
+                ax = fig.add_subplot(111, projection='3d')
 
-        # Plot bars
-        ax.bar3d(x, y, z, dx, dy, dz, color='skyblue', edgecolor='black')
+                # Plot bars
+                ax.bar3d(x, y, z, dx, dy, dz, color='skyblue', edgecolor='black')
 
-        # Labels
-        ax.set_xlabel('X Axis')
-        ax.set_ylabel('Y Axis')
-        ax.set_zlabel('Z Axis')
-        ax.set_title('3D Bar Graph Example')
+                # Labels
+                ax.set_xlabel('Set Integer Count')
+                ax.set_ylabel('Absolute Sum Target Index')
+                ax.set_zlabel('Average Iteration Count')
+                ax.set_title('3D Bar Graph Example')
 
-        plt.show()
+                if sys.platform == 'win32': plt.show()
+
+                plt.savefig(self.graphsDir / f'{self.zNames[zNameShort]} Output.png')  
+                plt.close()  
 
 
                 

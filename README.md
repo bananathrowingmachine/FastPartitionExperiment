@@ -28,11 +28,7 @@ This is the expected file directory, relative to Main.py. Make sure the python f
 │       └── TabulatedNormal.py
 ├── generated_files
 │   ├── data_tables
-│   │   ├── other_tables
-│   │   └── single_algorithm_tables
 │   ├── graphs
-│   │   ├── other_graphs
-│   │   └── single_algorithm_graphs
 │   └── solution_conflicts
 └── Main.py
 ```
