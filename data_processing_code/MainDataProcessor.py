@@ -82,7 +82,7 @@ class MainDataProcessor:
                 ax = fig.add_subplot(111, projection = '3d')
 
                 # Plot bars
-                ax.bar3d(x, y, z, dx, dy, dz, color = 'skyblue', edgecolor='black')
+                ax.bar3d(x, y, z, dx, dy, dz, color = 'red', edgecolor='black')
 
                 # Labels
                 ax.set_xlabel('Set Integer Count')
