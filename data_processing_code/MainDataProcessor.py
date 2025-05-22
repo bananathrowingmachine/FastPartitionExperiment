@@ -70,7 +70,7 @@ class MainDataProcessor:
         x, y = np.meshgrid(x, y)
         x = x.ravel()
         y = y.ravel()
-        z = 'targetSum'
+        z =rawData['memoCrazy']
 
         # Height of the bars
         dx = dy = 0.4
