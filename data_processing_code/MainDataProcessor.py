@@ -77,13 +77,15 @@ class MainDataProcessor:
                 worksheet.set_column(colIndex, colIndex, newWidth)
                 
             if algoName != 'targetSum':
+
+                # To show off the numbers increasing better, this code swaps the x and y axis, and then reverses the new x axis.
                 x, y = np.meshgrid(self.xValues, self.yValues)
                 dz = currFrame.T.to_numpy(dtype=float).ravel()
                 fig = plt.figure()
                 ax = fig.add_subplot(111, projection = '3d')
 
                 if algoName == 'recurseNormal': # Does all the special handling needed for the exponential time Recursive Normal algorithm.
-                    mask = x.ravel() > 25  # Changed from x to y since we're swapping axes
+                    mask = x.ravel() > 25  
 
                     xPre = x.ravel()[~mask]
                     yPre = y.ravel()[~mask]
@@ -92,13 +94,17 @@ class MainDataProcessor:
                     yPost = y.ravel()[mask]
                     dzPost = dz[mask]
 
-                    ax.bar3d(yPre, xPre, np.zeros_like(xPre), 0.95, 4.95, dzPre, color=self.algorithmData[algoName].BarColor, edgecolor=self.algorithmData[algoName].EdgeColor)  # Swapped x,y and their widths
-                    ax.bar3d(yPost, xPost, np.zeros_like(xPost), 0.95, 4.95, dzPost, color=self.algorithmData[algoName].BarColor, edgecolor=(0.40, 0.33, 0.00))  # Swapped x,y and their widths
-                else:
-                    ax.bar3d(y.ravel(), x.ravel(), np.zeros_like(x.ravel()), 0.95, 4.95, dz, color = self.algorithmData[algoName].BarColor, edgecolor = self.algorithmData[algoName].EdgeColor)  # Swapped x,y and their widths
+                    dzPreLog = np.log2(dzPre)
+                    dzPostLog = np.log2(dzPost)
 
-                ax.set_xlabel('Absolute Sum Target Index')  # Swapped labels
-                ax.set_ylabel('Set Integer Count')         # Swapped labels
+                    ax.bar3d(yPre, xPre, 1e-10 * np.ones_like(xPre), 0.95, 4.95, dzPreLog, color=self.algorithmData[algoName].BarColor, edgecolor=self.algorithmData[algoName].EdgeColor)  
+                    ax.bar3d(yPost, xPost, 1e-10 * np.ones_like(xPost), 0.95, 4.95, dzPostLog, color=self.algorithmData[algoName].BarColor, edgecolor=(0.40, 0.33, 0.00))  
+                else:
+                    ax.bar3d(y.ravel(), x.ravel(), np.ones_like(x.ravel()), 0.95, 4.95, dz, color = self.algorithmData[algoName].BarColor, edgecolor = self.algorithmData[algoName].EdgeColor)  
+
+                ax.set_xlabel('Absolute Sum Target Index')  
+                ax.invert_xaxis()  
+                ax.set_ylabel('Set Integer Count')       
                 ax.tick_params(axis='z', which='major', pad=14) 
                 ax.zaxis.set_major_formatter(ticker.ScalarFormatter(useMathText=True))
                 ax.zaxis.set_major_formatter(ticker.FuncFormatter(lambda x, _: f"{x:.2e}"))
