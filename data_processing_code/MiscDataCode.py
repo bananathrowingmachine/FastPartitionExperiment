@@ -1,13 +1,14 @@
 """
 Stores types used across multiple files to organize data transfer, as well as manages recording disagreements without causing race conditions.
 
-Made by bananathrowingmachine on May 10th, 2025
+Made by bananathrowingmachine on May 22nd, 2025
 """
 from collections import namedtuple
 from dataclasses import dataclass, field
 import numpy as np
 from pathlib import Path
 from docx import Document
+import pandas as pd
 
 # Float64 max values = finfo(resolution=1e-15, min=-1.7976931348623157e+308, max=1.7976931348623157e+308, dtype=float64)
 RawResultsDType = np.dtype([
@@ -23,18 +24,35 @@ ResultsWrapper = namedtuple('ResultsWrapper', ['IntCount', 'RawData', 'RecurseEs
 
 @dataclass(frozen=True)
 class ResultsWrapper:
+    """
+    A helpful wrapper with the current chunk of results and a few other helpful pieces of information.
+    """
     IntCount: int
     RecurseEstimate: int
     RawData: np.ndarray = field(default_factory=lambda: np.empty(21, dtype=RawResultsDType))
 
 @dataclass(frozen=True)
 class DisagreeData:
+    """
+    A combined grouping of all the data needed to log disagreements.
+    """
     AlgoOutputs: list[bool]
     IntCount: int
     TargetIndex: int
     TestNum: int
     TargetSum: int
     CurrentList: list[int]
+
+@dataclass()
+class DataProcessingInfo:
+    """
+    A combined grouping of all the different data processing data that goes with each algorithm, used solely in MainDataProcessor.py.
+    """
+    OfficialName: str
+    DataFrame: pd.DataFrame
+    CurrentMax: int
+    BarColor: tuple[float, float, float]
+    EdgeColor: tuple[float, float, float]
 
 class DisagreeProcessor:
     def __init__(self, genFilesDir: Path):
