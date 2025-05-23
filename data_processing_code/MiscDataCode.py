@@ -50,7 +50,6 @@ class DataProcessingInfo:
     """
     OfficialName: str
     DataFrame: pd.DataFrame
-    CurrentMax: int
     BarColor: tuple[float, float, float]
     EdgeColor: tuple[float, float, float]
 
@@ -120,11 +119,12 @@ class DisagreeProcessor:
         paragraph.add_run().add_break()
         paragraph.add_run(f"The specific enviornment being tested when this disagreement occured is shown below:").add_break()
 
-        if data.TestNum > 3: numSuffix = "th"
-        elif data.TestNum == 3: numSuffix = "rd"
-        elif data.TestNum == 2: numSuffix = "nd"
-        else: numSuffix = "st"
-        paragraph.add_run(f"This was the {data.TestNum}{numSuffix} repeat test for this specific set of independent variables.").add_break()
+        if 11 <= (data.TestNum % 100) <= 13:
+            suffix = 'th'
+        else:
+            suffix = {1: 'st', 2: 'nd', 3: 'rd'}.get(data.TestNum % 10, 'th')
+        testNumStr = f"{data.TestNum}{suffix}"
+        paragraph.add_run(f"This was the {testNumStr} repeat test for this specific set of independent variables.").add_break()
         paragraph.add_run(f"The amount of integers per set was {data.IntCount}.").add_break()
         paragraph.add_run(f"The current target index was {data.TargetIndex} which corresponds to a target absolute sum of {data.TargetSum}.").add_break()
         paragraph.add_run(f"The specific set that was tested has a sum of {sum(data.CurrentList)}, and a absolute sum of {sum(map(abs, data.CurrentList))}. It is shown below:").add_break()

@@ -8,6 +8,7 @@ import numpy as np
 import pandas as pd
 from pathlib import Path
 import matplotlib.pyplot as plt
+import matplotlib.ticker as ticker
 from mpl_toolkits.mplot3d import Axes3D
 import sys
 
@@ -32,34 +33,38 @@ class MainDataProcessor:
         
         self.algorithmData: dict[str, DataProcessingInfo] = {}
 
-        self.algorithmData['memoCrazy'] = DataProcessingInfo('Memoized Crazy', pd.DataFrame(columns=self.yValues, index=self.xValues, dtype=np.float64), 0, (0.5, 0.5, 0.5), (0.5, 0.5, 0.5))
-        self.algorithmData['memoNormal'] = DataProcessingInfo('Memoized Normal', pd.DataFrame(columns=self.yValues, index=self.xValues, dtype=np.float64), 0, (0.5, 0.5, 0.5), (0.5, 0.5, 0.5))
-        self.algorithmData['tabCrazy'] = DataProcessingInfo('Tabulated Crazy', pd.DataFrame(columns=self.yValues, index=self.xValues, dtype=np.float64), 0, (0.5, 0.5, 0.5), (0.5, 0.5, 0.5))
-        self.algorithmData['tabNormal'] = DataProcessingInfo('Tabulated Normal', pd.DataFrame(columns=self.yValues, index=self.xValues, dtype=np.float64), 0, (0.5, 0.5, 0.5), (0.5, 0.5, 0.5))
-        self.algorithmData['recurseNormal'] = DataProcessingInfo('Recursive Normal', pd.DataFrame(columns=self.yValues, index=self.xValues, dtype=np.float64), 0, (0.5, 0.5, 0.5), (0.5, 0.5, 0.5))
-        self.algorithmData['targetSum'] = DataProcessingInfo('Absolute Target Sum', pd.DataFrame(columns=self.yValues, index=self.xValues, dtype=np.int64), 0, (0.5, 0.5, 0.5), (0.5, 0.5, 0.5))
+        self.algorithmData['memoCrazy'] = DataProcessingInfo('Memoized Crazy', pd.DataFrame(columns=self.yValues, index=self.xValues, dtype=np.float64), (0.00, 0.40, 0.20), (0.00, 0.10, 0.05))
+        self.algorithmData['memoNormal'] = DataProcessingInfo('Memoized Normal', pd.DataFrame(columns=self.yValues, index=self.xValues, dtype=np.float64), (0.00, 0.12, 0.70), (0.00, 0.02, 0.10))
+        self.algorithmData['tabCrazy'] = DataProcessingInfo('Tabulated Crazy', pd.DataFrame(columns=self.yValues, index=self.xValues, dtype=np.float64), (1.00, 1.00, 0.00), (0.10, 0.10, 0.00))
+        self.algorithmData['tabNormal'] = DataProcessingInfo('Tabulated Normal', pd.DataFrame(columns=self.yValues, index=self.xValues, dtype=np.float64), (0.70, 0.00, 0.00), (0.10, 0.00, 0.00))
+        self.algorithmData['recurseNormal'] = DataProcessingInfo('Recursive Normal', pd.DataFrame(columns=self.yValues, index=self.xValues, dtype=np.float64), (0.60, 0.00, 0.50), (0.10, 0.00, 0.08))
+        self.algorithmData['targetSum'] = DataProcessingInfo('Absolute Target Sum', pd.DataFrame(columns=self.yValues, index=self.xValues, dtype=np.int64), None, None)
 
     def appendData(self, results: ResultsWrapper) -> None:
         """
-        Appends a new chunk of data to the appropriate x rows for each algorithm.
-        Regenerates the data tables and graphs each time in case the program is stopped before it completes. Therefore the latest x value of processes data will always be visible while waiting for the entire set of data to complete.
+        Appends a new chunk of data to the appropriate x rows for each algorithm in it's data frame.
 
         :param data: The data to get processed, wrapped up with the x index and estimated exponential time value.
         """
         xIndex = results.IntCount
         rawData = results.RawData   
-
-        writer = pd.ExcelWriter(self.tablesDir / "Results.xlsx", engine="xlsxwriter") 
         
         for algoName in self.algorithmData.keys():
-            currFrame = self.algorithmData[algoName].DataFrame
-            currRealName = self.algorithmData[algoName].OfficialName
-
             if algoName == 'recurseNormal' and results.RecurseEstimate is not None:
                 yData = np.array([results.RecurseEstimate for _ in range(21)])
             else:
                 yData = np.array([row[algoName] for row in rawData])
-            currFrame.loc[xIndex] = yData
+            self.algorithmData[algoName].DataFrame.loc[xIndex] = yData
+
+    def outputData(self) -> None:
+        """
+        Generates all of the images and files for the generated data. Formally returns nothing, but will save multiple files to the directory given during object construction.
+        """
+        writer = pd.ExcelWriter(self.tablesDir / "Results.xlsx", engine="xlsxwriter") 
+
+        for algoName in self.algorithmData.keys():
+            currFrame = self.algorithmData[algoName].DataFrame
+            currRealName = self.algorithmData[algoName].OfficialName
 
             sheetName = currRealName
             currFrame.T.to_excel(writer, sheet_name=sheetName)
@@ -72,23 +77,37 @@ class MainDataProcessor:
                 worksheet.set_column(colIndex, colIndex, newWidth)
                 
             if algoName != 'targetSum':
-                self.algorithmData[algoName].CurrentMax = max(self.algorithmData[algoName].CurrentMax, np.max(rawData[algoName]))
-                x, y = np.meshgrid([i for i in range(5, 101, 5)], self.yValues)
-                dz = self.algorithmData[algoName].DataFrame.to_numpy(dtype=float).ravel()
-
+                x, y = np.meshgrid(self.xValues, self.yValues)
+                dz = currFrame.T.to_numpy(dtype=float).ravel()
                 fig = plt.figure()
                 ax = fig.add_subplot(111, projection = '3d')
-                ax.bar3d(x.ravel(), y.ravel(), np.zeros_like(x.ravel()), 5.0, 5.0, dz, color = self.algorithmData[algoName].BarColor, edgecolor = self.algorithmData[algoName].EdgeColor)
 
-                ax.set_xlabel('Set Integer Count')
-                ax.set_ylabel('Absolute Sum Target Index')
-                ax.set_zlabel('Average Iteration Count')
-                ax.set_title(f'{self.algorithmData[algoName].OfficialName} Graph')
+                if algoName == 'recurseNormal': # Does all the special handling needed for the exponential time Recursive Normal algorithm.
+                    mask = x.ravel() > 25  # Changed from x to y since we're swapping axes
 
-                # Since my friend who's helping with graphing wants to use the pyplot.show() function while I'm fine with just seeing the images and don't have the necessary app installed anyways,
-                # this will only cause it to run on his windows device and only on the last data append.
-                if sys.platform == 'win32' and results.IntCount == 100: plt.show()
-                plt.savefig(self.graphsDir / f'{self.algorithmData[algoName].OfficialName} Graph.png')  
-                plt.close()  
+                    xPre = x.ravel()[~mask]
+                    yPre = y.ravel()[~mask]
+                    dzPre = dz[~mask]
+                    xPost = x.ravel()[mask]
+                    yPost = y.ravel()[mask]
+                    dzPost = dz[mask]
+
+                    ax.bar3d(yPre, xPre, np.zeros_like(xPre), 0.95, 4.95, dzPre, color=self.algorithmData[algoName].BarColor, edgecolor=self.algorithmData[algoName].EdgeColor)  # Swapped x,y and their widths
+                    ax.bar3d(yPost, xPost, np.zeros_like(xPost), 0.95, 4.95, dzPost, color=self.algorithmData[algoName].BarColor, edgecolor=(0.40, 0.33, 0.00))  # Swapped x,y and their widths
+                else:
+                    ax.bar3d(y.ravel(), x.ravel(), np.zeros_like(x.ravel()), 0.95, 4.95, dz, color = self.algorithmData[algoName].BarColor, edgecolor = self.algorithmData[algoName].EdgeColor)  # Swapped x,y and their widths
+
+                ax.set_xlabel('Absolute Sum Target Index')  # Swapped labels
+                ax.set_ylabel('Set Integer Count')         # Swapped labels
+                ax.tick_params(axis='z', which='major', pad=14) 
+                ax.zaxis.set_major_formatter(ticker.ScalarFormatter(useMathText=True))
+                ax.zaxis.set_major_formatter(ticker.FuncFormatter(lambda x, _: f"{x:.2e}"))
+                ax.set_zlabel('Average Iteration Count', labelpad=28)
+                ax.set_title(f'{currRealName} Graph')
+
+                # Shows the interactive plot window for my friend helping me, who is on windows.
+                if sys.platform == 'win32': plt.show()
+                plt.savefig(self.graphsDir / f'{currRealName} Graph.png')  
+                plt.close()
         
         writer.close()
