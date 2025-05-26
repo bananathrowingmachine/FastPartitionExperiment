@@ -98,7 +98,30 @@ class MainDataProcessor:
                     dzPostLog = np.log2(dzPost)
 
                     ax.bar3d(yPre, xPre, 1e-10 * np.ones_like(xPre), 0.95, 4.95, dzPreLog, color=self.algorithmData[algoName].BarColor, edgecolor=self.algorithmData[algoName].EdgeColor)  
-                    ax.bar3d(yPost, xPost, 1e-10 * np.ones_like(xPost), 0.95, 4.95, dzPostLog, color=self.algorithmData[algoName].BarColor, edgecolor=(0.40, 0.33, 0.00))  
+                    ax.bar3d(yPost, xPost, 1e-10 * np.ones_like(xPost), 0.95, 4.95, dzPostLog, color=self.algorithmData[algoName].BarColor, edgecolor=(0.40, 0.33, 0.00)) 
+                  
+                    
+                    scale = 10
+                    major_vals = [10, 100]
+                    major_locs = np.log2(major_vals) * scale
+                    major_labels = [r"$10^1$", r"$10^2$"]
+
+                    ax.set_zticks(major_locs)
+                    ax.set_zticklabels(major_labels)
+                   
+
+                 
+       
+                    
+
+
+
+
+
+
+
+
+                    
                 else:
                     ax.bar3d(y.ravel(), x.ravel(), np.ones_like(x.ravel()), 0.95, 4.95, dz, color = self.algorithmData[algoName].BarColor, edgecolor = self.algorithmData[algoName].EdgeColor)  
 
