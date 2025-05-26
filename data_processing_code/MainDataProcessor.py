@@ -1,7 +1,7 @@
 """
 Processes all of the data into data tables and graphs. 
 
-Made by bananathrowingmachine and Earthquakeshaker2 on May 22nd, 2025.
+Made by bananathrowingmachine and Earthquakeshaker2 on May 25th, 2025.
 """
 from data_processing_code.MiscDataCode import ResultsWrapper, DataProcessingInfo
 import numpy as np
@@ -56,9 +56,9 @@ class MainDataProcessor:
                 yData = np.array([row[algoName] for row in rawData])
             self.algorithmData[algoName].DataFrame.loc[xIndex] = yData
 
-    def outputData(self) -> None:
+    def outputTableData(self) -> None:
         """
-        Generates all of the images and files for the generated data. Formally returns nothing, but will save multiple files to the directory given during object construction.
+        Generates the data tables for the generated data. Formally returns nothing, but will save a file to the directory given during object construction.
         """
         writer = pd.ExcelWriter(self.tablesDir / "Results.xlsx", engine="xlsxwriter") 
 
@@ -75,6 +75,18 @@ class MainDataProcessor:
                 maxLength = max(maxLength, len(str(column)))
                 newWidth = min(maxLength, 20) + 2
                 worksheet.set_column(colIndex, colIndex, newWidth)
+
+        writer.close()
+
+    def outputData(self) -> None:
+        """
+        Generates all of the images and files for the generated data. Formally returns nothing, but will save multiple files to the directory given during object construction.
+        """
+        for algoName in self.algorithmData.keys():
+            currFrame = self.algorithmData[algoName].DataFrame
+            currRealName = self.algorithmData[algoName].OfficialName
+
+            self.outputTableData()
                 
             if algoName != 'targetSum':
 
@@ -113,16 +125,14 @@ class MainDataProcessor:
                     ax.zaxis.set_major_formatter(ticker.ScalarFormatter(useMathText=True))
                     ax.zaxis.set_major_formatter(ticker.FuncFormatter(lambda x, _: f"{x:.2e}"))
                     ax.set_zlabel('Average Iteration Count', labelpad=28)
+                    ax.tick_params(axis='z', which='major', pad=14) 
 
                 ax.set_xlabel('Absolute Sum Target Index')  
                 ax.invert_xaxis()  
                 ax.set_ylabel('Set Integer Count')       
-                ax.tick_params(axis='z', which='major', pad=14) 
                 ax.set_title(f'{currRealName} Graph')
 
                 # Shows the interactive plot window for my friend helping me, who is on windows.
                 if sys.platform == 'win32': plt.show()
                 plt.savefig(self.graphsDir / f'{currRealName} Graph.png')  
                 plt.close()
-        
-        writer.close()
