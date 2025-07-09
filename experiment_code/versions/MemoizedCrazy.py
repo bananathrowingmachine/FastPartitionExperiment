@@ -10,7 +10,7 @@ Made by bananathrowingmachine on May 12th, 2025.
 """
 class MemoizedCrazy:
     """
-    This is a class solely to make interationCount effectively pass by reference. Storing the answer map and input list is just an extra bonus.
+    This is a class solely to make iterationCount effectively pass by reference. Storing the answer map and input list is just an extra bonus.
     """
     def __init__(self, inputList: list[int]):
         """
