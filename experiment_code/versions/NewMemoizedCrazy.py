@@ -20,7 +20,7 @@ class NewMemoizedCrazy:
         """
         self.absoluteList = list(map(abs, inputList))
         self.answerMap: dict[tuple[int, int], bool] = {}
-        self.extraIterations = 0
+        self.remainingSum = [sum(self.absoluteList[i:]) for i in range(len(self.absoluteList))]
 
     @classmethod
     def testIterations(cls, inputList: list[int]) -> tuple[int, bool]:
@@ -30,11 +30,9 @@ class NewMemoizedCrazy:
         :param inputList: The inputted list, which will mapped to a list of absolute values in the input internally.
         :return: A tuple containing the iteration count, and the computed answer.
         """
-        import math
         solver = cls(sorted(inputList, reverse=True))
         result = solver.subsetSum(0, int(sum(inputList)/2))
-        iterationCount = len(solver.answerMap) + solver.extraIterations + len(inputList) * round(math.log(len(inputList), 2)) # Since the answer map is added to each recursive call, it's length is an iteration count.
-        return iterationCount, result
+        return len(solver.answerMap), result # Since the answer map is added to each recursive call, it's length is an iteration count.
     
     def subsetSum(self, index, goal) -> bool:
         """
@@ -46,14 +44,12 @@ class NewMemoizedCrazy:
         """
         if goal == 0:
             return True
-        self.extraIterations += len(self.absoluteList[index:])
-        remainingSum = sum(self.absoluteList[index:])
-        if goal - remainingSum > 0:
-            return False
-        if goal - remainingSum == 0:
-            return True
         if index >= len(self.absoluteList):
             return False
+        if goal - self.remainingSum[index] > 0:
+            return False
+        if goal - self.remainingSum[index] == 0:
+            return True
         
         if goal >= self.absoluteList[index]: # Bounds checking, better than the others though as it can use the current goal.
             if (index + 1, goal-self.absoluteList[index]) in self.answerMap:
