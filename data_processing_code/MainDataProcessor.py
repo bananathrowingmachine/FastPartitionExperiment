@@ -1,7 +1,7 @@
 """
 Processes all of the data into data tables and graphs. 
 
-Made by bananathrowingmachine and Earthquakeshaker2 on May 25th, 2025.
+Made by bananathrowingmachine and Earthquakeshaker2 on Nov 23rd, 2025.
 """
 from data_processing_code.MiscDataCode import ResultsWrapper, DataProcessingInfo
 import numpy as np
@@ -9,14 +9,13 @@ import pandas as pd
 from pathlib import Path
 import matplotlib.pyplot as plt
 import matplotlib.ticker as ticker
-from mpl_toolkits.mplot3d import Axes3D
 import sys
 
 class MainDataProcessor:
     """
     Data processor class, that stores, saves, and handles all the data tables and graphs. Best if created once and appendData is called repeatedly.
     """
-    def __init__(self, genFilesDir: Path):
+    def __init__(self, genFilesDir: Path, runSpeedy: bool):
         """
         Simple regular data processor object. Processes the data and stores it in subdirectories of the one given to it during construction.
 
@@ -33,12 +32,15 @@ class MainDataProcessor:
         
         self.algorithmData: dict[str, DataProcessingInfo] = {}
 
-        self.algorithmData['memoCrazy'] = DataProcessingInfo('Memoized Crazy', pd.DataFrame(columns=self.yValues, index=self.xValues, dtype=np.float64), (0.00, 0.40, 0.20), (0.00, 0.10, 0.05))
-        self.algorithmData['memoNormal'] = DataProcessingInfo('Memoized Normal', pd.DataFrame(columns=self.yValues, index=self.xValues, dtype=np.float64), (0.00, 0.12, 0.70), (0.00, 0.02, 0.10))
-        self.algorithmData['tabCrazy'] = DataProcessingInfo('Tabulated Crazy', pd.DataFrame(columns=self.yValues, index=self.xValues, dtype=np.float64), (1.00, 1.00, 0.00), (0.10, 0.10, 0.00))
-        self.algorithmData['tabNormal'] = DataProcessingInfo('Tabulated Normal', pd.DataFrame(columns=self.yValues, index=self.xValues, dtype=np.float64), (0.70, 0.00, 0.00), (0.10, 0.00, 0.00))
-        self.algorithmData['recurseNormal'] = DataProcessingInfo('Recursive Normal', pd.DataFrame(columns=self.yValues, index=self.xValues, dtype=np.float64), (0.60, 0.00, 0.50), (0.10, 0.00, 0.08))
         self.algorithmData['targetSum'] = DataProcessingInfo('Absolute Target Sum', pd.DataFrame(columns=self.yValues, index=self.xValues, dtype=np.int64), None, None)
+        self.algorithmData['memoCrazy'] = DataProcessingInfo('Memoized Crazy', pd.DataFrame(columns=self.yValues, index=self.xValues, dtype=np.float64), (0.00, 0.40, 0.20), (0.00, 0.10, 0.05))
+        if runSpeedy:
+            self.algorithmData['memoSuperCrazy'] = DataProcessingInfo('Memoized Super Crazy', pd.DataFrame(columns=self.yValues, index=self.xValues, dtype=np.float64), (0.20, 1.00, 0.20), (0.05, 0.25, 0.05))
+        else:
+            self.algorithmData['memoNormal'] = DataProcessingInfo('Memoized Normal', pd.DataFrame(columns=self.yValues, index=self.xValues, dtype=np.float64), (0.00, 0.12, 0.70), (0.00, 0.02, 0.10))
+            self.algorithmData['tabCrazy'] = DataProcessingInfo('Tabulated Crazy', pd.DataFrame(columns=self.yValues, index=self.xValues, dtype=np.float64), (1.00, 1.00, 0.00), (0.10, 0.10, 0.00))
+            self.algorithmData['tabNormal'] = DataProcessingInfo('Tabulated Normal', pd.DataFrame(columns=self.yValues, index=self.xValues, dtype=np.float64), (0.70, 0.00, 0.00), (0.10, 0.00, 0.00))
+            self.algorithmData['recurseNormal'] = DataProcessingInfo('Recursive Normal', pd.DataFrame(columns=self.yValues, index=self.xValues, dtype=np.float64), (0.60, 0.00, 0.50), (0.10, 0.00, 0.08))
 
     def appendData(self, results: ResultsWrapper) -> None:
         """

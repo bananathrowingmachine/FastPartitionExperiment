@@ -15,11 +15,11 @@ It will then send the packaged data completely unmodified to the data processing
 Once in the data processing code, the processor will unpack the data, processes it, and then once done will return back to the orchestrator, waiting for another chunk of data.
 Was designed to have as little code as possible to help my non comp sci major friend who does know how to graph in python.
 
-Made by bananathrowingmachine on May 25th, 2025.
+Made by bananathrowingmachine on Nov 23rd, 2025.
 """
 from experiment_code.ComplexityExperiment import ComplexityExperiment
 from data_processing_code.MainDataProcessor import MainDataProcessor
-from data_processing_code.MiscDataCode import RawResultsDType, ResultsWrapper, DisagreeData, DisagreeProcessor
+from data_processing_code.MiscDataCode import ResultsWrapper, DisagreeData, DisagreeProcessor
 
 from multiprocessing import Process, Queue, Event
 from inputimeout import TimeoutOccurred, inputimeout
@@ -30,7 +30,7 @@ import sys
 
 disagreeCount = 1
 
-def collectData(queue: Queue, example: bool):
+def collectData(queue: Queue, example: bool, speedy: bool):
     """
     Allows data collection to happen in a seperate thread. Takes data and inputs it into the queue.
 
@@ -41,14 +41,11 @@ def collectData(queue: Queue, example: bool):
     for n in range(1, 21):
         size = n * 5
         try:
-            fullResults = ComplexityExperiment.testProblemSize(size, example)
+            fullResults = ComplexityExperiment.testProblemSize(size, example, speedy)
         except:
             print("Test process crashed. Terminating.")
             raise
         results = fullResults[0]
-        if results.dtype != RawResultsDType or results.shape != (21,): # I doubt this will ever happen.
-            print(f"Expected shape (21,) with dtype {RawResultsDType}, but got {results.shape} with dtype {results.dtype}. Terminating.")
-            sys.exit(1)
         queue.put(ResultsWrapper(size, None if size <= 25 else 2 ** size, results))
         disagreeList = fullResults[1]
         if len(disagreeList) != 0:
@@ -57,16 +54,16 @@ def collectData(queue: Queue, example: bool):
     if noDisagrees:
         queue.put(None)
 
-def processData(queue: Queue, keepGoing, genFilesDir: Path):
+def processData(queue: Queue, keepGoing, genFilesDir: Path, speedy: bool):
     """
     Allows data processing to happen in a seperate thread. Takes data inputted into the queue and heads off to processes it. Will wait idly until data arrives.
 
     :param queue: The data queue. Used to allow the computer to collect and process data simultaneously. Effectively the input of the method. Instantly calls the data processor when data is made available.
     """
-    DataProcessor = MainDataProcessor(genFilesDir)
+    DataProcessor = MainDataProcessor(genFilesDir, speedy)
     while keepGoing.is_set() or not queue.empty():
         try: 
-            data = queue.get(timeout=0.25) # Attempts to process data every 0.25 seconds until the end of work signal of None is sent.
+            data = queue.get(timeout=0.25)
             if data is None:
                 DisagreeProcessor.noDisagreements(genFilesDir)
             elif isinstance(data, ResultsWrapper):
@@ -97,34 +94,30 @@ def main():
     if sys.platform == 'win32': os.chmod(genFilesDir, 0o777)
     keepGoing = Event()
     keepGoing.set()
-    print("This program requires a lot of computation to run effectively. If the device you are running this on is not particularly good, you might run into issues.")
-    print("Therefore, by default this program will generate and graph a set of computationally cheap example data, however that data will be mostly randomly generated nonsense.")
-    print("Only generate a full legitimate set of data if your understand it will take a while, and will use all of your PC's resources.")
-    print(" ")
-    example = True
+    print("This program takes a long time to complete. To help with that below are a few options that can sped up execution but don't give the full results.")
+    speedy = False
     try:
-        answer = inputimeout("That being said, press f to generate a full set of data, and press anything else to generate an example set. ", 10)
-        if answer.lower() == "f":
-            try:
-                fallBack = inputimeout("Full data collection will commence in 10 seconds if no further inputs are recieved. Press f again to reconfirm quickly. ", 10)
-                if fallBack.lower() == "f":
-                    print("Full data collection has commenced.")
-                    example = False
-                else:
-                    print("Full data collection has been cancelld. Will use example data instead.") 
-                    example = True
-            except TimeoutOccurred:
-                print("Full data collection has commenced.")
-                example = False
+        answer = inputimeout("Active the speedy but incomplete version (will only run the 2 fastest algorithms)? [Y/N]", 10)
+        if answer.lower() == "y":
+            speedy = True
+            print("A sped up set of data will be provided.")
         else:
-            print("A set of example data will be provided.") 
-            example = True
+            print("The complete set of data will be provided.") 
     except TimeoutOccurred:
-        print("Input timeout occured. Defaulting to example data.")
-        example = True
+        print("Input timeout occured. Defaulting to complete data.")
+    example = False
     try:
-        collector = Process(target=collectData, args=(queue, example))
-        processor = Process(target=processData, args=(queue, keepGoing, genFilesDir))
+        answer = inputimeout("Activate the example data generator (will generate mostly random numbers in place of actual results)? [Y/N]", 10)
+        if answer.lower() == "y":
+            example = True
+            print("A set of example data will be provided.") 
+        else:
+            print("A regular set of data will be provided.")
+    except TimeoutOccurred:
+        print("Input timeout occured. Defaulting to regular data.")
+    try:
+        collector = Process(target=collectData, args=(queue, example, speedy))
+        processor = Process(target=processData, args=(queue, keepGoing, genFilesDir, speedy))
     except KeyboardInterrupt:
         keepGoing.clear()
         raise

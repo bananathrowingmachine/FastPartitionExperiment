@@ -1,7 +1,7 @@
 """
 Stores types used across multiple files to organize data transfer, as well as manages recording disagreements without causing race conditions.
 
-Made by bananathrowingmachine on May 22nd, 2025
+Made by bananathrowingmachine on Nov 23rd, 2025
 """
 from collections import namedtuple
 from dataclasses import dataclass, field
@@ -9,9 +9,10 @@ import numpy as np
 from pathlib import Path
 from docx import Document
 import pandas as pd
+from typing import Union
 
 # Float64 max values = finfo(resolution=1e-15, min=-1.7976931348623157e+308, max=1.7976931348623157e+308, dtype=float64)
-RawResultsDType = np.dtype([
+FullResultsDType = np.dtype([
     ('targetSum', np.uint64),
     ('memoCrazy', np.float64), 
     ('memoNormal', np.float64), 
@@ -19,6 +20,14 @@ RawResultsDType = np.dtype([
     ('tabNormal', np.float64), 
     ('recurseNormal', np.float64) 
 ])
+
+SpeedyResultsDType = np.dtype([
+    ('targetSum', np.uint64),
+    ('memoCrazy', np.float64), 
+    ('memoSuperCrazy', np.float64), 
+])
+
+UnionDType = Union[FullResultsDType, SpeedyResultsDType]
 
 ResultsWrapper = namedtuple('ResultsWrapper', ['IntCount', 'RawData', 'RecurseEstimate'])
 
@@ -29,7 +38,7 @@ class ResultsWrapper:
     """
     IntCount: int
     RecurseEstimate: int
-    RawData: np.ndarray = field(default_factory=lambda: np.empty(21, dtype=RawResultsDType))
+    RawData: np.ndarray = field(default_factory=lambda: np.empty(21, dtype=UnionDType))
 
 @dataclass(frozen=True)
 class DisagreeData:
@@ -100,12 +109,13 @@ class DisagreeProcessor:
         :param idNum: The disagreement number.
         """
         xnor = data.AlgoOutputs
-        algoNames = ["Memoized Crazy: ", ", Memoized Normal: ", ", Tabulated Crazy: ", ("," if data.IntCount <= 25 else " and") + " Tabulated Normal: ", " and Recursive Normal: "]
+        algoNames = ["Memoized Crazy: ", ", Memoized Normal: " if len(xnor) != 2 else " and Memoized Super Crazy: ", 
+                     ", Tabulated Crazy: ", ("," if data.IntCount <= 25 else " and") + " Tabulated Normal: ", " and Recursive Normal: "]
         try:
             document = Document(self.disagreeDir / "DisagreementRecord.docx")
         except FileNotFoundError:
             document = Document()
-            document.add_heading("Complete Algorithms Disgareement Record")
+            document.add_heading("Complete Algorithms Disagreement Record")
             document.add_heading("This document has all recorded instances where the different partition algorithms disagreed on the answer for a given set. It is procedurally generated as the experiment runs.", 3)
 
         document.add_paragraph().add_run(f"Disagreement number {idNum}:").bold = True

@@ -1,7 +1,7 @@
 """
 Runs an experiment of integer count size for all versions of the algorithm.
 
-Written by bananathrowingmachine, May 22nd, 2025.
+Written by bananathrowingmachine, Nov 23rd, 2025.
 """
 from experiment_code.versions.MemoizedCrazy import MemoizedCrazy
 from experiment_code.versions.MemoizedNormal import MemoizedNormal
@@ -9,7 +9,7 @@ import experiment_code.versions.TabulatedCrazy as TabulatedCrazy
 import experiment_code.versions.TabulatedNormal as TabulatedNormal
 from experiment_code.versions.RecursiveNormal import RecursiveNormal
 
-from data_processing_code.MiscDataCode import RawResultsDType, DisagreeData
+from data_processing_code.MiscDataCode import FullResultsDType, SpeedyResultsDType, DisagreeData
 import concurrent.futures as ThreadPool
 from multiprocessing import Manager
 import numpy as np
@@ -64,37 +64,38 @@ class ComplexityExperiment:
         self.outputLevel = outLevel
 
     @classmethod
-    def testProblemSize(cls, size: int, runExample: bool) -> tuple[np.ndarray, list[DisagreeData]]:
+    def testProblemSize(cls, size: int, runExample: bool, runSpeedy: bool) -> tuple[np.ndarray, list[DisagreeData]]:
         """
         In a simple TLDR sense, will run a experiment (or example of one).
 
         :param size: The amount of seperate integers should be in a set sent to the algorithms. Commonly referred to as size. Stays constant throughtout a single class of the method.
-        :param example: Return an example set of data without blowing up your pc.
+        :param runExample: Return an example set of data without blowing up your pc.
+        :param runSpeedy: Return a sped up but incomplete set of data.
         :return: A numpy array where each column is [targetSum], [memoCrazy], [memoNormal], [tabCrazy], [tabNormal], and [recurseNormal] in that order, and named, as well as the list of all recorded disagreements between algorithms.
         """
-        experiment = cls(size, OutLevel.ALL)
-        allRegResults = np.empty(21, dtype=RawResultsDType)
-        if runExample: 
-            disagreeVictim = np.random.default_rng().integers(0, 21), np.random.default_rng().integers(0, 21)
-        elif experiment.outputLevel > 0: print(f"|[==>>--:>-  Started entire test suite for set integer count {size:3}. This will take awhile.  -<:--<<==]|")
+        if runExample:
+            yapLevel = 0
+        elif runSpeedy:
+            yapLevel = 2
+        else:
+            yapLevel = 4
+        experiment = cls(size, yapLevel)
+        allRegResults = np.empty(21, dtype=SpeedyResultsDType) if runSpeedy else np.empty(21, dtype=FullResultsDType)
+        if experiment.outputLevel > 0: print(f"|[==>>--:>-  Started entire test suite for set integer count {size:3}. This will take awhile.  -<:--<<==]|")
         for targetIndex in range(21):
-            if runExample: 
-                r = experiment.generateSampleOutput(targetIndex, targetIndex == disagreeVictim[0] or targetIndex == disagreeVictim[1])
-            else:
-                r = experiment.runSingleSize(targetIndex)
-            allRegResults[targetIndex] = (experiment.sumSizeTarget[targetIndex], r[0], r[1], r[2], r[3], r[4])
+            r = experiment.generateSampleOutput(targetIndex, runSpeedy) if runExample else experiment.runSingleSize(targetIndex, runSpeedy)
+            allRegResults[targetIndex] = (experiment.sumSizeTarget[targetIndex], r[0], r[1]) if runSpeedy else (experiment.sumSizeTarget[targetIndex], r[0], r[1], r[2], r[3], r[4])
         
-        if not runExample and experiment.outputLevel > 0: 
+        if experiment.outputLevel > 0: 
             print(f"|[==>>--:>- Finished entire test suite for set integer count {size:3}. Results have been sent. -<:--<<==]|")
             print("|[==>>--:>- ============================================================================= -<:--<<==]|")
         return allRegResults, experiment.disagreeList
     
-    def generateSampleOutput(self, targetIndex: int, disagreement: bool) -> tuple[np.float64, np.float64, np.float64, np.float64, np.float64]:
+    def generateSampleOutput(self, targetIndex: int, runSpeedy: bool) -> tuple[np.float64, np.float64, np.float64, np.float64, np.float64]:
         """
         Returns a set of quickly generated example data to test the data processing.
 
         :param targetIndex: The target index to get the example sum from.
-        :param disagreement: Wether to record a disgareement here.
         :return: The sum size target, used for recording the specifics somewhere.
         """
         currSize = self.sumSizeTarget[targetIndex]
@@ -103,9 +104,11 @@ class ComplexityExperiment:
         output = (abs(random.normal(currSize, exampleBound / 2)), abs(random.normal(currSize, exampleBound / 4)), abs(random.normal(currSize, exampleBound / 6)), 
                   abs(random.normal(currSize, exampleBound / 8)), abs(random.normal(currSize, exampleBound / 10)) if self.runRecurse else np.nan)
         
-        if disagreement:
-            xnor = [random.integers(0, 2) == 0, random.integers(0, 2) == 0, random.integers(0, 2) == 0, random.integers(0, 2) == 0]
-            if self.runRecurse: xnor.append(random.integers(0, 2) == 0)
+        if targetIndex in np.random.default_rng().integers(0, 21, size=2):
+            xnor = [random.integers(0, 2) == 0, random.integers(0, 2) == 0]
+            if not runSpeedy:
+                xnor.extend([random.integers(0, 2) == 0, random.integers(0, 2) == 0])
+                if self.runRecurse: xnor.append(random.integers(0, 2) == 0)
             self.disagreeList.append(DisagreeData(xnor, self.setCount, targetIndex, 1, self.sumSizeTarget[targetIndex], self.generateRandomSet(targetIndex)))
         return output
 
