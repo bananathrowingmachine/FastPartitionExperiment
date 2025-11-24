@@ -97,7 +97,7 @@ def main():
     print("This program takes a long time to complete. To help with that below are a few options that can sped up execution but don't give the full results.")
     speedy = False
     try:
-        answer = inputimeout("Active the speedy but incomplete version (will only run the 2 fastest algorithms)? [Y/N]", 10)
+        answer = inputimeout("Active the speedy but incomplete version (will only run the 2 fastest algorithms)? [Y/N] \n", 10)
         if answer.lower() == "y":
             speedy = True
             print("A sped up set of data will be provided.")
@@ -107,7 +107,7 @@ def main():
         print("Input timeout occured. Defaulting to complete data.")
     example = False
     try:
-        answer = inputimeout("Activate the example data generator (will generate mostly random numbers in place of actual results)? [Y/N]", 10)
+        answer = inputimeout("Activate the example data generator (will generate mostly random numbers in place of actual results)? [Y/N] \n", 10)
         if answer.lower() == "y":
             example = True
             print("A set of example data will be provided.") 

@@ -1,14 +1,14 @@
 """
 Solves the partition problem using a top down dynamic programming algorithm, which is an algorithm that recurses but it stores results of solved subproblems and refers back to them if needed.
-This version however uses a "abs-value trick" that I discovered to help speed things up, as well as only checking skip if take is False.
-Out of all the versions of partition, this is the one that is the most my own, as the crazy math is my own, while the general partition/subset sum algorithm itself is written by Jeff Erickson and then translated for this experiment.
+This version however uses a as many hueristics as possible that still keep the result completely accurate that I could find.
+Out of all the versions of partition, this is the most original, as all the hueristics are my idea, while the general partition/subset sum algorithm itself is written by Jeff Erickson and then translated for this experiment.
 
-This partition algorithm is mostly just Jeff Erickson's Subset Sum algorithm with a reverse memoization order, like 2 extra things, then the crazy math translation into a solution to partition.
+This partition algorithm is mostly just Jeff Erickson's Subset Sum algorithm with a reverse memoization order, some extra hueristics, then the crazy math translation into a solution to partition.
 His version can be found in Chapter 3, pages 116 and 117 in his free online algorithms textbook located here: http://algorithms.wtf/
 
-Made by bananathrowingmachine on May 12th, 2025.
+Made by bananathrowingmachine on Nov 23rd, 2025.
 """
-class MemoizedCrazy:
+class NewMemoizedCrazy:
     """
     This is a class solely to make iterationCount effectively pass by reference. Storing the answer map and input list is just an extra bonus.
     """
@@ -18,8 +18,10 @@ class MemoizedCrazy:
 
         :param inputList: The inputted list, which will mapped to a list of absolute values in the input.
         """
+        self.inputList = inputList
         self.absoluteList = list(map(abs, inputList))
         self.answerMap: dict[tuple[int, int], bool] = {}
+        self.extraIterations = 0
 
     @classmethod
     def testIterations(cls, inputList: list[int]) -> tuple[int, bool]:
@@ -31,7 +33,7 @@ class MemoizedCrazy:
         """
         solver = cls(inputList)
         result = solver.subsetSum(0, int(sum(inputList)/2))
-        return len(solver.answerMap), result # Since the answer map is added to each recursive call, it's length is an iteration count.
+        return len(solver.answerMap) + solver.extraIterations, result # Since the answer map is added to each recursive call, it's length is an iteration count.
 
     def subsetSum(self, index, goal) -> bool:
         """
@@ -43,6 +45,12 @@ class MemoizedCrazy:
         """
         if goal == 0:
             return True
+        self.extraIterations += len(self.absoluteList[index:])
+        if sum(self.inputList[index:]) == 0:
+            return True
+        self.extraIterations += len(self.absoluteList[index:]) * 2
+        if max(self.absoluteList[index:]) > sum(self.absoluteList[index:])/2:
+            return False
         if index >= len(self.absoluteList):
             return False
         

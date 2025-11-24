@@ -24,7 +24,7 @@ FullResultsDType = np.dtype([
 SpeedyResultsDType = np.dtype([
     ('targetSum', np.uint64),
     ('memoCrazy', np.float64), 
-    ('memoSuperCrazy', np.float64), 
+    ('oldMemoCrazy', np.float64), 
 ])
 
 UnionDType = Union[FullResultsDType, SpeedyResultsDType]
@@ -109,7 +109,7 @@ class DisagreeProcessor:
         :param idNum: The disagreement number.
         """
         xnor = data.AlgoOutputs
-        algoNames = ["Memoized Crazy: ", ", Memoized Normal: " if len(xnor) != 2 else " and Memoized Super Crazy: ", 
+        algoNames = ["New Memoized Crazy: ", ", Memoized Normal: " if len(xnor) != 2 else " and Old Memoized Crazy: ", 
                      ", Tabulated Crazy: ", ("," if data.IntCount <= 25 else " and") + " Tabulated Normal: ", " and Recursive Normal: "]
         try:
             document = Document(self.disagreeDir / "DisagreementRecord.docx")
