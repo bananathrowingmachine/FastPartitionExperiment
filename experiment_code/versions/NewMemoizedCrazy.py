@@ -46,6 +46,9 @@ class NewMemoizedCrazy:
         if goal == 0:
             return True
         self.extraIterations += len(self.absoluteList[index:])
+        if sum(self.inputList[index:]) % 2 == 1:
+            return False
+        self.extraIterations += len(self.absoluteList[index:])
         if sum(self.inputList[index:]) == 0:
             return True
         self.extraIterations += len(self.absoluteList[index:]) * 2
