@@ -95,7 +95,7 @@ class DisagreeProcessor:
         """
         directory = cls(genFilesDir)
         document = Document()
-        document.add_heading("Complete Algorithms Disgareement Record")
+        document.add_heading("Complete Algorithms Disagreement Record")
         document.add_heading("This document has all recorded instances where the different partition algorithms disagreed on the answer for a given set. It is procedurally generated as the experiment runs.", 3)
         document.add_paragraph("There were no recorded disagreements throughout running the entire experiment. Therefore, there is nothing else here to see.")
         document.save(directory.disagreeDir / "DisagreementRecord.docx")
