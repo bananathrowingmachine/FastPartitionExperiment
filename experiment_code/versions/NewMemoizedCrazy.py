@@ -48,12 +48,6 @@ class NewMemoizedCrazy:
         self.extraIterations += len(self.absoluteList[index:])
         if sum(self.inputList[index:]) % 2 == 1:
             return False
-        self.extraIterations += len(self.absoluteList[index:])
-        if sum(self.inputList[index:]) == 0:
-            return True
-        self.extraIterations += len(self.absoluteList[index:]) * 2
-        if max(self.absoluteList[index:]) > sum(self.absoluteList[index:])/2:
-            return False
         if index >= len(self.absoluteList):
             return False
         
