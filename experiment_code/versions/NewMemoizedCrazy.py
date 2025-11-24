@@ -18,7 +18,6 @@ class NewMemoizedCrazy:
 
         :param inputList: The inputted list, which will mapped to a list of absolute values in the input.
         """
-        self.inputList = inputList
         self.absoluteList = list(map(abs, inputList))
         self.answerMap: dict[tuple[int, int], bool] = {}
         self.extraIterations = 0
@@ -31,10 +30,12 @@ class NewMemoizedCrazy:
         :param inputList: The inputted list, which will mapped to a list of absolute values in the input internally.
         :return: A tuple containing the iteration count, and the computed answer.
         """
-        solver = cls(inputList)
+        import math
+        solver = cls(sorted(inputList, reverse=True))
         result = solver.subsetSum(0, int(sum(inputList)/2))
-        return len(solver.answerMap) + solver.extraIterations, result # Since the answer map is added to each recursive call, it's length is an iteration count.
-
+        iterationCount = len(solver.answerMap) + solver.extraIterations + len(inputList) * round(math.log(len(inputList), 2)) # Since the answer map is added to each recursive call, it's length is an iteration count.
+        return iterationCount, result
+    
     def subsetSum(self, index, goal) -> bool:
         """
         Recursively solves the subset sum problem with inputs for partition. 
@@ -46,8 +47,11 @@ class NewMemoizedCrazy:
         if goal == 0:
             return True
         self.extraIterations += len(self.absoluteList[index:])
-        if sum(self.inputList[index:]) % 2 == 1:
+        remainingSum = sum(self.absoluteList[index:])
+        if goal - remainingSum > 0:
             return False
+        if goal - remainingSum == 0:
+            return True
         if index >= len(self.absoluteList):
             return False
         
