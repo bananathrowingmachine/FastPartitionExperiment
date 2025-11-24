@@ -14,7 +14,7 @@ from typing import Union
 # Float64 max values = finfo(resolution=1e-15, min=-1.7976931348623157e+308, max=1.7976931348623157e+308, dtype=float64)
 FullResultsDType = np.dtype([
     ('targetSum', np.uint64),
-    ('memoCrazy', np.float64), 
+    ('newMemoCrazy', np.float64), 
     ('memoNormal', np.float64), 
     ('tabCrazy', np.float64),
     ('tabNormal', np.float64), 
@@ -23,7 +23,7 @@ FullResultsDType = np.dtype([
 
 SpeedyResultsDType = np.dtype([
     ('targetSum', np.uint64),
-    ('memoCrazy', np.float64), 
+    ('newMemoCrazy', np.float64), 
     ('oldMemoCrazy', np.float64), 
 ])
 
@@ -127,7 +127,7 @@ class DisagreeProcessor:
         
         paragraph.add_run(f"The results from each algorithm are; {resultString}.")
         paragraph.add_run().add_break()
-        paragraph.add_run(f"The specific enviornment being tested when this disagreement occured is shown below:").add_break()
+        paragraph.add_run(f"The specific environment being tested when this disagreement occurred is shown below:").add_break()
 
         if 11 <= (data.TestNum % 100) <= 13:
             suffix = 'th'
