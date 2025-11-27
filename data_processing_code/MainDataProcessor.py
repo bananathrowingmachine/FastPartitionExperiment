@@ -15,17 +15,22 @@ class MainDataProcessor:
     """
     Data processor class, that stores, saves, and handles all the data tables and graphs. Best if created once and appendData is called repeatedly.
     """
-    def __init__(self, genFilesDir: Path, runSpeedy: bool):
+    def __init__(self, genFilesDir: Path, runSpeedy = False):
         """
         Simple regular data processor object. Processes the data and stores it in subdirectories of the one given to it during construction.
 
-        :param genFilesDir: The directory to store generated processed data in. Will create the sub directories for graphs and data tables if they do not exist.
+        :param genFilesDir: The directory to store generated processed data in. Will create the sub directories for graphs and data tables if they do not exist. Will do nothing if given None.
+        :param runSpeedy: If the speedy version is being run, which effects which algorithm data presets to load. Defaults to False.
         """
-        self.graphsDir = genFilesDir / "graphs"
-        self.tablesDir = genFilesDir / "data_tables"
+        if genFilesDir != None:
+            self.graphsDir = genFilesDir / "graphs"
+            self.tablesDir = genFilesDir / "data_tables"
 
-        for directory in [self.graphsDir, self.tablesDir]:
-            directory.mkdir(parents=True, exist_ok=True)
+            for directory in [self.graphsDir, self.tablesDir]:
+                directory.mkdir(parents=True, exist_ok=True)
+        else:
+            self.graphsDir = None
+            self.tablesDir = None
 
         self.xValues = [i for i in range(5, 101, 5)]
         self.yValues = [i for i in range(21)]
@@ -61,29 +66,35 @@ class MainDataProcessor:
     def outputTableData(self) -> None:
         """
         Generates the data tables for the generated data. Formally returns nothing, but will save a file to the directory given during object construction.
+        If no file is given during construction this method will do nothing (will change later to output the dataframes).
         """
-        writer = pd.ExcelWriter(self.tablesDir / "Results.xlsx", engine="xlsxwriter") 
+        if self.tablesDir != None:
+            writer = pd.ExcelWriter(self.tablesDir / "Results.xlsx", engine="xlsxwriter") 
 
-        for algoName in self.algorithmData.keys():
-            currFrame = self.algorithmData[algoName].DataFrame
-            currRealName = self.algorithmData[algoName].OfficialName
+            for algoName in self.algorithmData.keys():
+                currFrame = self.algorithmData[algoName].DataFrame
+                currRealName = self.algorithmData[algoName].OfficialName
 
-            sheetName = currRealName
-            currFrame.T.to_excel(writer, sheet_name=sheetName)
-            worksheet = writer.sheets[sheetName]
-                    
-            for colIndex, column in enumerate(currFrame.columns):
-                maxLength = max((len(f"{x:.15g}") for x in currFrame[column]), default=0)
-                maxLength = max(maxLength, len(str(column)))
-                newWidth = min(maxLength, 20) + 2
-                worksheet.set_column(colIndex, colIndex, newWidth)
+                sheetName = currRealName
+                currFrame.T.to_excel(writer, sheet_name=sheetName)
+                worksheet = writer.sheets[sheetName]
+                        
+                for colIndex, column in enumerate(currFrame.columns):
+                    maxLength = max((len(f"{x:.15g}") for x in currFrame[column]), default=0)
+                    maxLength = max(maxLength, len(str(column)))
+                    newWidth = min(maxLength, 20) + 2
+                    worksheet.set_column(colIndex, colIndex, newWidth)
 
-        writer.close()
+            writer.close()
 
-    def outputImageData(self) -> None:
+    def outputImageData(self) -> list[plt.Figure]:
         """
-        Generates all of the images and files for the generated data. Formally returns nothing, but will save multiple files to the directory given during object construction.
+        Generates all of the images and files for the generated data. If a path is set during object construction, this method will save the figures to the path location.
+        In either case, a list of figures will be returned as well. 
+
+        :return: A list of each figure generated.
         """
+        output = []
         for algoName in self.algorithmData.keys():
             currFrame = self.algorithmData[algoName].DataFrame
             currRealName = self.algorithmData[algoName].OfficialName
@@ -134,7 +145,11 @@ class MainDataProcessor:
                 ax.set_ylabel('Set Integer Count')       
                 ax.set_title(f'{currRealName} Graph')
 
-                # Shows the interactive plot window for my friend helping me, who is on windows.
-                if sys.platform == 'win32': plt.show()
-                plt.savefig(self.graphsDir / f'{currRealName} Graph.png')  
-                plt.close()
+                if self.graphsDir != None:
+                    # Shows the interactive plot window for my friend helping me, who is on windows.
+                    if sys.platform == 'win32': plt.show()
+                    plt.savefig(self.graphsDir / f'{currRealName} Graph.png')  
+                    plt.close()
+                output.append(plt.gcf())
+
+        return output
