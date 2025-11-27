@@ -1,7 +1,7 @@
 """
 Processes all of the data into data tables and graphs. 
 
-Made by bananathrowingmachine and Earthquakeshaker2 on Nov 23rd, 2025.
+Made by bananathrowingmachine and Earthquakeshaker2 on Nov 27rd, 2025.
 """
 from data_processing_code.MiscDataCode import ResultsWrapper, DataProcessingInfo
 import numpy as np
@@ -80,7 +80,7 @@ class MainDataProcessor:
 
         writer.close()
 
-    def outputData(self) -> None:
+    def outputImageData(self) -> None:
         """
         Generates all of the images and files for the generated data. Formally returns nothing, but will save multiple files to the directory given during object construction.
         """

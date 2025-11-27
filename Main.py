@@ -15,11 +15,12 @@ It will then send the packaged data completely unmodified to the data processing
 Once in the data processing code, the processor will unpack the data, processes it, and then once done will return back to the orchestrator, waiting for another chunk of data.
 Was designed to have as little code as possible to help my non comp sci major friend who does know how to graph in python.
 
-Made by bananathrowingmachine on Nov 23rd, 2025.
+Made by bananathrowingmachine on Nov 27th, 2025.
 """
 from experiment_code.ComplexityExperiment import ComplexityExperiment
 from data_processing_code.MainDataProcessor import MainDataProcessor
-from data_processing_code.MiscDataCode import ResultsWrapper, DisagreeData, DisagreeProcessor
+from data_processing_code.MiscDataCode import ResultsWrapper, DisagreeData
+from data_processing_code.DisagreeProcessor import DisagreeProcessor
 
 from multiprocessing import Process, Queue, Event
 from inputimeout import TimeoutOccurred, inputimeout
@@ -77,7 +78,7 @@ def processData(queue: Queue, keepGoing, genFilesDir: Path, speedy: bool):
         except KeyboardInterrupt:
             DataProcessor.outputTableData()
             break
-    DataProcessor.outputData()
+    DataProcessor.outputImageData()
 
 """
 The main method. Starts up the threads, flags, and gets everything moving. This is the file to run to start up everything else.
