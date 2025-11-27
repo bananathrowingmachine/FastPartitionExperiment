@@ -22,7 +22,7 @@ class MainDataProcessor:
         :param genFilesDir: The directory to store generated processed data in. Will create the sub directories for graphs and data tables if they do not exist. Will do nothing if given None.
         :param runSpeedy: If the speedy version is being run, which effects which algorithm data presets to load. Defaults to False.
         """
-        if genFilesDir != None:
+        if genFilesDir is not None:
             self.graphsDir = genFilesDir / "graphs"
             self.tablesDir = genFilesDir / "data_tables"
 
