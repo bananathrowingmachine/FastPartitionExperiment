@@ -15,7 +15,7 @@ class MainDataProcessor:
     """
     Data processor class, that stores, saves, and handles all the data tables and graphs. Best if created once and appendData is called repeatedly.
     """
-    def __init__(self, genFilesDir: Path, runSpeedy = False):
+    def __init__(self, genFilesDir: Path | None, runSpeedy = False):
         """
         Simple regular data processor object. Processes the data and stores it in subdirectories of the one given to it during construction.
 
@@ -68,7 +68,7 @@ class MainDataProcessor:
         Generates the data tables for the generated data. Formally returns nothing, but will save a file to the directory given during object construction.
         If no file is given during construction this method will do nothing (will change later to output the dataframes).
         """
-        if self.tablesDir != None:
+        if self.tablesDir is not None:
             writer = pd.ExcelWriter(self.tablesDir / "Results.xlsx", engine="xlsxwriter") 
 
             for algoName in self.algorithmData.keys():
