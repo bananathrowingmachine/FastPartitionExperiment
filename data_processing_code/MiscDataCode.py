@@ -34,8 +34,6 @@ MachinePredResultsDType = np.dtype([
 
 UnionDType = Union[FullResultsDType, SpeedyResultsDType, MachinePredResultsDType]
 
-ResultsWrapper = namedtuple('ResultsWrapper', ['IntCount', 'RawData', 'RecurseEstimate'])
-
 @dataclass(frozen=True)
 class ResultsWrapper:
     """

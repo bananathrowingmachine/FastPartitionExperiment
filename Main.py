@@ -61,7 +61,10 @@ def processData(queue: Queue, keepGoing, genFilesDir: Path, speedy: bool):
 
     :param queue: The data queue. Used to allow the computer to collect and process data simultaneously. Effectively the input of the method. Instantly calls the data processor when data is made available.
     """
-    DataProcessor = MainDataProcessor(genFilesDir, speedy)
+    if speedy:
+        DataProcessor = MainDataProcessor(genFilesDir, (True, True, True, False, False, False, False))
+    else:
+        DataProcessor = MainDataProcessor(genFilesDir)
     while keepGoing.is_set() or not queue.empty():
         try: 
             data = queue.get(timeout=0.25)
