@@ -15,7 +15,7 @@ It will then send the packaged data completely unmodified to the data processing
 Once in the data processing code, the processor will unpack the data, processes it, and then once done will return back to the orchestrator, waiting for another chunk of data.
 Was designed to have as little code as possible to help my non comp sci major friend who does know how to graph in python.
 
-Made by bananathrowingmachine on Nov 27th, 2025.
+Made by bananathrowingmachine on Feb 9, 2026.
 """
 from experiment_code.ComplexityExperiment import ComplexityExperiment
 from data_processing_code.MainDataProcessor import MainDataProcessor
@@ -23,26 +23,26 @@ from data_processing_code.MiscDataCode import ResultsWrapper, DisagreeData
 from data_processing_code.DisagreeProcessor import DisagreeProcessor
 
 from multiprocessing import Process, Queue, Event
-from inputimeout import TimeoutOccurred, inputimeout
 from shutil import rmtree
 from pathlib import Path
 from queue import Empty
+import argparse
 import sys
 
 disagreeCount = 1
 
-def collectData(queue: Queue, example: bool, speedy: bool):
+def collectData(queue: Queue, args):
     """
     Allows data collection to happen in a seperate thread. Takes data and inputs it into the queue.
 
     :param queue: The data queue. Used to allow the computer to collect and process data simultaneously. Effectively the output of the method.
-    :param example: Wether to generate a quick example set of data, since a real set is computationally expensive.
+    :param args: The command line arguments passed when the program started.
     """
     noDisagrees = True
     for n in range(1, 21):
         size = n * 5
         try:
-            fullResults = ComplexityExperiment.testProblemSize(size, example, speedy)
+            fullResults = ComplexityExperiment.testProblemSize(size, args)
         except:
             print("Test process crashed. Terminating.")
             raise
@@ -98,30 +98,15 @@ def main():
     if sys.platform == 'win32': os.chmod(genFilesDir, 0o777)
     keepGoing = Event()
     keepGoing.set()
-    print("This program takes a long time to complete. To help with that below are a few options that can sped up execution but don't give the full results.")
-    speedy = False
+    parser = argparse.ArgumentParser(description="Driver/main for my partition algorithm complexity experiment.")
+    parser.add_argument("-r", "--reduced", action="store_true", help="run a significantly reduced testing suite of just Old and New Memoized Crazy being run, on my machine doing this takes the runtime from about 24 hours to about 15 minutes")
+    parser.add_argument("-e", "--example", action="store_true", help="generate some random example data, used to test the data processor therefore it does not run the python or C implementations of the algorithms")
+    parser.add_argument("-p", "--python", action="store_true", help="run the original python implementations of the algorithm versions instead of the C versions (NOT IMPLEMENTED YET, PYTHON VERSIONS WILL ALWAYS RUN)")
+    parser.add_argument("-c", "--compile", action="store_true", help="compile the C versions at startup without checking if they already exist (NOT IMPLEMENTED YET, NOTHING TO COMPILE)")
+    args = parser.parse_args()
     try:
-        answer = inputimeout("Active the speedy but incomplete version (will only run the 2 fastest algorithms)? [Y/N] \n", 10)
-        if answer.lower() == "y":
-            speedy = True
-            print("A sped up set of data will be provided.")
-        else:
-            print("The complete set of data will be provided.") 
-    except TimeoutOccurred:
-        print("Input timeout occured. Defaulting to complete data.")
-    example = False
-    try:
-        answer = inputimeout("Activate the example data generator (will generate mostly random numbers in place of actual results)? [Y/N] \n", 10)
-        if answer.lower() == "y":
-            example = True
-            print("A set of example data will be provided.") 
-        else:
-            print("A regular set of data will be provided.")
-    except TimeoutOccurred:
-        print("Input timeout occured. Defaulting to regular data.")
-    try:
-        collector = Process(target=collectData, args=(queue, example, speedy))
-        processor = Process(target=processData, args=(queue, keepGoing, genFilesDir, speedy))
+        collector = Process(target=collectData, args=(queue, args))
+        processor = Process(target=processData, args=(queue, keepGoing, genFilesDir, args.reduced))
     except KeyboardInterrupt:
         keepGoing.clear()
         raise

@@ -1,13 +1,18 @@
 Basic Instructions:
 ===================
 
-To run the program, run Main.py, either be clicking your IDE's run program command or by running python3 Main.py in a terminal located inside the directory Main.py is located in.
+To run the program use python3 on Main.py. There are also optional command line arguments shown below. The current set of dependencies is 'numpy', 'pandas', 'matplotlib', 'python-docx' and 'xlsxwriter'. ```pip install numpy pandas matplotlib python-docx xlsxwriter``` will install them all. Additionally, if you are running the C version of the algorithms your device will need gcc installed and the permissions to use it as the program will compile the C code with gcc (if the compiled versions do not exist in the files) when started.
 
-Do note that running a full experiment is extremely computationally expensive, so to help speed up the process before the computation starts the console will ask you if you wish to select running the speedy version, and/or to generate a meaningless set of example data. Both use [Y/N] and you can choose any combination of them. The default is to run the full version without a meaningless set of example data.
+options: \
+  -h, --help     show this help message and exit \
+  -r, --reduced  run a significantly reduced testing suite of just Old and New Memoized Crazy being run, on my machine doing this takes the runtime from about 24 hours to about 15 minutes \
+  -e, --example  generate some random example data, used to test the data processor therefore it does not run the python or C implementations of the algorithms \
+  -p, --python   run the original python implementations of the algorithm versions instead of the C versions (NOT IMPLEMENTED YET, PYTHON VERSIONS WILL ALWAYS RUN) \
+  -c, --compile  compile the C versions at startup without checking if they already exist (NOT IMPLEMENTED YET, NOTHING TO COMPILE)
 
 Also be aware that running this program will always wipe all previously recorded data, including graphs, data tables, and solution conflicts. If you want to save any previous data move it out of the generated files directory.
 
-For a saved version of the generated data, as well as other documents relating to stress testing with worse case scenarios and proofs, check out my misc files repository for this project found [here.](https://github.com/bananathrowingmachine/FastPartitionExperimentDocs)
+For a saved version of the generated data, as well as other documents relating to stress testing with worse case scenarios check out my misc files repository for this project found [here.](https://github.com/bananathrowingmachine/FastPartitionExperimentDocs)
 
 File Directory:
 ===============
@@ -58,11 +63,13 @@ Next are the data processors, and the data collector on an equal level, so I'll 
 
 After that is the data collector. This section collects the data from the raw algorithms at the final layer. However since the algorithms being tested also all need inputs to run on, the collector is also what creates the problem sets for each algorithm by using a bunch of math to create randomly generated sets with absolute sums near a certain benchmark using a gaussian distribution of numbers with a constantly adjusting deviation, that it also determines. Since determining the benchmarks over and over would be a waste, this part does things in integer count batches, where it will run all the tests for 1 integer count of sets, put all of that data into a neat 2D numpy array, and send it to the orchestrator, which gives it to the thread that runs the processors. To also help speed things up, this file will split into 12-15 independent active threads all at once, 1 for each algorithm, and then 3 for each individual test, where an individual test specifically means running the same generated set (which therefore has the same conditions) on all active algorithms.
 
-Finally, it's the algorithms layer. This has all 5 variations of the partition algorithm that I am testing. They will all take in a set given to them, and determine if it can be partitioned into 2 equal subsets. Each variation also counts their iteration counts, to see which one is asymptotically faster in x given conditions. The 5 variations are:
+Finally, it's the algorithms layer. This has all 6 variations of the partition algorithm that I am testing. They will all take in a set given to them, and determine if it can be partitioned into 2 equal subsets. Each variation also counts their iteration counts, to see which one is asymptotically faster in x given conditions. The 6 variations are:
 
 Memoized Normal, which is a recursive algorithm that records previously solved problems so it doesn't solve them again.
 
-Memoized Crazy, which is Memoized Normal with the abs-value trick added on top to include extremely aggressive pruning.
+Old Memoized Crazy, which is Memoized Normal with the abs-value trick added on top to include extremely aggressive pruning.
+
+New Memoized Crazy, which is an experimental version of Memoized Crazy to try and make it even faster.
 
 Tabulated Normal, which uses a bottom up iterative tabulation approach.
 

@@ -1,7 +1,7 @@
 """
 Runs an experiment of integer count size for all versions of the algorithm.
 
-Written by bananathrowingmachine, Nov 23rd, 2025.
+Written by bananathrowingmachine, Feb 9, 2026.
 """
 from experiment_code.versions.MemoizedNormal import MemoizedNormal
 from experiment_code.versions.OldMemoizedCrazy import OldMemoizedCrazy
@@ -65,27 +65,26 @@ class ComplexityExperiment:
         self.outputLevel = outLevel
 
     @classmethod
-    def testProblemSize(cls, size: int, runExample: bool, runSpeedy: bool) -> tuple[np.ndarray, list[DisagreeData]]:
+    def testProblemSize(cls, size: int, args) -> tuple[np.ndarray, list[DisagreeData]]:
         """
         In a simple TLDR sense, will run a experiment (or example of one).
 
         :param size: The amount of seperate integers should be in a set sent to the algorithms. Commonly referred to as size. Stays constant throughtout a single class of the method.
-        :param runExample: Return an example set of data without blowing up your pc.
-        :param runSpeedy: Return a sped up but incomplete set of data.
+        :param args: The command line arguments passed when the program started.
         :return: A numpy array where each column is [targetSum], [newMemoCrazy], [memoNormal], [tabCrazy], [tabNormal], and [recurseNormal] in that order, and named, as well as the list of all recorded disagreements between algorithms.
         """
-        if runExample:
+        if args.example:
             yapLevel = 0
-        elif runSpeedy:
+        elif args.reduced:
             yapLevel = 2
         else:
             yapLevel = 4
         experiment = cls(size, yapLevel)
-        allRegResults = np.empty(21, dtype=SpeedyResultsDType) if runSpeedy else np.empty(21, dtype=FullResultsDType)
+        allRegResults = np.empty(21, dtype=SpeedyResultsDType) if args.reduced else np.empty(21, dtype=FullResultsDType)
         if experiment.outputLevel > 0: print(f"|[==>>--:>-  Started entire test suite for set integer count {size:3}. This will take awhile.  -<:--<<==]|")
         for targetIndex in range(21):
-            r = experiment.generateSampleOutput(targetIndex, runSpeedy) if runExample else experiment.runSingleSize(targetIndex, runSpeedy)
-            allRegResults[targetIndex] = (experiment.sumSizeTarget[targetIndex], r[0], r[1]) if runSpeedy else (experiment.sumSizeTarget[targetIndex], r[0], r[1], r[2], r[3], r[4])
+            r = experiment.generateSampleOutput(targetIndex, args.reduced) if args.example else experiment.runSingleSize(targetIndex, args.reduced)
+            allRegResults[targetIndex] = (experiment.sumSizeTarget[targetIndex], r[0], r[1]) if args.reduced else (experiment.sumSizeTarget[targetIndex], r[0], r[1], r[2], r[3], r[4])
         
         if experiment.outputLevel > 0: 
             print(f"|[==>>--:>- Finished entire test suite for set integer count {size:3}. Results have been sent. -<:--<<==]|")
