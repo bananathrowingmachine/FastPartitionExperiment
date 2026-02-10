@@ -1,11 +1,11 @@
 Basic Instructions:
 ===================
 
-To run the program use python3 on Main.py. There are also optional command line arguments shown below. The current set of dependencies is 'numpy', 'pandas', 'matplotlib', 'python-docx' and 'xlsxwriter'. ```pip install numpy pandas matplotlib python-docx xlsxwriter``` will install them all. Additionally, if you are running the C version of the algorithms your device will need gcc installed and the permissions to use it as the program will compile the C code with gcc (if the compiled versions do not exist in the files) when started.
+To run the program use python3 on FastPartitionExperiment.py. The current set of python dependencies are 'numpy', 'pandas', 'matplotlib', 'python-docx' and 'xlsxwriter'. Use ```pip install numpy pandas matplotlib python-docx xlsxwriter``` to install them quickly in a virtual environment. If running the C versions having gcc installed and usable by the python code is also needed.
 
 options: \
   -h, --help     show this help message and exit \
-  -r, --reduced  run a significantly reduced testing suite of just Old and New Memoized Crazy being run, on my machine doing this takes the runtime from about 24 hours to about 15 minutes \
+  -r, --reduced  run a significantly reduced testing suite of just Old and New Memoized Crazy being run, on my machine doing this takes the runtime from about 24 hours to about 15 minutes using the python algorithm versions both times \
   -e, --example  generate some random example data, used to test the data processor therefore it does not run the python or C implementations of the algorithms \
   -p, --python   run the original python implementations of the algorithm versions instead of the C versions (NOT IMPLEMENTED YET, PYTHON VERSIONS WILL ALWAYS RUN) \
   -c, --compile  compile the C versions at startup without checking if they already exist (NOT IMPLEMENTED YET, NOTHING TO COMPILE)
@@ -17,9 +17,10 @@ For a saved version of the generated data, as well as other documents relating t
 File Directory:
 ===============
 
-This is the expected file directory, relative to Main.py. Make sure the python files are where they need to be to make everything work. This also shows the output directory tree that the program will create, also relative to Main.py.
+Below is the expected file directory, relative to FastPartitionExperiment.py. Make sure the python files are where they need to be to make everything work. This also shows the output directory tree that the program will create, also relative to FastPartitionExperiment.py.
 
 ```bash
+.
 ├── data_processing_code
 │   ├── DisagreeProcessor.py
 │   ├── MainDataProcessor.py
@@ -27,17 +28,27 @@ This is the expected file directory, relative to Main.py. Make sure the python f
 ├── experiment_code
 │   ├── ComplexityExperiment.py
 │   └── versions
-│       ├── MemoizedNormal.py
-│       ├── OldMemoizedCrazy.py
-│       ├── NewMemoizedCrazy.py
-│       ├── RecursiveNormal.py
-│       ├── TabulatedCrazy.py
-│       └── TabulatedNormal.py
+│       ├── c
+│       │   ├── MemoizedNormal.c
+│       │   ├── NewMemoizedCrazy.c
+│       │   ├── OldMemoizedCrazy.c
+│       │   ├── RecursiveNormal.c
+│       │   ├── TabulatedCrazy.c
+│       │   └── TabulatedNormal.c
+│       └── python
+│           ├── MemoizedNormal.py
+│           ├── NewMemoizedCrazy.py
+│           ├── OldMemoizedCrazy.py
+│           ├── RecursiveNormal.py
+│           ├── TabulatedCrazy.py
+│           └── TabulatedNormal.py
+├── FastPartitionExperiment.py
 ├── generated_files
-│   ├── data_tables
-│   ├── graphs
-│   └── solution_conflicts
-└── Main.py
+│   ├── data_tables
+│   ├── graphs
+│   └── solution_conflicts
+├── LICENSE
+└── README.md
 ```
 
 Details on the project as a whole:
@@ -52,7 +63,7 @@ Not everything in this project is completely my work. Since it varies by who I t
 
 However, while it's not fully my work, a majority is, including the entirety of Main.py (the 2nd most important file), ComplexityExperiment.py (the most important and complex file) and MiscDataCode.py (data transfer and misc data processing), as well as how the entire system was designed to interact with each other. For example, while I recieved a good chunk of help for DataProcessor.py, and used the textbook for my algorithms course at university for help with the algorithms being tested, everything that takes a environment parameters that are to be tested, converts it into a set, inputs said set into each algorithm, obtains the raw results, minorly processes the raw data into averages, sends it through the experimenter into the orchestrator to the be processed, and then finally gets sent by the orchestrator to the data processors is all me.
 
-TLDR: I just needed some assistance one the edges, but all the linking and combining to make a fully functional program was me.
+TLDR: I just needed some assistance on the graphing and some of the partition algorithm versions, but all the linking and combining to make a fully functional program was me.
 
 Low level operations of the entire project:
 ===========================================

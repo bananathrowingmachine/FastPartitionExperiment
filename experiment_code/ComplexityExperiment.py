@@ -3,12 +3,12 @@ Runs an experiment of integer count size for all versions of the algorithm.
 
 Written by bananathrowingmachine, Feb 9, 2026.
 """
-from experiment_code.versions.MemoizedNormal import MemoizedNormal
-from experiment_code.versions.OldMemoizedCrazy import OldMemoizedCrazy
-from experiment_code.versions.NewMemoizedCrazy import NewMemoizedCrazy
-import experiment_code.versions.TabulatedCrazy as TabulatedCrazy
-import experiment_code.versions.TabulatedNormal as TabulatedNormal
-from experiment_code.versions.RecursiveNormal import RecursiveNormal
+from experiment_code.versions.python.MemoizedNormal import MemoizedNormal
+from experiment_code.versions.python.OldMemoizedCrazy import OldMemoizedCrazy
+from experiment_code.versions.python.NewMemoizedCrazy import NewMemoizedCrazy
+import experiment_code.versions.python.TabulatedCrazy as TabulatedCrazy
+import experiment_code.versions.python.TabulatedNormal as TabulatedNormal
+from experiment_code.versions.python.RecursiveNormal import RecursiveNormal
 
 from data_processing_code.MiscDataCode import FullResultsDType, SpeedyResultsDType, DisagreeData
 import concurrent.futures as ThreadPool
@@ -74,19 +74,24 @@ class ComplexityExperiment:
         :return: A numpy array where each column is [targetSum], [newMemoCrazy], [memoNormal], [tabCrazy], [tabNormal], and [recurseNormal] in that order, and named, as well as the list of all recorded disagreements between algorithms.
         """
         if args.example:
-            yapLevel = 0
+            yapLevel = OutLevel.NONE
         elif args.reduced:
-            yapLevel = 2
+            if args.python:
+                yapLevel = OutLevel.SUM
+            else:
+                yapLevel = OutLevel.SUITE
+        elif not args.python:
+            yapLevel = OutLevel.BATCH
         else:
-            yapLevel = 4
+            yapLevel = OutLevel.ALL
         experiment = cls(size, yapLevel)
         allRegResults = np.empty(21, dtype=SpeedyResultsDType) if args.reduced else np.empty(21, dtype=FullResultsDType)
-        if experiment.outputLevel > 0: print(f"|[==>>--:>-  Started entire test suite for set integer count {size:3}. This will take awhile.  -<:--<<==]|")
+        if experiment.outputLevel >= OutLevel.SUITE: print(f"|[==>>--:>-  Started entire test suite for set integer count {size:3}. This will take awhile.  -<:--<<==]|")
         for targetIndex in range(21):
             r = experiment.generateSampleOutput(targetIndex, args.reduced) if args.example else experiment.runSingleSize(targetIndex, args.reduced)
             allRegResults[targetIndex] = (experiment.sumSizeTarget[targetIndex], r[0], r[1]) if args.reduced else (experiment.sumSizeTarget[targetIndex], r[0], r[1], r[2], r[3], r[4])
         
-        if experiment.outputLevel > 0: 
+        if experiment.outputLevel >= OutLevel.SUITE: 
             print(f"|[==>>--:>- Finished entire test suite for set integer count {size:3}. Results have been sent. -<:--<<==]|")
             print("|[==>>--:>- ============================================================================= -<:--<<==]|")
         return allRegResults, experiment.disagreeList
@@ -209,7 +214,7 @@ class ComplexityExperiment:
         :param targetIndex: The size target index of the set. Can be from 0->20 inclusive where 0 is smallest possible, 20 is largest possible, and everything else is increments of 5%.
         :return: A tuple of the testNum, and a inner tuple of the results in order New Memoized Crazy, Memoized Normal, Tabulated Crazy, Tabulated Normal, Recursive Normal, with np.nan given if Recursive Normal is too high.
         """
-        if self.outputLevel > 2: print(f":>-  Started test take {testNum:2} for specs {self.setCount:3} and {targetIndex:2}. -<:")
+        if self.outputLevel >= OutLevel.BATCH: print(f":>-  Started test take {testNum:2} for specs {self.setCount:3} and {targetIndex:2}. -<:")
         testList = list(self.generateRandomSet(targetIndex))
         officialNames = {"newMemoCrazy": "  Memoized Crazy", "memoNormal": " Memoized Normal", "tabCrazy": " Tabulated Crazy", "tabNormal": "Tabulated Normal", "recurseNormal": "Recursive Normal"}
     
@@ -222,7 +227,7 @@ class ComplexityExperiment:
             results = {}
             for future in ThreadPool.as_completed(futures):
                 name = futures[future]
-                if self.outputLevel > 3: print(f"- Finished test for {officialNames[name]} take {testNum:2}. -")
+                if self.outputLevel >= OutLevel.ALL: print(f"- Finished test for {officialNames[name]} take {testNum:2}. -")
                 results[name] = future.result()
 
         xnor = [results["newMemoCrazy"][1], results["memoNormal"][1], results["tabCrazy"][1], results["tabNormal"][1]]
@@ -232,7 +237,7 @@ class ComplexityExperiment:
             with self.disagreeLock:
                 self.disagreeList.append(DisagreeData(xnor, self.setCount, targetIndex, testNum, self.sumSizeTarget[targetIndex], testList))
         
-        if self.outputLevel > 2: print(f":>- Finished test take {testNum:2} for specs {self.setCount:3} and {targetIndex:2}. -<:")
+        if self.outputLevel >= OutLevel.BATCH: print(f":>- Finished test take {testNum:2} for specs {self.setCount:3} and {targetIndex:2}. -<:")
         return testNum, (results["newMemoCrazy"][0], results["memoNormal"][0], results["tabCrazy"][0], results["tabNormal"][0], results["recurseNormal"][0] if self.runRecurse else -1) 
     
     def runSingleSpeedyTest(self, targetIndex: int, testNum: int) -> tuple[int, tuple[np.int64, np.int64]]:
@@ -243,7 +248,7 @@ class ComplexityExperiment:
         :param targetIndex: The size target index of the set. Can be from 0->20 inclusive where 0 is smallest possible, 20 is largest possible, and everything else is increments of 5%.
         :return: A tuple of the testNum, and a inner tuple of the results in order New Memoized Crazy, Old Memoized Crazy.
         """
-        if self.outputLevel > 2: print(f":>-  Started test take {testNum:2} for specs {self.setCount:3} and {targetIndex:2}. -<:")
+        if self.outputLevel >= OutLevel.BATCH: print(f":>-  Started test take {testNum:2} for specs {self.setCount:3} and {targetIndex:2}. -<:")
         testList = list(self.generateRandomSet(targetIndex))
         officialNames = {"newMemoCrazy": "New Memoized Crazy", "memoSuperNormal": "Old Memoized Crazy"}
     
@@ -253,7 +258,7 @@ class ComplexityExperiment:
             results = {}
             for future in ThreadPool.as_completed(futures):
                 name = futures[future]
-                if self.outputLevel > 3: print(f"- Finished test for {officialNames[name]} take {testNum:2}. -")
+                if self.outputLevel >= OutLevel.ALL: print(f"- Finished test for {officialNames[name]} take {testNum:2}. -")
                 results[name] = future.result()
 
         xnor = [results["newMemoCrazy"][1], results["oldMemoCrazy"][1]]
@@ -261,7 +266,7 @@ class ComplexityExperiment:
             with self.disagreeLock:
                 self.disagreeList.append(DisagreeData(xnor, self.setCount, targetIndex, testNum, self.sumSizeTarget[targetIndex], testList))
         
-        if self.outputLevel > 2: print(f":>- Finished test take {testNum:2} for specs {self.setCount:3} and {targetIndex:2}. -<:")
+        if self.outputLevel >= OutLevel.BATCH: print(f":>- Finished test take {testNum:2} for specs {self.setCount:3} and {targetIndex:2}. -<:")
         return testNum, (results["newMemoCrazy"][0], results["oldMemoCrazy"][0]) 
 
     def runSingleSize(self, targetIndex: int, runSpeedy: bool) -> tuple[np.float64, np.float64, np.float64, np.float64, np.float64] | tuple[np.float64, np.float64]:
@@ -273,7 +278,7 @@ class ComplexityExperiment:
         :param runSpeedy: If the speedy version should be run or not.
         :return: A tuple with each variations average results in order, depending on if full results are being calculated and if recursiveNormal is being run.
         """
-        if self.outputLevel > 1: print(f">>--:>-  Started tests for integer count {self.setCount:3} and absolute sum target index {targetIndex:2}. -<:--<<")
+        if self.outputLevel >= OutLevel.SUM: print(f">>--:>-  Started tests for integer count {self.setCount:3} and absolute sum target index {targetIndex:2}. -<:--<<")
         results = np.empty((50, 2 if runSpeedy else 5), dtype=np.int64)
         
         workerCount = 6 if runSpeedy else 3
@@ -295,7 +300,7 @@ class ComplexityExperiment:
                 outerPool.shutdown(wait=False, cancel_futures=True)
                 raise
         
-        if self.outputLevel > 1: print(f">>--:>- Finished tests for integer count {self.setCount:3} and absolute sum target index {targetIndex:2}. -<:--<<")
+        if self.outputLevel >= OutLevel.SUM: print(f">>--:>- Finished tests for integer count {self.setCount:3} and absolute sum target index {targetIndex:2}. -<:--<<")
         if runSpeedy:
             return (np.mean(results[:, 0]), np.mean(results[:, 1]))
         return (np.mean(results[:, 0]), np.mean(results[:, 1]), np.mean(results[:, 2]), np.mean(results[:, 3]), np.mean(results[:, 4]) if self.runRecurse else np.nan)

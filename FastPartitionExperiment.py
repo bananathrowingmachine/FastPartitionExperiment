@@ -89,6 +89,17 @@ The main method. Starts up the threads, flags, and gets everything moving. This 
 Do note that this program will also wipe all previously generated graphs, data tables, and recorded solution conflicts when run.
 """
 def main():
+    parser = argparse.ArgumentParser(description="Driver/main for my partition algorithm complexity experiment.")
+    parser.add_argument("-r", "--reduced", action="store_true", help="run a significantly reduced testing suite of just Old and New Memoized Crazy being run, on my machine doing this takes the runtime from about 24 hours to about 15 minutes")
+    parser.add_argument("-e", "--example", action="store_true", help="generate some random example data, used to test the data processor therefore it does not run the python or C implementations of the algorithms")
+    parser.add_argument("-p", "--python", action="store_true", help="run the original python implementations of the algorithm versions instead of the C versions (NOT IMPLEMENTED YET, PYTHON VERSIONS WILL ALWAYS RUN)")
+    parser.add_argument("-c", "--compile", action="store_true", help="compile the C versions at startup without checking if they already exist (NOT IMPLEMENTED YET, NOTHING TO COMPILE)")
+    args = parser.parse_args()
+    if sys.platform == 'win32':
+        from multiprocessing import freeze_support
+        freeze_support()
+        import os
+        import time
     queue = Queue()
     genFilesDir = Path(__file__).resolve().parent / "generated_files"
     if genFilesDir.exists():
@@ -98,12 +109,6 @@ def main():
     if sys.platform == 'win32': os.chmod(genFilesDir, 0o777)
     keepGoing = Event()
     keepGoing.set()
-    parser = argparse.ArgumentParser(description="Driver/main for my partition algorithm complexity experiment.")
-    parser.add_argument("-r", "--reduced", action="store_true", help="run a significantly reduced testing suite of just Old and New Memoized Crazy being run, on my machine doing this takes the runtime from about 24 hours to about 15 minutes")
-    parser.add_argument("-e", "--example", action="store_true", help="generate some random example data, used to test the data processor therefore it does not run the python or C implementations of the algorithms")
-    parser.add_argument("-p", "--python", action="store_true", help="run the original python implementations of the algorithm versions instead of the C versions (NOT IMPLEMENTED YET, PYTHON VERSIONS WILL ALWAYS RUN)")
-    parser.add_argument("-c", "--compile", action="store_true", help="compile the C versions at startup without checking if they already exist (NOT IMPLEMENTED YET, NOTHING TO COMPILE)")
-    args = parser.parse_args()
     try:
         collector = Process(target=collectData, args=(queue, args))
         processor = Process(target=processData, args=(queue, keepGoing, genFilesDir, args.reduced))
@@ -121,12 +126,4 @@ def main():
         sys.exit(0)
 
 if __name__ == '__main__':
-    """
-    Prepares all the extra stuff needed to run this on windows.
-    """
-    if sys.platform == 'win32':
-        from multiprocessing import freeze_support
-        freeze_support()
-        import os
-        import time
     main()
