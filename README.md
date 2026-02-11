@@ -1,14 +1,14 @@
 Basic Instructions:
 ===================
 
-To run the program use python3 on FastPartitionExperiment.py. The current set of python dependencies are 'numpy', 'pandas', 'matplotlib', 'python-docx' and 'xlsxwriter'. Use ```pip install numpy pandas matplotlib python-docx xlsxwriter``` to install them quickly in a virtual environment. If running the C versions having gcc installed and usable by the python code is also needed.
+To run the program use python3 on FastPartitionExperiment.py. The current set of python dependencies are 'numpy', 'pandas', 'matplotlib', 'python-docx', 'xlsxwriter' and 'cffi'. Use ```pip install numpy pandas matplotlib python-docx xlsxwriter cffi``` to install them quickly in a virtual environment.
 
 options: \
   -h, --help     show this help message and exit \
   -r, --reduced  run a significantly reduced testing suite of just Old and New Memoized Crazy being run, on my machine doing this takes the runtime from about 24 hours to about 15 minutes using the python algorithm versions both times \
   -e, --example  generate some random example data, used to test the data processor therefore it does not run the python or C implementations of the algorithms \
   -p, --python   run the original python implementations of the algorithm versions instead of the C versions (NOT IMPLEMENTED YET, PYTHON VERSIONS WILL ALWAYS RUN) \
-  -c, --compile  compile the C versions at startup without checking if they already exist (NOT IMPLEMENTED YET, NOTHING TO COMPILE)
+  -c, --compile  compile the C versions at startup without checking if they already exist (NOT IMPLEMENTED YET, EVERYTHING MUST BE SELF COMPILED RIGHT NOW)
 
 Also be aware that running this program will always wipe all previously recorded data, including graphs, data tables, and solution conflicts. If you want to save any previous data move it out of the generated files directory.
 
@@ -61,9 +61,9 @@ Details on how much work is my own:
 
 Not everything in this project is completely my work. Since it varies by who I took some ideas from or got help from, by how much, and everything else, credits to each are by file.
 
-However, while it's not fully my work, a majority is, including the entirety of Main.py (the 2nd most important file), ComplexityExperiment.py (the most important and complex file) and MiscDataCode.py (data transfer and misc data processing), as well as how the entire system was designed to interact with each other. For example, while I recieved a good chunk of help for DataProcessor.py, and used the textbook for my algorithms course at university for help with the algorithms being tested, everything that takes a environment parameters that are to be tested, converts it into a set, inputs said set into each algorithm, obtains the raw results, minorly processes the raw data into averages, sends it through the experimenter into the orchestrator to the be processed, and then finally gets sent by the orchestrator to the data processors is all me.
+However, while it's not fully my work, a majority is, including the entirety of Main.py (the 2nd most important file), ComplexityExperiment.py (the most important and complex file) and MiscDataCode.py (data transfer and misc data processing), as well as how the entire system was designed to interact with each other. For example, while I recieved a good chunk of help for DataProcessor.py, and used the textbook for my algorithms course at university for help with the algorithms being tested, everything that takes a environment parameters that are to be tested, converts it into a set, inputs said set into each algorithm, obtains the raw results, minorly processes the raw data into averages, sends it through the experimenter into the orchestrator to the be processed, and then finally gets sent by the orchestrator to the data processors is all me. Additionally, the hash table used by the C versions (khash.h) comes from the klib library.
 
-TLDR: I just needed some assistance on the graphing and some of the partition algorithm versions, but all the linking and combining to make a fully functional program was me.
+TLDR: I just used some help on the graphing and some of the partition algorithm versions, but all the linking and combining to make a fully functional program was me.
 
 Low level operations of the entire project:
 ===========================================

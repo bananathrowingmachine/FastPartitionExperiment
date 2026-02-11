@@ -1,7 +1,7 @@
 """
 Runs an experiment of integer count size for all versions of the algorithm.
 
-Written by bananathrowingmachine, Feb 9, 2026.
+Written by bananathrowingmachine, Feb 11, 2026.
 """
 from experiment_code.versions.python.MemoizedNormal import MemoizedNormal
 from experiment_code.versions.python.OldMemoizedCrazy import OldMemoizedCrazy
@@ -15,6 +15,7 @@ import concurrent.futures as ThreadPool
 from multiprocessing import Manager
 import numpy as np
 from enum import IntEnum
+from cffi import FFI
 
 class OutLevel(IntEnum):
     """
@@ -205,70 +206,7 @@ class ComplexityExperiment:
                 newSet.add(victim)
 
         return newSet
-
-    def runSingleFullTest(self, targetIndex: int, testNum: int) -> tuple[int, tuple[np.int64, np.int64, np.int64, np.int64, np.int64]]:
-        """
-        Runs each algorithm once for the full version. Verifies all algorithms returned the same bool, and will record the parameters and which algorithm disagrees if not. Also returns the iteration count of each.
-        Uses a python multithreading pool to run each version at the same time.
-
-        :param targetIndex: The size target index of the set. Can be from 0->20 inclusive where 0 is smallest possible, 20 is largest possible, and everything else is increments of 5%.
-        :return: A tuple of the testNum, and a inner tuple of the results in order New Memoized Crazy, Memoized Normal, Tabulated Crazy, Tabulated Normal, Recursive Normal, with np.nan given if Recursive Normal is too high.
-        """
-        if self.outputLevel >= OutLevel.BATCH: print(f":>-  Started test take {testNum:2} for specs {self.setCount:3} and {targetIndex:2}. -<:")
-        testList = list(self.generateRandomSet(targetIndex))
-        officialNames = {"newMemoCrazy": "  Memoized Crazy", "memoNormal": " Memoized Normal", "tabCrazy": " Tabulated Crazy", "tabNormal": "Tabulated Normal", "recurseNormal": "Recursive Normal"}
     
-        with ThreadPool.ProcessPoolExecutor(max_workers=5 if self.runRecurse else 4) as innerPool:
-            futures = {innerPool.submit(NewMemoizedCrazy.testIterations, testList): "newMemoCrazy", 
-                       innerPool.submit(MemoizedNormal.testIterations, testList): "memoNormal", 
-                       innerPool.submit(TabulatedCrazy.testIterations, testList): "tabCrazy", 
-                       innerPool.submit(TabulatedNormal.testIterations, testList): "tabNormal"}
-            if self.runRecurse: futures[innerPool.submit(RecursiveNormal.testIterations, testList)] = "recurseNormal"
-            results = {}
-            for future in ThreadPool.as_completed(futures):
-                name = futures[future]
-                if self.outputLevel >= OutLevel.ALL: print(f"- Finished test for {officialNames[name]} take {testNum:2}. -")
-                results[name] = future.result()
-
-        xnor = [results["newMemoCrazy"][1], results["memoNormal"][1], results["tabCrazy"][1], results["tabNormal"][1]]
-        if self.runRecurse: 
-            xnor.append(results["recurseNormal"][1])
-        if len(set(xnor)) > 1:
-            with self.disagreeLock:
-                self.disagreeList.append(DisagreeData(xnor, self.setCount, targetIndex, testNum, self.sumSizeTarget[targetIndex], testList))
-        
-        if self.outputLevel >= OutLevel.BATCH: print(f":>- Finished test take {testNum:2} for specs {self.setCount:3} and {targetIndex:2}. -<:")
-        return testNum, (results["newMemoCrazy"][0], results["memoNormal"][0], results["tabCrazy"][0], results["tabNormal"][0], results["recurseNormal"][0] if self.runRecurse else -1) 
-    
-    def runSingleSpeedyTest(self, targetIndex: int, testNum: int) -> tuple[int, tuple[np.int64, np.int64]]:
-        """
-        Runs the fast algorithms for the speedy version. Verifies all algorithms returned the same bool, and will record the parameters and which algorithm disagrees if not. Also returns the iteration count of each.
-        Uses a python multithreading pool to run each version at the same time.
-
-        :param targetIndex: The size target index of the set. Can be from 0->20 inclusive where 0 is smallest possible, 20 is largest possible, and everything else is increments of 5%.
-        :return: A tuple of the testNum, and a inner tuple of the results in order New Memoized Crazy, Old Memoized Crazy.
-        """
-        if self.outputLevel >= OutLevel.BATCH: print(f":>-  Started test take {testNum:2} for specs {self.setCount:3} and {targetIndex:2}. -<:")
-        testList = list(self.generateRandomSet(targetIndex))
-        officialNames = {"newMemoCrazy": "New Memoized Crazy", "memoSuperNormal": "Old Memoized Crazy"}
-    
-        with ThreadPool.ProcessPoolExecutor(max_workers=2) as innerPool:
-            futures = {innerPool.submit(NewMemoizedCrazy.testIterations, testList): "newMemoCrazy", 
-                       innerPool.submit(OldMemoizedCrazy.testIterations, testList): "oldMemoCrazy"}
-            results = {}
-            for future in ThreadPool.as_completed(futures):
-                name = futures[future]
-                if self.outputLevel >= OutLevel.ALL: print(f"- Finished test for {officialNames[name]} take {testNum:2}. -")
-                results[name] = future.result()
-
-        xnor = [results["newMemoCrazy"][1], results["oldMemoCrazy"][1]]
-        if len(set(xnor)) > 1:
-            with self.disagreeLock:
-                self.disagreeList.append(DisagreeData(xnor, self.setCount, targetIndex, testNum, self.sumSizeTarget[targetIndex], testList))
-        
-        if self.outputLevel >= OutLevel.BATCH: print(f":>- Finished test take {testNum:2} for specs {self.setCount:3} and {targetIndex:2}. -<:")
-        return testNum, (results["newMemoCrazy"][0], results["oldMemoCrazy"][0]) 
-
     def runSingleSize(self, targetIndex: int, runSpeedy: bool) -> tuple[np.float64, np.float64, np.float64, np.float64, np.float64] | tuple[np.float64, np.float64]:
         """
         Runs multiple tests of the same condition (set size and abs sum size). Will return a tuple of the average iterations count from each test.
@@ -288,10 +226,7 @@ class ComplexityExperiment:
             try:
                 while len(tasks) != 0 or len(activeTests) != 0:
                     while len(activeTests) < workerCount and len(tasks) != 0:
-                        if runSpeedy:
-                            activeTests.add(outerPool.submit(self.runSingleSpeedyTest, targetIndex, tasks.pop()))
-                        else:
-                            activeTests.add(outerPool.submit(self.runSingleFullTest, targetIndex, tasks.pop()))
+                        activeTests.add(outerPool.submit(self.runSingleTest, targetIndex, tasks.pop(), runSpeedy))
                     completedTest = next(ThreadPool.as_completed(activeTests))
                     activeTests.remove(completedTest)
                     testResult = completedTest.result()
@@ -304,3 +239,49 @@ class ComplexityExperiment:
         if runSpeedy:
             return (np.mean(results[:, 0]), np.mean(results[:, 1]))
         return (np.mean(results[:, 0]), np.mean(results[:, 1]), np.mean(results[:, 2]), np.mean(results[:, 3]), np.mean(results[:, 4]) if self.runRecurse else np.nan)
+
+    def runSingleTest(self, targetIndex: int, testNum: int, runSpeedy: bool) -> tuple[int, tuple[np.int64, np.int64, np.int64, np.int64, np.int64]] | tuple[int, tuple[np.int64, np.int64]]:
+        """
+        Runs each algorithm once for the full version. Verifies all algorithms returned the same bool, and will record the parameters and which algorithm disagrees if not. Also returns the iteration count of each.
+        Uses a python multithreading pool to run each version at the same time.
+
+        :param targetIndex: The size target index of the set. Can be from 0->20 inclusive where 0 is smallest possible, 20 is largest possible, and everything else is increments of 5%.
+        :param testNum: The test number (used solely for console output).
+        :param runSpeedy: If the speedy version should be run or not.
+        :return: A tuple of the testNum, and a inner tuple of the results in order New Memoized Crazy, Old Memoized Crazy, Memoized Normal, Tabulated Crazy, Tabulated Normal, Recursive Normal, with -1 given if Recursive Normal is too high.
+        """
+        if self.outputLevel >= OutLevel.BATCH: print(f":>-  Started test take {testNum:2} for specs {self.setCount:3} and {targetIndex:2}. -<:")
+        testList = list(self.generateRandomSet(targetIndex))
+        officialNames = {"newMemoCrazy": "New Memoized Crazy", "oldMemoCrazy": "Old Memoized Crazy", "memoNormal": "   Memoized Normal", 
+                         "tabCrazy": "   Tabulated Crazy", "tabNormal": "  Tabulated Normal", "recurseNormal": "  Recursive Normal"}
+    
+        with ThreadPool.ProcessPoolExecutor(max_workers=5 if self.runRecurse else 4) as innerPool:
+            if runSpeedy:
+                futures = {innerPool.submit(NewMemoizedCrazy.testIterations, testList): "newMemoCrazy", 
+                       innerPool.submit(OldMemoizedCrazy.testIterations, testList): "oldMemoCrazy"}
+            else:
+                futures = {innerPool.submit(NewMemoizedCrazy.testIterations, testList): "newMemoCrazy", 
+                        innerPool.submit(MemoizedNormal.testIterations, testList): "memoNormal", 
+                        innerPool.submit(TabulatedCrazy.testIterations, testList): "tabCrazy", 
+                        innerPool.submit(TabulatedNormal.testIterations, testList): "tabNormal"}
+                if self.runRecurse: futures[innerPool.submit(RecursiveNormal.testIterations, testList)] = "recurseNormal"
+            results = {}
+            for future in ThreadPool.as_completed(futures):
+                name = futures[future]
+                if self.outputLevel >= OutLevel.ALL: print(f"- Finished test for {officialNames[name]} take {testNum:2}. -")
+                results[name] = future.result()
+
+        if runSpeedy:
+            xnor = [results["newMemoCrazy"][1], results["oldMemoCrazy"][1]]
+        else:
+            xnor = [results["newMemoCrazy"][1], results["memoNormal"][1], results["tabCrazy"][1], results["tabNormal"][1]]
+            if self.runRecurse: 
+                xnor.append(results["recurseNormal"][1])
+        if len(set(xnor)) > 1:
+            with self.disagreeLock:
+                self.disagreeList.append(DisagreeData(xnor, self.setCount, targetIndex, testNum, self.sumSizeTarget[targetIndex], testList))
+        
+        if self.outputLevel >= OutLevel.BATCH: print(f":>- Finished test take {testNum:2} for specs {self.setCount:3} and {targetIndex:2}. -<:")
+        if runSpeedy:
+            return testNum, (results["newMemoCrazy"][0], results["oldMemoCrazy"][0]) 
+        return testNum, (results["newMemoCrazy"][0], results["memoNormal"][0], results["tabCrazy"][0], results["tabNormal"][0], results["recurseNormal"][0] if self.runRecurse else -1) 
