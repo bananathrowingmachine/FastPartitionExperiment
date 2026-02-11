@@ -29,6 +29,7 @@ Below is the expected file directory, relative to FastPartitionExperiment.py. Ma
 │   ├── ComplexityExperiment.py
 │   └── versions
 │       ├── c
+│       │   ├── khash.h
 │       │   ├── MemoizedNormal.c
 │       │   ├── NewMemoizedCrazy.c
 │       │   ├── OldMemoizedCrazy.c
@@ -76,14 +77,11 @@ After that is the data collector. This section collects the data from the raw al
 
 Finally, it's the algorithms layer. This has all 6 variations of the partition algorithm that I am testing. They will all take in a set given to them, and determine if it can be partitioned into 2 equal subsets. Each variation also counts their iteration counts, to see which one is asymptotically faster in x given conditions. The 6 variations are:
 
-Memoized Normal, which is a recursive algorithm that records previously solved problems so it doesn't solve them again.
+Memoized Normal, which is a recursive algorithm that records previously solved problems so it doesn't solve them again. \
+Old Memoized Crazy, which is Memoized Normal with the abs-value trick added on top to include extremely aggressive pruning. \
+New Memoized Crazy, which is an experimental version of Memoized Crazy to try and make it even faster. \
+Tabulated Normal, which uses a bottom up iterative tabulation approach. \
+Tabulated Crazy, which is Tabulated Normal with the same hueristics as Memoized Crazy. \
+Recursive Normal, which is a basic exponential time recursive algorithm. This one is hard coded to shut off after a set has more then 25 integers to save time. 
 
-Old Memoized Crazy, which is Memoized Normal with the abs-value trick added on top to include extremely aggressive pruning.
-
-New Memoized Crazy, which is an experimental version of Memoized Crazy to try and make it even faster.
-
-Tabulated Normal, which uses a bottom up iterative tabulation approach.
-
-Tabulated Crazy, which is Tabulated Normal with the same hueristics as Memoized Crazy.
-
-Recursive Normal, which is a basic exponential time recursive algorithm. This one is hard coded to shut off after a set has more then 25 integers to save time.
+The C versions of the algorithms do the exact same algorithm calculations although they do it in a C way with structs and pointers.
