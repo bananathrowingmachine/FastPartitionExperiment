@@ -91,28 +91,29 @@ def main():
     Do note that this program will also wipe all previously generated graphs, data tables, and recorded solution conflicts when run.
     """
     parser = argparse.ArgumentParser(description="Driver/main for my partition algorithm complexity experiment.")
-    parser.add_argument("-r", "--reduced", action="store_true", help="run a significantly reduced testing suite of just Old and New Memoized Crazy being run instead of the full 5 versions")
-    parser.add_argument("-e", "--example", action="store_true", help="generate some random example data, used to test the data processor therefore it does not run the python or C implementations of the algorithms")
-    parser.add_argument("-p", "--python", action="store_true", help="run the original python implementations of the algorithm versions instead of the C versions (NOT IMPLEMENTED YET, PYTHON VERSIONS WILL ALWAYS RUN)")
+    parser.add_argument('-c', '--clean', action='store_true', help="Clean then C binaries then exits. If used with --python, all __pycache__ will be cleaned as well.")
+    parser.add_argument('-e', '--example', action='store_true', help="Generate example data. Will not attempt to compile C binaries.")
+    parser.add_argument('-r', '--reduced', action='store_true', help="Run the reduced test suite. If used with --example will generate example data of the reduced test suite.")
+    parser.add_argument('-p', '--python', action='store_true', help="Run the Python versions of the algorithms instead of the C versions. Will not attempt to compile C binaries.")
     args = parser.parse_args()
     if sys.platform == 'win32':
         from multiprocessing import freeze_support
         freeze_support()
-        import time
-    queue = Queue()
-    genFilesDir = Path(__file__).resolve().parent / "generated_files"
+    cBinDir = Path(__file__).resolve().parent / "experiment_code" / "versions" / "c_bin"
+    if args.clean:
+        rmtree(cBinDir, ignore_errors=True)
+        if args.python:
+            for path in Path('.').rglob('__pycache__'):
+                rmtree(path)
+        sys.exit(0)
     if not (args.python or args.example):
-        cBinDir = Path(__file__).resolve().parent / "experiment_code" / "versions" / "c_bin"
         if not cBinDir.exists():
             cBinDir.mkdir(parents=True)
-            buildCLib(cBinDir)
-    if genFilesDir.exists():
-        rmtree(genFilesDir)
-        if sys.platform == 'win32': time.sleep(1)
+            buildCLibrary(cBinDir)
+    genFilesDir = Path(__file__).resolve().parent / "generated_files"
+    rmtree(genFilesDir, ignore_errors=True)
     genFilesDir.mkdir(parents=True, exist_ok=True)
-    if sys.platform == 'win32': 
-        os.chmod(genFilesDir, 0o777)
-        os.chmod(cBinDir, 0o777)
+    queue = Queue()
     keepGoing = Event()
     keepGoing.set()
     try:
@@ -131,7 +132,7 @@ def main():
         print("All processing has been completed. Closing.")
         sys.exit(0)
 
-def buildCLib(targetDir):
+def buildCLibrary(targetDir):
     """
     Builds the C library.
     
@@ -161,15 +162,13 @@ def buildCLib(targetDir):
             """, 
             include_dirs=['../c']            
         )
-        _ = ffibuilder.compile(tmpdir=targetDir)
+        ffibuilder.compile(tmpdir=targetDir, verbose=True)
         filesToClean += glob.glob(os.path.join(targetDir, f"_{name}.[co]"))
         filesToClean += glob.glob(os.path.join(targetDir, f"_{name}.obj"))
 
     for f in filesToClean:
-        try:
-            os.remove(f)
-        except OSError:
-            pass
+        try: os.remove(f)
+        except OSError: pass
 
 if __name__ == '__main__':
     main()

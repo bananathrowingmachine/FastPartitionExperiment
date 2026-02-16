@@ -1,7 +1,7 @@
 Basic Instructions:
 ===================
 
-To run the program use python3 on FastPartitionExperiment.py. The current set of python dependencies are 'numpy', 'pandas', 'matplotlib', 'python-docx', 'xlsxwriter' and 'cffi'. Use ```pip install numpy pandas matplotlib python-docx xlsxwriter cffi``` to install them quickly in a virtual environment.
+To run the program use python3 on FastPartitionExperiment.py. The current set of python dependencies are 'numpy', 'pandas', 'matplotlib', 'python-docx', 'xlsxwriter', 'cffi' and 'setuptools'. Use ```pip install numpy pandas matplotlib python-docx xlsxwriter cffi setuptools``` to install them quickly in a virtual environment.
 
 options: \
   -h, --help     show this help message and exit \

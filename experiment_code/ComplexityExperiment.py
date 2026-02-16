@@ -262,14 +262,14 @@ class ComplexityExperiment:
             workers = 4
         with ThreadPool.ProcessPoolExecutor(max_workers=workers) as innerPool:
             if self.runReduced:
-                futures = {innerPool.submit(NewMemoizedCrazy.testIterations, testList): "newMemoCrazy", 
-                       innerPool.submit(OldMemoizedCrazy.testIterations, testList): "oldMemoCrazy"}
+                futures = {innerPool.submit(NewMemoizedCrazy.testIterations, testList, self.setCount): "newMemoCrazy", 
+                       innerPool.submit(OldMemoizedCrazy.testIterations, testList, self.setCount): "oldMemoCrazy"}
             else:
-                futures = {innerPool.submit(NewMemoizedCrazy.testIterations, testList): "newMemoCrazy", 
-                        innerPool.submit(MemoizedNormal.testIterations, testList): "memoNormal", 
-                        innerPool.submit(TabulatedCrazy.testIterations, testList): "tabCrazy", 
-                        innerPool.submit(TabulatedNormal.testIterations, testList): "tabNormal"}
-                if self.runRecurse: futures[innerPool.submit(RecursiveNormal.testIterations, testList)] = "recurseNormal"
+                futures = {innerPool.submit(NewMemoizedCrazy.testIterations, testList, self.setCount): "newMemoCrazy", 
+                        innerPool.submit(MemoizedNormal.testIterations, testList, self.setCount): "memoNormal", 
+                        innerPool.submit(TabulatedCrazy.testIterations, testList, self.setCount): "tabCrazy", 
+                        innerPool.submit(TabulatedNormal.testIterations, testList, self.setCount): "tabNormal"}
+                if self.runRecurse: futures[innerPool.submit(RecursiveNormal.testIterations, testList, self.setCount)] = "recurseNormal"
             results = {}
             for future in ThreadPool.as_completed(futures):
                 name = futures[future]
