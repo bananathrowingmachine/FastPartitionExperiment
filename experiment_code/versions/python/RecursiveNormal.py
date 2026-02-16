@@ -29,7 +29,7 @@ class RecursiveNormal:
         self.negSum = negSum
 
     @classmethod
-    def testIterations(cls, inputList: list[int]) -> tuple[int, bool]:
+    def testIterations(cls, inputList: list[int], _) -> tuple[int, bool]:
         """
         Tests the iteration count of a basic recursive partition algorithm.
 

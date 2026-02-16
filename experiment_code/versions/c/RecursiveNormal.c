@@ -20,7 +20,7 @@ typedef struct
     bool result;
 } Output;
 
-bool subsetSum(Constants *constants, int index, int goal, int *iterationCount);
+static bool subsetSum(Constants *constants, int index, int goal, int *iterationCount);
 
 /**
  * Tests the iteration count of a basic recursive partition algorithm.
@@ -47,7 +47,7 @@ Output testIterations(int *inputList, int listLength)
  * Solves the subset sum problem recursively.
  * NOT IMPLEMENTED YET THIS JUST PUTS THE ARRAYS SUM IN ITERATIONCOUNT AND RETURNS TRUE (used for C->Python testing)
  */
-bool subsetSum(Constants *constants, int index, int goal, int *iterationCount)
+static bool subsetSum(Constants *constants, int index, int goal, int *iterationCount)
 {
     for (int i = 0; i < constants->listLength; i++)
         *iterationCount += constants->inputList[i];

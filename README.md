@@ -7,47 +7,53 @@ options: \
   -h, --help     show this help message and exit \
   -r, --reduced  run a significantly reduced testing suite of just Old and New Memoized Crazy being run, on my machine doing this takes the runtime from about 24 hours to about 15 minutes using the python algorithm versions both times \
   -e, --example  generate some random example data, used to test the data processor therefore it does not run the python or C implementations of the algorithms \
-  -p, --python   run the original python implementations of the algorithm versions instead of the C versions (NOT IMPLEMENTED YET, PYTHON VERSIONS WILL ALWAYS RUN) \
-  -c, --compile  compile the C versions at startup without checking if they already exist (NOT IMPLEMENTED YET, EVERYTHING MUST BE SELF COMPILED RIGHT NOW)
+  -p, --python   run the original python implementations of the algorithm versions instead of the C versions (NOT IMPLEMENTED YET, PYTHON VERSIONS WILL ALWAYS RUN) 
 
-Also be aware that running this program will always wipe all previously recorded data, including graphs, data tables, and solution conflicts. If you want to save any previous data move it out of the generated files directory.
+NOTE: Running this program will always wipe previously recorded data, including graphs, data tables, and solution conflicts. If you want to save any previous data move it out of the generated files directory before running the program. This program will also automatically create any pycache or C binary files if they will be needed as well as folders for them.
 
 For a saved version of the generated data, as well as other documents relating to stress testing with worse case scenarios check out my misc files repository for this project found [here.](https://github.com/bananathrowingmachine/FastPartitionExperimentDocs)
 
 File Directory:
 ===============
 
-Below is the expected file directory, relative to FastPartitionExperiment.py. Make sure the python files are where they need to be to make everything work. This also shows the output directory tree that the program will create, also relative to FastPartitionExperiment.py.
+Below is the expected file directory, relative to FastPartitionExperiment.py. This has every code file as well as output file included in the project. This however does not include any C binary or pycache files nor the directories created to store them.
 
 ```bash
 .
 ├── data_processing_code
-│   ├── DisagreeProcessor.py
-│   ├── MainDataProcessor.py
-│   └── MiscDataCode.py
+│   ├── DisagreeProcessor.py
+│   ├── MainDataProcessor.py
+│   └── MiscDataCode.py
 ├── experiment_code
-│   ├── ComplexityExperiment.py
-│   └── versions
-│       ├── c
-│       │   ├── khash.h
-│       │   ├── MemoizedNormal.c
-│       │   ├── NewMemoizedCrazy.c
-│       │   ├── OldMemoizedCrazy.c
-│       │   ├── RecursiveNormal.c
-│       │   ├── TabulatedCrazy.c
-│       │   └── TabulatedNormal.c
-│       └── python
-│           ├── MemoizedNormal.py
-│           ├── NewMemoizedCrazy.py
-│           ├── OldMemoizedCrazy.py
-│           ├── RecursiveNormal.py
-│           ├── TabulatedCrazy.py
-│           └── TabulatedNormal.py
+│   ├── ComplexityExperiment.py
+│   └── versions
+│       ├── c
+│       │   ├── khash.h
+│       │   ├── MemoizedNormal.c
+│       │   ├── NewMemoizedCrazy.c
+│       │   ├── OldMemoizedCrazy.c
+│       │   ├── RecursiveNormal.c
+│       │   ├── TabulatedCrazy.c
+│       │   └── TabulatedNormal.c
+│       └── python
+│           ├── MemoizedNormal.py
+│           ├── NewMemoizedCrazy.py
+│           ├── OldMemoizedCrazy.py
+│           ├── RecursiveNormal.py
+│           ├── TabulatedCrazy.py
+│           └── TabulatedNormal.py
 ├── FastPartitionExperiment.py
 ├── generated_files
 │   ├── data_tables
+│   │   └── Results.xlsx
 │   ├── graphs
+│   │   ├── Memoized Normal Graph.png
+│   │   ├── New Memoized Crazy Graph.png
+│   │   ├── Recursive Normal Graph.png
+│   │   ├── Tabulated Crazy Graph.png
+│   │   └── Tabulated Normal Graph.png
 │   └── solution_conflicts
+│       └── DisagreementRecord.docx
 ├── LICENSE
 └── README.md
 ```

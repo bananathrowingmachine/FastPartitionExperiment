@@ -15,7 +15,6 @@ import concurrent.futures as ThreadPool
 from multiprocessing import Manager
 import numpy as np
 from enum import IntEnum
-from cffi import FFI
 
 class OutLevel(IntEnum):
     """

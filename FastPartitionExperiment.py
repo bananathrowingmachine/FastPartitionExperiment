@@ -15,7 +15,7 @@ It will then send the packaged data completely unmodified to the data processing
 Once in the data processing code, the processor will unpack the data, processes it, and then once done will return back to the orchestrator, waiting for another chunk of data.
 Was designed to have as little code as possible to help my non comp sci major friend who does know how to graph in python.
 
-Made by bananathrowingmachine on Feb 9, 2026.
+Made by bananathrowingmachine on Feb 16, 2026.
 """
 from experiment_code.ComplexityExperiment import ComplexityExperiment
 from data_processing_code.MainDataProcessor import MainDataProcessor
@@ -28,6 +28,7 @@ from pathlib import Path
 from queue import Empty
 import argparse
 import sys
+import os
 
 disagreeCount = 1
 
@@ -83,30 +84,35 @@ def processData(queue: Queue, keepGoing, genFilesDir: Path, speedy: bool):
             break
     DataProcessor.outputImageData()
 
-"""
-The main method. Starts up the threads, flags, and gets everything moving. This is the file to run to start up everything else.
-
-Do note that this program will also wipe all previously generated graphs, data tables, and recorded solution conflicts when run.
-"""
 def main():
+    """
+    The main method. Starts up the threads, flags, and gets everything moving. This is the file to run to start up everything else.
+
+    Do note that this program will also wipe all previously generated graphs, data tables, and recorded solution conflicts when run.
+    """
     parser = argparse.ArgumentParser(description="Driver/main for my partition algorithm complexity experiment.")
-    parser.add_argument("-r", "--reduced", action="store_true", help="run a significantly reduced testing suite of just Old and New Memoized Crazy being run, on my machine doing this takes the runtime from about 24 hours to about 15 minutes")
+    parser.add_argument("-r", "--reduced", action="store_true", help="run a significantly reduced testing suite of just Old and New Memoized Crazy being run instead of the full 5 versions")
     parser.add_argument("-e", "--example", action="store_true", help="generate some random example data, used to test the data processor therefore it does not run the python or C implementations of the algorithms")
     parser.add_argument("-p", "--python", action="store_true", help="run the original python implementations of the algorithm versions instead of the C versions (NOT IMPLEMENTED YET, PYTHON VERSIONS WILL ALWAYS RUN)")
-    parser.add_argument("-c", "--compile", action="store_true", help="compile the C versions at startup without checking if they already exist (NOT IMPLEMENTED YET, NOTHING TO COMPILE)")
     args = parser.parse_args()
     if sys.platform == 'win32':
         from multiprocessing import freeze_support
         freeze_support()
-        import os
         import time
     queue = Queue()
     genFilesDir = Path(__file__).resolve().parent / "generated_files"
+    if not (args.python or args.example):
+        cBinDir = Path(__file__).resolve().parent / "experiment_code" / "versions" / "c_bin"
+        if not cBinDir.exists():
+            cBinDir.mkdir(parents=True)
+            buildCLib(cBinDir)
     if genFilesDir.exists():
         rmtree(genFilesDir)
         if sys.platform == 'win32': time.sleep(1)
     genFilesDir.mkdir(parents=True, exist_ok=True)
-    if sys.platform == 'win32': os.chmod(genFilesDir, 0o777)
+    if sys.platform == 'win32': 
+        os.chmod(genFilesDir, 0o777)
+        os.chmod(cBinDir, 0o777)
     keepGoing = Event()
     keepGoing.set()
     try:
@@ -124,6 +130,46 @@ def main():
         processor.join()
         print("All processing has been completed. Closing.")
         sys.exit(0)
+
+def buildCLib(targetDir):
+    """
+    Builds the C library.
+    
+    :param targetDir: The folder for the C binaries.
+    """
+    import glob
+    from cffi import FFI
+    algorithms = ["MemoizedNormal", "NewMemoizedCrazy", "OldMemoizedCrazy", "RecursiveNormal", "TabulatedCrazy", "TabulatedNormal"]
+    filesToClean = []
+    for name in algorithms:
+        ffibuilder = FFI()
+        ffibuilder.cdef("""
+            typedef _Bool bool;
+                        
+            typedef struct {
+                int iterationCount;
+                bool result;
+            } Output;
+
+            Output testIterations(int* inputList, int listLength);
+        """)
+
+        ffibuilder.set_source(
+            f"_{name}",
+            f"""
+            #include "{name}.c"
+            """, 
+            include_dirs=['../c']            
+        )
+        _ = ffibuilder.compile(tmpdir=targetDir)
+        filesToClean += glob.glob(os.path.join(targetDir, f"_{name}.[co]"))
+        filesToClean += glob.glob(os.path.join(targetDir, f"_{name}.obj"))
+
+    for f in filesToClean:
+        try:
+            os.remove(f)
+        except OSError:
+            pass
 
 if __name__ == '__main__':
     main()
