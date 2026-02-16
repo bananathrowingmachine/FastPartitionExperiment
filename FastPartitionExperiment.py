@@ -29,6 +29,8 @@ from queue import Empty
 import argparse
 import sys
 import os
+import glob
+from cffi import FFI
 
 disagreeCount = 1
 
@@ -99,17 +101,15 @@ def main():
     if sys.platform == 'win32':
         from multiprocessing import freeze_support
         freeze_support()
-    cBinDir = Path(__file__).resolve().parent / "experiment_code" / "versions" / "c_bin"
+    cParentDir = Path(__file__).resolve().parent / "experiment_code" / "versions"
     if args.clean:
-        rmtree(cBinDir, ignore_errors=True)
+        rmtree(cParentDir / "c_bin", ignore_errors=True)
         if args.python:
             for path in Path('.').rglob('__pycache__'):
                 rmtree(path)
         sys.exit(0)
     if not (args.python or args.example):
-        if not cBinDir.exists():
-            cBinDir.mkdir(parents=True)
-            buildCLibrary(cBinDir)
+        buildCLibrary(cParentDir)
     genFilesDir = Path(__file__).resolve().parent / "generated_files"
     rmtree(genFilesDir, ignore_errors=True)
     genFilesDir.mkdir(parents=True, exist_ok=True)
@@ -132,39 +132,42 @@ def main():
         print("All processing has been completed. Closing.")
         sys.exit(0)
 
-def buildCLibrary(targetDir):
+def buildCLibrary(parentDir: Path):
     """
     Builds the C library.
     
     :param targetDir: The folder for the C binaries.
     """
-    import glob
-    from cffi import FFI
     algorithms = ["MemoizedNormal", "NewMemoizedCrazy", "OldMemoizedCrazy", "RecursiveNormal", "TabulatedCrazy", "TabulatedNormal"]
+    targetDir = parentDir / "c_bin"
+    sourceDir = parentDir / "c"
     filesToClean = []
     for name in algorithms:
-        ffibuilder = FFI()
-        ffibuilder.cdef("""
-            typedef _Bool bool;
-                        
-            typedef struct {
-                int iterationCount;
-                bool result;
-            } Output;
+        binary = next(targetDir.glob(f"_{name}.*.{'pyd' if os.name == 'nt' else 'so'}"), None)
+        srcFile = sourceDir / f"{name}.c"
+        if binary is None or srcFile.stat().st_mtime > binary.stat().st_mtime:
+            ffibuilder = FFI()
+            ffibuilder.cdef("""
+                typedef _Bool bool;
+                            
+                typedef struct {
+                    int iterationCount;
+                    bool result;
+                } Output;
 
-            Output testIterations(int* inputList, int listLength);
-        """)
+                Output testIterations(int* inputList, int listLength);
+            """)
 
-        ffibuilder.set_source(
-            f"_{name}",
-            f"""
-            #include "{name}.c"
-            """, 
-            include_dirs=['../c']            
-        )
-        ffibuilder.compile(tmpdir=targetDir, verbose=True)
-        filesToClean += glob.glob(os.path.join(targetDir, f"_{name}.[co]"))
-        filesToClean += glob.glob(os.path.join(targetDir, f"_{name}.obj"))
+            ffibuilder.set_source(
+                f"_{name}",
+                f"""
+                #include "{name}.c"
+                """, 
+                include_dirs=[str(sourceDir)]            
+            )
+            ffibuilder.compile(tmpdir=targetDir)
+            filesToClean += glob.glob(os.path.join(targetDir, f"_{name}.[co]"))
+            filesToClean += glob.glob(os.path.join(targetDir, f"_{name}.obj"))
 
     for f in filesToClean:
         try: os.remove(f)

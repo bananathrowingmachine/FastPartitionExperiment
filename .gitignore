@@ -2,3 +2,5 @@
 miscTests/*
 generated_files/*
 experiment_code/versions/c_bin/*
+.vscode
+.clang-format
