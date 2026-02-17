@@ -1,9 +1,9 @@
 """
 Processes all of the data into data tables and graphs. 
 
-Made by bananathrowingmachine and Earthquakeshaker2 on Nov 27rd, 2025.
+Made by bananathrowingmachine and Earthquakeshaker2 on Feb 16, 2026.
 """
-from data_processing_code.MiscDataCode import ResultsWrapper, DataProcessingInfo
+from data_processing_code.MiscDataCode import ResultsWrapper, DataProcessingInfo, AlgoNames
 import numpy as np
 import pandas as pd
 from pathlib import Path
@@ -15,12 +15,12 @@ class MainDataProcessor:
     """
     Data processor class, that stores, saves, and handles all the data tables and graphs. Best if created once and appendData is called repeatedly.
     """
-    def __init__(self, genFilesDir: Path | None, presets: tuple[bool] = (True, True, False, True, True, True, True)):
+    def __init__(self, genFilesDir: Path | None, presets: tuple[AlgoNames]):
         """
         Simple regular data processor object. Processes the data and stores it in subdirectories of the one given to it during construction.
 
         :param genFilesDir: The directory to store generated processed data in. Will create the sub directories for graphs and data tables if they do not exist. Will do nothing if given None.
-        :param presets: Which presets to make frames for. In order they are 'Absolute Target Sum', 'New Memoized Crazy', 'Old Memoized Crazy', 'Memoized Normal', 'Tabulated Crazy', 'Tabulated Normal', and 'Recursive Normal'. 
+        :param presets: Which presets to make frames for. Use the AlgoNames enum to tell the data processor which algorithm graphs/tables to generate. 
         """
         if genFilesDir is not None:
             self.graphsDir = genFilesDir / "graphs"
@@ -36,14 +36,20 @@ class MainDataProcessor:
         self.yValues = [i for i in range(21)]
         
         self.algorithmData: dict[str, DataProcessingInfo] = {}
-
-        if presets[0]: self.algorithmData['targetSum'] = DataProcessingInfo('Absolute Target Sum', pd.DataFrame(columns=self.yValues, index=self.xValues, dtype=np.int64), None, None)
-        if presets[1]: self.algorithmData['newMemoCrazy'] = DataProcessingInfo('New Memoized Crazy', pd.DataFrame(columns=self.yValues, index=self.xValues, dtype=np.float64), (0.00, 0.40, 0.20), (0.00, 0.10, 0.05))
-        if presets[2]: self.algorithmData['oldMemoCrazy'] = DataProcessingInfo('Old Memoized Crazy', pd.DataFrame(columns=self.yValues, index=self.xValues, dtype=np.float64), (0.20, 1.00, 0.20), (0.05, 0.25, 0.05))
-        if presets[3]: self.algorithmData['memoNormal'] = DataProcessingInfo('Memoized Normal', pd.DataFrame(columns=self.yValues, index=self.xValues, dtype=np.float64), (0.00, 0.12, 0.70), (0.00, 0.02, 0.10))
-        if presets[4]: self.algorithmData['tabCrazy'] = DataProcessingInfo('Tabulated Crazy', pd.DataFrame(columns=self.yValues, index=self.xValues, dtype=np.float64), (1.00, 1.00, 0.00), (0.10, 0.10, 0.00))
-        if presets[5]: self.algorithmData['tabNormal'] = DataProcessingInfo('Tabulated Normal', pd.DataFrame(columns=self.yValues, index=self.xValues, dtype=np.float64), (0.70, 0.00, 0.00), (0.10, 0.00, 0.00))            
-        if presets[6]: self.algorithmData['recurseNormal'] = DataProcessingInfo('Recursive Normal', pd.DataFrame(columns=self.yValues, index=self.xValues, dtype=np.float64), (0.60, 0.00, 0.50), (0.10, 0.00, 0.08))
+        if AlgoNames.TargetSum in presets: 
+            self.algorithmData['targetSum'] = DataProcessingInfo('Absolute Target Sum', pd.DataFrame(columns=self.yValues, index=self.xValues, dtype=np.int64), None, None)
+        if AlgoNames.NewMemoizedCrazy in presets: 
+            self.algorithmData['newMemoCrazy'] = DataProcessingInfo('New Memoized Crazy', pd.DataFrame(columns=self.yValues, index=self.xValues, dtype=np.float64), (0.00, 0.40, 0.20), (0.00, 0.10, 0.05))
+        if AlgoNames.OldMemoizedCrazy in presets: 
+            self.algorithmData['oldMemoCrazy'] = DataProcessingInfo('Old Memoized Crazy', pd.DataFrame(columns=self.yValues, index=self.xValues, dtype=np.float64), (0.20, 1.00, 0.20), (0.05, 0.25, 0.05))
+        if AlgoNames.MemoizedNormal in presets: 
+            self.algorithmData['memoNormal'] = DataProcessingInfo('Memoized Normal', pd.DataFrame(columns=self.yValues, index=self.xValues, dtype=np.float64), (0.00, 0.12, 0.70), (0.00, 0.02, 0.10))
+        if AlgoNames.TabulatedCrazy in presets: 
+            self.algorithmData['tabCrazy'] = DataProcessingInfo('Tabulated Crazy', pd.DataFrame(columns=self.yValues, index=self.xValues, dtype=np.float64), (1.00, 1.00, 0.00), (0.10, 0.10, 0.00))
+        if AlgoNames.TabulatedNormal in presets: 
+            self.algorithmData['tabNormal'] = DataProcessingInfo('Tabulated Normal', pd.DataFrame(columns=self.yValues, index=self.xValues, dtype=np.float64), (0.70, 0.00, 0.00), (0.10, 0.00, 0.00))            
+        if AlgoNames.RecursiveNormal in presets: 
+            self.algorithmData['recurseNormal'] = DataProcessingInfo('Recursive Normal', pd.DataFrame(columns=self.yValues, index=self.xValues, dtype=np.float64), (0.60, 0.00, 0.50), (0.10, 0.00, 0.08))
 
     def appendData(self, results: ResultsWrapper) -> None:
         """

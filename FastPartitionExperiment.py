@@ -19,7 +19,7 @@ Made by bananathrowingmachine on Feb 16, 2026.
 """
 from experiment_code.ComplexityExperiment import ComplexityExperiment
 from data_processing_code.MainDataProcessor import MainDataProcessor
-from data_processing_code.MiscDataCode import ResultsWrapper, DisagreeData
+from data_processing_code.MiscDataCode import ResultsWrapper, DisagreeData, AlgoNames
 from data_processing_code.DisagreeProcessor import DisagreeProcessor
 
 from multiprocessing import Process, Queue, Event
@@ -65,9 +65,9 @@ def processData(queue: Queue, keepGoing, genFilesDir: Path, speedy: bool):
     :param queue: The data queue. Used to allow the computer to collect and process data simultaneously. Effectively the input of the method. Instantly calls the data processor when data is made available.
     """
     if speedy:
-        DataProcessor = MainDataProcessor(genFilesDir, (True, True, True, False, False, False, False))
+        DataProcessor = MainDataProcessor(genFilesDir, (AlgoNames.TargetSum, AlgoNames.NewMemoizedCrazy, AlgoNames.OldMemoizedCrazy))
     else:
-        DataProcessor = MainDataProcessor(genFilesDir)
+        DataProcessor = MainDataProcessor(genFilesDir, (AlgoNames.TargetSum, AlgoNames.NewMemoizedCrazy, AlgoNames.MemoizedNormal, AlgoNames.TabulatedCrazy, AlgoNames.TabulatedNormal, AlgoNames.RecursiveNormal))
     while keepGoing.is_set() or not queue.empty():
         try: 
             data = queue.get(timeout=0.25)
@@ -129,7 +129,7 @@ def main():
         keepGoing.clear() # Signals end of work to the data processor.
         print("Data collection has finished. Finishing up processing.")
         processor.join()
-        print("All processing has been completed. Closing.")
+        print("All processing has been completed. Exiting.")
         sys.exit(0)
 
 def buildCLibrary(parentDir: Path):
@@ -138,11 +138,10 @@ def buildCLibrary(parentDir: Path):
     
     :param targetDir: The folder for the C binaries.
     """
-    algorithms = ["MemoizedNormal", "NewMemoizedCrazy", "OldMemoizedCrazy", "RecursiveNormal", "TabulatedCrazy", "TabulatedNormal"]
     targetDir = parentDir / "c_bin"
     sourceDir = parentDir / "c"
     filesToClean = []
-    for name in algorithms:
+    for name in ["MemoizedNormal", "NewMemoizedCrazy", "OldMemoizedCrazy", "RecursiveNormal", "TabulatedCrazy", "TabulatedNormal"]:
         binary = next(targetDir.glob(f"_{name}.*.{'pyd' if os.name == 'nt' else 'so'}"), None)
         srcFile = sourceDir / f"{name}.c"
         if binary is None or srcFile.stat().st_mtime > binary.stat().st_mtime:

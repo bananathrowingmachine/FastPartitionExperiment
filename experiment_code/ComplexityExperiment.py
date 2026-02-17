@@ -3,13 +3,13 @@ Runs an experiment of integer count size for all versions of the algorithm.
 
 Written by bananathrowingmachine, Feb 16, 2026.
 """
-from data_processing_code.MiscDataCode import FullResultsDType, SpeedyResultsDType, DisagreeData
+from data_processing_code.MiscDataCode import FullResultsDType, SpeedyResultsDType, DisagreeData, AlgoNames
 import concurrent.futures as ThreadPool
 from multiprocessing import Manager
 import numpy as np
 from enum import IntEnum
 
-def worker(taskName: str, testList: list[int], runPython: bool) -> tuple[int, bool]:
+def worker(taskName: AlgoNames, testList: list[int], runPython: bool) -> tuple[int, bool]:
     """
     Worker function for the threads so that python can pickle everything.
     
@@ -39,7 +39,8 @@ def worker(taskName: str, testList: list[int], runPython: bool) -> tuple[int, bo
         from experiment_code.versions.c_bin._NewMemoizedCrazy import ffi
         testList = ffi.new("int[]", testList)
 
-    registry = {"oldMemoCrazy": OldMemoizedCrazy, "memoNormal": MemoizedNormal, "tabCrazy": TabulatedCrazy, "tabNormal": TabulatedNormal, "recurseNormal": RecursiveNormal, "newMemoCrazy": NewMemoizedCrazy}
+    registry = {AlgoNames.NewMemoizedCrazy: NewMemoizedCrazy, AlgoNames.OldMemoizedCrazy: OldMemoizedCrazy, AlgoNames.MemoizedNormal: MemoizedNormal, 
+                AlgoNames.TabulatedCrazy: TabulatedCrazy, AlgoNames.TabulatedNormal: TabulatedNormal, AlgoNames.RecursiveNormal: RecursiveNormal}
 
     if runPython:
         return registry[taskName].testIterations(testList) 
@@ -95,12 +96,12 @@ class ComplexityExperiment:
         self.runPython = inputArgs.python
         self.outputLevel = outLevel
         if self.runReduced:
-            self.tasks = ["oldMemoCrazy"]
+            self.tasks = [AlgoNames.OldMemoizedCrazy]
         else:
-            self.tasks = ["memoNormal", "tabCrazy", "tabNormal"]
+            self.tasks = [AlgoNames.MemoizedNormal, AlgoNames.TabulatedCrazy, AlgoNames.TabulatedNormal]
             if self.runRecurse:
-                self.tasks.append("recurseNormal")
-        self.tasks.append("newMemoCrazy")
+                self.tasks.append(AlgoNames.RecursiveNormal)
+        self.tasks.append(AlgoNames.NewMemoizedCrazy)
 
     @classmethod
     def testProblemSize(cls, size: int, inputArgs) -> tuple[np.ndarray, list[DisagreeData]]:
@@ -109,7 +110,7 @@ class ComplexityExperiment:
 
         :param size: The amount of seperate integers should be in a set sent to the algorithms. Commonly referred to as size. Stays constant throughtout a single class of the method.
         :param inputArgs: The command line arguments passed when the program started.
-        :return: A numpy array where each column is [targetSum], [newMemoCrazy], [memoNormal], [tabCrazy], [tabNormal], and [recurseNormal] in that order, and named, as well as the list of all recorded disagreements between algorithms.
+        :return: A numpy array where each column is [targetSum], [newMemoCrazy], [memoNormal], [tabCrazy], [tabNormal], and [recurseNormal] named in that order and the list of all recorded disagreements between algorithms.
         """
         if inputArgs.example:
             yapLevel = OutLevel.NONE
@@ -206,7 +207,7 @@ class ComplexityExperiment:
             if random.integers(0, 2) == 1: nextNum *= -1
             newSet.add(int(nextNum))
             devDiv = (14 - len(newSet) / self.setCount * 10)
-            standardDeviation = (6 * (2 * self.intSizeBound - abs(abs(nextNum) - mean))) / devDiv # Self adjusting standard deviation. Based on how far the last number was from the bounds, and how many numbers are left until set is filled.
+            standardDeviation = (6 * (2 * self.intSizeBound - abs(abs(nextNum) - mean))) / devDiv # Self adjusting standard deviation.
             if standardDeviation <= 0: # Rarely happens, will set the deviation to slightly lower than full with the current standard deviation.
                 standardDeviation = (self.intSizeBound * 1.5) / devDiv
 
@@ -253,7 +254,7 @@ class ComplexityExperiment:
         :return: A tuple with each variations average results in order, depending on if full results are being calculated and if recursiveNormal is being run.
         """
         if self.outputLevel >= OutLevel.SUM: print(f">>--:>-  Started tests for integer count {self.setCount:3} and absolute sum target index {targetIndex:2}. -<:--<<")
-        results = np.empty((50, 2 if self.runReduced else 5), dtype=np.int64)
+        results = np.empty((50, 2 if self.runReduced else 5), dtype=np.uint32)
         
         workerCount = 6 if self.runReduced else 3
         with ThreadPool.ProcessPoolExecutor(max_workers=workerCount) as outerPool:
@@ -276,19 +277,19 @@ class ComplexityExperiment:
             return (np.mean(results[:, 0]), np.mean(results[:, 1]))
         return (np.mean(results[:, 0]), np.mean(results[:, 1]), np.mean(results[:, 2]), np.mean(results[:, 3]), np.mean(results[:, 4]) if self.runRecurse else np.nan)
 
-    def runSingleTest(self, targetIndex: int, testNum: int) -> tuple[int, tuple[np.int64, np.int64, np.int64, np.int64, np.int64]] | tuple[int, tuple[np.int64, np.int64]]:
+    def runSingleTest(self, targetIndex: int, testNum: int) -> tuple[int, tuple[np.uint32, np.uint32, np.uint32, np.uint32, np.uint32]] | tuple[int, tuple[np.uint32, np.uint32]]:
         """
         Runs each algorithm once for the full version. Verifies all algorithms returned the same bool, and will record the parameters and which algorithm disagrees if not. Also returns the iteration count of each.
         Uses a python multithreading pool to run each version at the same time.
 
         :param targetIndex: The size target index of the set. Can be from 0->20 inclusive where 0 is smallest possible, 20 is largest possible, and everything else is increments of 5%.
         :param testNum: The test number (used solely for console output).
-        :return: A tuple of the testNum, and a inner tuple of the results in order New Memoized Crazy, Old Memoized Crazy, Memoized Normal, Tabulated Crazy, Tabulated Normal, Recursive Normal, with -1 given if Recursive Normal is too high.
+        :return: A tuple of the testNum, and a inner tuple of the results in order New Memoized Crazy, Old Memoized Crazy, Memoized Normal, Tabulated Crazy, Tabulated Normal and Recursive Normal, with 0 given if set size is too high.
         """
         if self.outputLevel >= OutLevel.BATCH: print(f":>-  Started test take {testNum:2} for specs {self.setCount:3} and {targetIndex:2}. -<:")
         testList = list(self.generateRandomSet(targetIndex))
-        officialNames = {"newMemoCrazy": "New Memoized Crazy", "oldMemoCrazy": "Old Memoized Crazy", "memoNormal": "   Memoized Normal", 
-                         "tabCrazy": "   Tabulated Crazy", "tabNormal": "  Tabulated Normal", "recurseNormal": "  Recursive Normal"}
+        officialNames = {AlgoNames.NewMemoizedCrazy: "New Memoized Crazy", AlgoNames.OldMemoizedCrazy: "Old Memoized Crazy", AlgoNames.MemoizedNormal: "   Memoized Normal", 
+                         AlgoNames.TabulatedCrazy: "   Tabulated Crazy", AlgoNames.TabulatedNormal: "  Tabulated Normal", AlgoNames.RecursiveNormal: "  Recursive Normal"}
     
         with ThreadPool.ProcessPoolExecutor(max_workers=len(self.tasks)) as innerPool:
             futures = {innerPool.submit(worker, name, testList, self.runPython): name for name in self.tasks}
@@ -299,16 +300,18 @@ class ComplexityExperiment:
                 results[name] = future.result()
 
         if self.runReduced:
-            xnor = [results["newMemoCrazy"][1], results["oldMemoCrazy"][1]]
+            xnor = [results[AlgoNames.OldMemoizedCrazy][1]]
         else:
-            xnor = [results["newMemoCrazy"][1], results["memoNormal"][1], results["tabCrazy"][1], results["tabNormal"][1]]
+            xnor = [results[AlgoNames.MemoizedNormal][1], results[AlgoNames.TabulatedCrazy][1], results[AlgoNames.TabulatedNormal][1]]
             if self.runRecurse: 
-                xnor.append(results["recurseNormal"][1])
+                xnor.append(results[AlgoNames.RecursiveNormal][1])
+        xnor.append(results[AlgoNames.NewMemoizedCrazy][1])
         if len(set(xnor)) > 1:
             with self.disagreeLock:
                 self.disagreeList.append(DisagreeData(xnor, self.setCount, targetIndex, testNum, self.sumSizeTarget[targetIndex], testList))
         
         if self.outputLevel >= OutLevel.BATCH: print(f":>- Finished test take {testNum:2} for specs {self.setCount:3} and {targetIndex:2}. -<:")
         if self.runReduced:
-            return testNum, (results["newMemoCrazy"][0], results["oldMemoCrazy"][0]) 
-        return testNum, (results["newMemoCrazy"][0], results["memoNormal"][0], results["tabCrazy"][0], results["tabNormal"][0], results["recurseNormal"][0] if self.runRecurse else -1) 
+            return testNum, (results[AlgoNames.NewMemoizedCrazy][0], results[AlgoNames.OldMemoizedCrazy][0]) 
+        return testNum, (results[AlgoNames.NewMemoizedCrazy][0], results[AlgoNames.MemoizedNormal][0], results[AlgoNames.TabulatedCrazy][0], 
+                         results[AlgoNames.TabulatedNormal][0], results[AlgoNames.RecursiveNormal][0] if self.runRecurse else 0) 
