@@ -1,7 +1,7 @@
 /**
  * Input and output structs/function for the C versions.
  *
- * Made by bananathrowingmachine of Feb 16, 2024
+ * Made by bananathrowingmachine of Feb 17, 2024
  */
 
 typedef struct Constants {
@@ -16,6 +16,11 @@ typedef struct Output {
   bool result;
 } Output;
 
+/**
+ * Tests the iteration count of the algorithm it shares a file with.
+ *
+ * @param inputList List of integers to be tested on.
+ * @param listLength Length of the list given above.
+ * @returns Struct of the iteration count followed by a boolean on if the input can be partitioned.
+ */
 Output testIterations(int* inputList, int listLength);
-
-static bool subsetSum(Constants* constants, int index, int goal, int* iterationCount);

@@ -2,11 +2,13 @@
  * NewMemoizedCrazy.py written completely in C. For more information check there.
  * NOT IMPLEMENTED YET THIS JUST PUTS THE ARRAYS SUM IN ITERATIONCOUNT AND RETURNS TRUE (used for C->Python testing)
  *
- * Made by bananathrowingmachine on Feb 16, 2026.
+ * Made by bananathrowingmachine on Feb 17, 2026.
  */
 #include <khash.h>
 #include <stdbool.h>
 #include <typedefs.h>
+
+static bool subsetSum(Constants* constants, int index, int goal, int* iterationCount);
 
 /**
  * Tests the iteration count of a basic recursive partition algorithm.

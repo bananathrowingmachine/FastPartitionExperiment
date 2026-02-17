@@ -1,15 +1,16 @@
 /**
- * RecursiveNormal.py written completely in C. For more information check there.
- * NOT IMPLEMENTED YET THIS JUST PUTS THE ARRAYS SUM IN ITERATIONCOUNT AND RETURNS TRUE (used for C->Python testing)
+ * Solves the partition problem by inputting half the inputs sum into a Subset Sum recursive algorithm that can handle negative numbers. Extremely slow.
  *
- * Made by bananathrowingmachine on Feb 16, 2026.
+ * This is literally just Jeff Erickson's Subset Sum recursive formula with a single condition change from goal below 0 to goal out of bounds
+ * His algorithm can be found in Chapter 2, page 77 and Chapter 3, page 116 in his free online algorithms textbook located here: http://algorithms.wtf/
+ *
+ * Made by bananathrowingmachine on Feb 17, 2026.
  */
 #include <stdbool.h>
 #include <typedefs.h>
 
-/**
- * Tests the iteration count of a basic recursive partition algorithm.
- */
+static bool subsetSum(Constants* constants, int index, int goal, int* iterationCount);
+
 Output testIterations(int* inputList, int listLength) {
   Constants constants;
   constants.inputList = inputList;
@@ -27,12 +28,22 @@ Output testIterations(int* inputList, int listLength) {
 }
 
 /**
- * Solves the subset sum problem recursively.
- * NOT IMPLEMENTED YET THIS JUST PUTS THE ARRAYS ABSOLUTE SUM IN ITERATIONCOUNT AND RETURNS TRUE (used for C->Python testing)
+ * Simple, recursive, subset sum algorithm in C. It tries to get the goal to 0 by either subtracting on skipping the next element in the input array.
+ *
+ * @param constants Pointer to the constants throughtout execution such as the input list.
+ * @param index The current index.
+ * @param goal The current goal.
+ * @param iterationCount Pointer to the algorithm iteration count.
  */
 static bool subsetSum(Constants* constants, int index, int goal, int* iterationCount) {
-  for (int i = 0; i < constants->listLength; i++)
-    *iterationCount += abs(constants->inputList[i]);
-  *iterationCount *= 6;
-  return true;
+  if (goal == 0)
+    return true;
+  if (index >= constants->listLength)
+    return false;
+  iterationCount++;
+  int nextGoal = goal - constants->inputList[index];
+  index++;
+  if (nextGoal > constants->posSum || nextGoal < constants->negSum)
+    return subsetSum(constants, index, goal, iterationCount);
+  return subsetSum(constants, index, goal, iterationCount) || subsetSum(constants, index, nextGoal, iterationCount);
 }
