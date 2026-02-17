@@ -3,6 +3,7 @@
  *
  * Made by bananathrowingmachine of Feb 17, 2024
  */
+#include <stdint.h>
 
 typedef struct Constants {
   int* inputList;
@@ -13,7 +14,7 @@ typedef struct Constants {
 
 typedef struct Output {
   int iterationCount;
-  bool result;
+  uint8_t result;
 } Output;
 
 /**

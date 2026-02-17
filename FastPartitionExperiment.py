@@ -15,7 +15,7 @@ It will then send the packaged data completely unmodified to the data processing
 Once in the data processing code, the processor will unpack the data, processes it, and then once done will return back to the orchestrator, waiting for another chunk of data.
 Was designed to have as little code as possible to help my non comp sci major friend who does know how to graph in python.
 
-Made by bananathrowingmachine on Feb 16, 2026.
+Made by bananathrowingmachine on Feb 17, 2026.
 """
 from experiment_code.ComplexityExperiment import ComplexityExperiment
 from data_processing_code.MainDataProcessor import MainDataProcessor
@@ -164,12 +164,12 @@ def buildCLibrary(parentDir: Path):
         srcFile = sourceDir / f"{name}.c"
         if binary is None or srcFile.stat().st_mtime > binary.stat().st_mtime:
             ffibuilder = FFI()
-            ffibuilder.cdef("""
-                typedef _Bool bool;
+            ffibuilder.cdef(""" 
+                typedef unsigned char uint8_t;
                             
                 typedef struct {
                     int iterationCount;
-                    bool result;
+                    uint8_t result;
                 } Output;
 
                 Output testIterations(int* inputList, int listLength);

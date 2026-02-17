@@ -6,10 +6,9 @@
  *
  * Made by bananathrowingmachine on Feb 17, 2026.
  */
-#include <stdbool.h>
 #include <typedefs.h>
 
-static bool subsetSum(Constants* constants, int index, int goal, int* iterationCount);
+static uint8_t subsetSum(Constants* constants, int index, int goal, int* iterationCount);
 
 Output testIterations(int* inputList, int listLength) {
   Constants constants;
@@ -35,12 +34,12 @@ Output testIterations(int* inputList, int listLength) {
  * @param goal The current goal.
  * @param iterationCount Pointer to the algorithm iteration count.
  */
-static bool subsetSum(Constants* constants, int index, int goal, int* iterationCount) {
+static uint8_t subsetSum(Constants* constants, int index, int goal, int* iterationCount) {
   if (goal == 0)
-    return true;
+    return 1;
   if (index >= constants->listLength)
-    return false;
-  iterationCount++;
+    return 0;
+  *(iterationCount)++;
   int nextGoal = goal - constants->inputList[index];
   index++;
   if (nextGoal > constants->posSum || nextGoal < constants->negSum)

@@ -1,11 +1,13 @@
 /**
- * TabulatedNormal.py written completely in C. For more information check there.
+ * Solves the partition problem using a bottom up dynamic programming algorithm, which is an algorithm that iteratively fills a list of subproblems in reverse order to then end at the answer.
  * NOT IMPLEMENTED YET THIS JUST PUTS THE ARRAYS SUM IN ITERATIONCOUNT AND RETURNS TRUE (used for C->Python testing)
  *
- * Made by bananathrowingmachine on Feb 16, 2026.
+ * Made by bananathrowingmachine on Feb 17, 2026.
  */
-#include <stdbool.h>
+#include <immintrin.h>
 #include <typedefs.h>
+
+static Output partition(Constants* constants, int index, int goal);
 
 /**
  * Tests the iteration count of a basic recursive partition algorithm.
@@ -20,19 +22,36 @@ Output testIterations(int* inputList, int listLength) {
     else
       constants.negSum += inputList[i];
   }
-  Output output;
-  output.iterationCount = 0;
-  output.result = subsetSum(&constants, 0, (constants.posSum + constants.negSum) / 2, &output.iterationCount);
-  return output;
+  return partition(&constants, 0, (constants.posSum + constants.negSum) / 2);
 }
 
 /**
- * Solves the subset sum problem recursively.
- * NOT IMPLEMENTED YET THIS JUST PUTS THE ARRAYS ABSOLUTE SUM IN ITERATIONCOUNT AND RETURNS TRUE (used for C->Python testing)
+ * Solves the partition problem with vectorized dynamic programming.
  */
-static bool subsetSum(Constants* constants, int index, int goal, int* iterationCount) {
+static Output partition(Constants* constants, int index, int goal) {
+  int sumRange = constants->posSum - constants->negSum + 1;
+  // uint8_t prev[sumRange];
+
+  Output output;
   for (int i = 0; i < constants->listLength; i++)
-    *iterationCount += abs(constants->inputList[i]);
-  *iterationCount *= 5;
-  return true;
+    output.iterationCount += abs(constants->inputList[i]);
+  output.iterationCount *= 5;
+  // output.result = 1;
+  return output;
+  /**
+   * python example array before and after
+   * [[None, None, None, None, None, None, None, None, None, None, None],
+   * [None, None, None, None, None, None, None, None, None, None, None],
+   * [None, None, None, None, None, None, None, None, None, None, None],
+   * [None, None, None, None, None, None, None, None, None, None, None],
+   * [None, None, None, None, None, None, None, None, None, None, None],
+   * [True, False, False, False, False, False, False, False, False, False, False]]
+   *
+   * [[True, True, True, True, True, True, True, True, True, True, True],
+   * [True, True, True, False, True, True, False, False, True, True, False],
+   * [True, True, False, False, True, True, False, False, False, False, False],
+   * [True, True, False, False, True, True, False, False, False, False, False],
+   * [True, True, False, False, False, False, False, False, False, False, False],
+   * [True, False, False, False, False, False, False, False, False, False, False]]
+   */
 }

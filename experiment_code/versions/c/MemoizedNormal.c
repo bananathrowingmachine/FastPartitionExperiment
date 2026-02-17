@@ -5,10 +5,9 @@
  * Made by bananathrowingmachine on Feb 17, 2026.
  */
 #include <khash.h>
-#include <stdbool.h>
 #include <typedefs.h>
 
-static bool subsetSum(Constants* constants, int index, int goal, int* iterationCount);
+static uint8_t subsetSum(Constants* constants, int index, int goal, int* iterationCount);
 
 /**
  * Tests the iteration count of a basic recursive partition algorithm. gg
@@ -33,9 +32,9 @@ Output testIterations(int* inputList, int listLength) {
  * Solves the subset sum problem recursively.
  * NOT IMPLEMENTED YET THIS JUST PUTS THE ARRAYS ABSOLUTE SUM IN ITERATIONCOUNT AND RETURNS TRUE (used for C->Python testing)
  */
-static bool subsetSum(Constants* constants, int index, int goal, int* iterationCount) {
+static uint8_t subsetSum(Constants* constants, int index, int goal, int* iterationCount) {
   for (int i = 0; i < constants->listLength; i++)
     *iterationCount += abs(constants->inputList[i]);
   *iterationCount *= 3;
-  return true;
+  return 1;
 }
