@@ -67,7 +67,8 @@ def processData(queue: Queue, keepGoing, genFilesDir: Path, speedy: bool):
     if speedy:
         DataProcessor = MainDataProcessor(genFilesDir, (AlgoNames.TargetSum, AlgoNames.NewMemoizedCrazy, AlgoNames.OldMemoizedCrazy))
     else:
-        DataProcessor = MainDataProcessor(genFilesDir, (AlgoNames.TargetSum, AlgoNames.NewMemoizedCrazy, AlgoNames.MemoizedNormal, AlgoNames.TabulatedCrazy, AlgoNames.TabulatedNormal, AlgoNames.RecursiveNormal))
+        # (AlgoNames.TargetSum, AlgoNames.NewMemoizedCrazy, AlgoNames.MemoizedNormal, AlgoNames.TabulatedCrazy, AlgoNames.TabulatedNormal, AlgoNames.RecursiveNormal)
+        DataProcessor = MainDataProcessor(genFilesDir, (AlgoNames.NewMemoizedCrazy, AlgoNames.MemoizedNormal, AlgoNames.TabulatedCrazy, AlgoNames.TabulatedNormal))
     while keepGoing.is_set() or not queue.empty():
         try: 
             data = queue.get(timeout=0.25)

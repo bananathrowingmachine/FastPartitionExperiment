@@ -37,19 +37,19 @@ class MainDataProcessor:
         
         self.algorithmData: dict[str, DataProcessingInfo] = {}
         if AlgoNames.TargetSum in presets: 
-            self.algorithmData['targetSum'] = DataProcessingInfo('Absolute Target Sum', pd.DataFrame(columns=self.yValues, index=self.xValues, dtype=np.int64), None, None)
+            self.algorithmData[AlgoNames.TargetSum] = DataProcessingInfo('Absolute Target Sum', pd.DataFrame(columns=self.yValues, index=self.xValues, dtype=np.int64), None, None)
         if AlgoNames.NewMemoizedCrazy in presets: 
-            self.algorithmData['newMemoCrazy'] = DataProcessingInfo('New Memoized Crazy', pd.DataFrame(columns=self.yValues, index=self.xValues, dtype=np.float64), (0.00, 0.40, 0.20), (0.00, 0.10, 0.05))
+            self.algorithmData[AlgoNames.NewMemoizedCrazy] = DataProcessingInfo('New Memoized Crazy', pd.DataFrame(columns=self.yValues, index=self.xValues, dtype=np.float64), (0.00, 0.40, 0.20), (0.00, 0.10, 0.05))
         if AlgoNames.OldMemoizedCrazy in presets: 
-            self.algorithmData['oldMemoCrazy'] = DataProcessingInfo('Old Memoized Crazy', pd.DataFrame(columns=self.yValues, index=self.xValues, dtype=np.float64), (0.20, 1.00, 0.20), (0.05, 0.25, 0.05))
+            self.algorithmData[AlgoNames.OldMemoizedCrazy] = DataProcessingInfo('Old Memoized Crazy', pd.DataFrame(columns=self.yValues, index=self.xValues, dtype=np.float64), (0.20, 1.00, 0.20), (0.05, 0.25, 0.05))
         if AlgoNames.MemoizedNormal in presets: 
-            self.algorithmData['memoNormal'] = DataProcessingInfo('Memoized Normal', pd.DataFrame(columns=self.yValues, index=self.xValues, dtype=np.float64), (0.00, 0.12, 0.70), (0.00, 0.02, 0.10))
+            self.algorithmData[AlgoNames.MemoizedNormal] = DataProcessingInfo('Memoized Normal', pd.DataFrame(columns=self.yValues, index=self.xValues, dtype=np.float64), (0.00, 0.12, 0.70), (0.00, 0.02, 0.10))
         if AlgoNames.TabulatedCrazy in presets: 
-            self.algorithmData['tabCrazy'] = DataProcessingInfo('Tabulated Crazy', pd.DataFrame(columns=self.yValues, index=self.xValues, dtype=np.float64), (1.00, 1.00, 0.00), (0.10, 0.10, 0.00))
+            self.algorithmData[AlgoNames.TabulatedCrazy] = DataProcessingInfo('Tabulated Crazy', pd.DataFrame(columns=self.yValues, index=self.xValues, dtype=np.float64), (1.00, 1.00, 0.00), (0.10, 0.10, 0.00))
         if AlgoNames.TabulatedNormal in presets: 
-            self.algorithmData['tabNormal'] = DataProcessingInfo('Tabulated Normal', pd.DataFrame(columns=self.yValues, index=self.xValues, dtype=np.float64), (0.70, 0.00, 0.00), (0.10, 0.00, 0.00))            
+            self.algorithmData[AlgoNames.TabulatedNormal] = DataProcessingInfo('Tabulated Normal', pd.DataFrame(columns=self.yValues, index=self.xValues, dtype=np.float64), (0.70, 0.00, 0.00), (0.10, 0.00, 0.00))            
         if AlgoNames.RecursiveNormal in presets: 
-            self.algorithmData['recurseNormal'] = DataProcessingInfo('Recursive Normal', pd.DataFrame(columns=self.yValues, index=self.xValues, dtype=np.float64), (0.60, 0.00, 0.50), (0.10, 0.00, 0.08))
+            self.algorithmData[AlgoNames.RecursiveNormal] = DataProcessingInfo('Recursive Normal', pd.DataFrame(columns=self.yValues, index=self.xValues, dtype=np.float64), (0.60, 0.00, 0.50), (0.10, 0.00, 0.08))
 
     def appendData(self, results: ResultsWrapper) -> None:
         """
@@ -61,7 +61,7 @@ class MainDataProcessor:
         rawData = results.RawData   
         
         for algoName in self.algorithmData.keys():
-            if algoName == 'recurseNormal' and results.RecurseEstimate is not None:
+            if algoName == AlgoNames.RecursiveNormal and results.RecurseEstimate is not None:
                 yData = np.array([results.RecurseEstimate for _ in range(21)])
             else:
                 yData = np.array([row[algoName] for row in rawData])
@@ -105,7 +105,7 @@ class MainDataProcessor:
 
             self.outputTableData()
                 
-            if algoName != 'targetSum':
+            if algoName != AlgoNames.TargetSum:
 
                 # To show off the numbers increasing better, this code swaps the x and y axis, and then reverses the new x axis.
                 x, y = np.meshgrid(self.xValues, self.yValues)
@@ -113,7 +113,7 @@ class MainDataProcessor:
                 fig = plt.figure()
                 ax = fig.add_subplot(111, projection = '3d')
 
-                if algoName == 'recurseNormal': # Does all the special handling needed for the exponential time Recursive Normal algorithm.
+                if algoName == AlgoNames.RecursiveNormal: # Does all the special handling needed for the exponential time Recursive Normal algorithm.
                     mask = x.ravel() > 25  
 
                     xPre = x.ravel()[~mask]
