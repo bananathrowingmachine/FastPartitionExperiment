@@ -1,6 +1,6 @@
 """
 Main orchestrator for all the moving parts. Is also where the main function is located and is therefore what needs to run to run the entire program.
-This program on a deeper level will delete the output subdirectories if they exist, recreate them (to clean out all old data), gets the necessary user input, then will run the data collector and processor, and move the data between the two.
+This program on a deeper level will delete the output subdirectories if they exist, recreate them (to clean out all old data), gets the necessary user input, then will run the data collector and processor, and move data around.
 Both the data collector and the data processor run on independent threads, and the complexity experiment will actually run multiple parallel threads as well.
 
 Details on the data collector:
@@ -41,25 +41,30 @@ def collectData(queue: Queue, args):
     :param queue: The data queue. Used to allow the computer to collect and process data simultaneously. Effectively the output of the method.
     :param args: The command line arguments passed when the program started.
     """
+    sheets = None
     if args.example:
         import pandas as pd
         import urllib.error
         try:
             if args.reduced:
-                fileLink = 'https://github.com/bananathrowingmachine/FastPartitionExperimentDocs/blob/main/Previous%20Results/Speedy%20Runs/Nov%2023%2C%202025%20r1/data_tables/Results.xlsx?raw=true'
+                excelFile = pd.ExcelFile('https://github.com/bananathrowingmachine/FastPartitionExperimentDocs/blob/main/Previous%20Results/Speedy%20Runs/Nov%2023%2C%202025%20r1/data_tables/Results.xlsx?raw=true')
+                sheets = [pd.read_excel(excelFile, sheet_name='New Memoized Crazy'), pd.read_excel(excelFile, sheet_name='Old Memoized Crazy')]
             else:
-                fileLink = 'https://github.com/bananathrowingmachine/FastPartitionExperimentDocs/blob/main/Previous%20Results/Full%20Runs/May%2026%2C%202025/data_tables/Results.xlsx?raw=true'
-            dataFrame = pd.ExcelFile(fileLink)
+                excelFile = pd.ExcelFile('https://github.com/bananathrowingmachine/FastPartitionExperimentDocs/blob/main/Previous%20Results/Full%20Runs/May%2026%2C%202025/data_tables/Results.xlsx?raw=true')
+                sheets = [pd.read_excel(excelFile, sheet_name='Memoized Crazy'), pd.read_excel(excelFile, sheet_name='Memoized Normal'), pd.read_excel(excelFile, sheet_name='Tabulated Crazy'), 
+                          pd.read_excel(excelFile, sheet_name='Tabulated Normal'), pd.read_excel(excelFile, sheet_name='Recursive Normal')]
+            
         except (urllib.error.URLError, ConnectionError):
-            dataFrame = None
-            print('Could not download previous data from the internet. Resorting to fallback of randomly generated data.')
+            print('()~~}|[==>>--:>-    Could not download data. Resorting to generating random data.    -<:--<<==]|{~~()')
+    else:
+        print("|[==>>--:>- ============================================================================= -<:--<<==]|")
     noDisagrees = True
     for n in range(1, 21):
         size = n * 5
         try:
-            fullResults = ComplexityExperiment.testProblemSize(size, args, dataFrame)
+            fullResults = ComplexityExperiment.testProblemSize(size, args, sheets)
         except:
-            print("Test process crashed. Terminating.")
+            print("()~~}|[==>>--:>-                  Test process crashed. Terminating.                 -<:--<<==]|{~~()")
             raise
         results = fullResults[0]
         queue.put(ResultsWrapper(size, None if size <= 25 else 2 ** size, results))
@@ -107,7 +112,7 @@ def main():
     parser = argparse.ArgumentParser(description="Driver/main for my partition algorithm complexity experiment.", add_help=False)
     parser.add_argument('-h', '--help', action='help', default=argparse.SUPPRESS, help='Show this help message and exit. No files or folders will be created or deleted.')
     parser.add_argument('-c', '--clean', action='store_true', help="Clean then C binaries then exits. If used with --python, all __pycache__ will be cleaned as well.")
-    parser.add_argument('-e', '--example', action='store_true', help="Output example data downloaded from GitHub if online, or randomly generated data if offline. Will not attempt to compile C binaries or run any algorithm version.")
+    parser.add_argument('-e', '--example', action='store_true', help="Output old/outdated example data downloaded from GitHub if online, or randomly generated data if offline. Will not attempt to compile C binaries.")
     parser.add_argument('-r', '--reduced', action='store_true', help="Run the reduced test suite. If used with --example will output example data of the reduced test suite.")
     parser.add_argument('-p', '--python', action='store_true', help="Run the Python versions of the algorithms instead of the C versions. Will not attempt to compile C binaries.")
     args = parser.parse_args()
@@ -140,9 +145,9 @@ def main():
         processor.start()
         collector.join()
         keepGoing.clear() # Signals end of work to the data processor.
-        print("Data collection has finished. Finishing up processing.")
+        print("()~~}|[==>>--:>-        Data collection has finished. Finishing up processing.       -<:--<<==]|{~~()")
         processor.join()
-        print("All processing has been completed. Exiting.")
+        print("()~~}|[==>>--:>-              All processing has been completed. Exiting.            -<:--<<==]|{~~()")
         sys.exit(0)
 
 def buildCLibrary(parentDir: Path):

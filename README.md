@@ -6,11 +6,11 @@ To run the program use python3 on FastPartitionExperiment.py. The current set of
 options:\
   -h, --help -> Show this help message and exit. No files or folders will be created or deleted.\
   -c, --clean -> Clean then C binaries then exits. If used with --python, all \_\_pycache\_\_ will be cleaned as well.\
-  -e, --example -> Output example data downloaded from GitHub if online, or randomly generated data if offline. Will not attempt to compile C binaries or run any algorithm version.\
+  -e, --example -> Output old/outdated example data downloaded from GitHub if online, or randomly generated data if offline. Will not attempt to compile C binaries.\
   -r, --reduced -> Run the reduced test suite. If used with --example will output example data of the reduced test suite.\
   -p, --python -> Run the Python versions of the algorithms instead of the C versions. Will not attempt to compile C binaries.
 
-NOTE: Running this program will always wipe previously recorded data, including graphs, data tables, and solution conflicts. If you want to save any previous data move it out of the generated files directory before running the program. This program will also automatically create any pycache or C binary files if they will be needed as well as folders for them.
+NOTE: Running this program will always wipe previously recorded data, including graphs, data tables, and solution conflicts. If you want to save any previous data move it out of the generated files directory before running the program. 
 
 For a saved version of the generated data, as well as other documents relating to stress testing with worse case scenarios check out my misc files repository for this project found [here.](https://github.com/bananathrowingmachine/FastPartitionExperimentDocs)
 
