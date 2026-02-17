@@ -8,7 +8,7 @@ His version can be found in Chapter 3, pages 116 and 117 in his free online algo
 
 Made by bananathrowingmachine on May 9th, 2025.
 """
-def testIterations(inputList: list[int], _) -> tuple[int, bool]:
+def testIterations(inputList: list[int]) -> tuple[int, bool]:
     """
     Finds a few details about the input set then send it off to partition and returns it's answer directly. Since this algorithm is not recursive, absolutely no need to make the wrapper class like for the others.
 

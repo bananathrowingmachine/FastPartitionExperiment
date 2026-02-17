@@ -29,7 +29,7 @@ class MemoizedNormal:
         self.negSum = negSum
 
     @classmethod
-    def testIterations(cls, inputList: list[int], _) -> tuple[int, bool]:
+    def testIterations(cls, inputList: list[int]) -> tuple[int, bool]:
         """
         Tests the iteration count of a partition algorithm that uses top down dynamic programming to allow it solve given inputs quicker.
 

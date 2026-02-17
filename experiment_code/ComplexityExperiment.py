@@ -1,20 +1,50 @@
 """
 Runs an experiment of integer count size for all versions of the algorithm.
 
-Written by bananathrowingmachine, Feb 11, 2026.
+Written by bananathrowingmachine, Feb 16, 2026.
 """
-from experiment_code.versions.python.MemoizedNormal import MemoizedNormal
-from experiment_code.versions.python.OldMemoizedCrazy import OldMemoizedCrazy
-from experiment_code.versions.python.NewMemoizedCrazy import NewMemoizedCrazy
-import experiment_code.versions.python.TabulatedCrazy as TabulatedCrazy
-import experiment_code.versions.python.TabulatedNormal as TabulatedNormal
-from experiment_code.versions.python.RecursiveNormal import RecursiveNormal
-
 from data_processing_code.MiscDataCode import FullResultsDType, SpeedyResultsDType, DisagreeData
 import concurrent.futures as ThreadPool
 from multiprocessing import Manager
 import numpy as np
 from enum import IntEnum
+
+def worker(taskName: str, testList: list[int], runPython: bool) -> tuple[int, bool]:
+    """
+    Worker function for the threads so that python can pickle everything.
+    
+    :param taskName: The name of the task
+    :type taskName: str
+    :param testList: The list to be tested
+    :type testList: list[int]
+    :param runPython: Boolean on running the Python versions instead of the C versions
+    :type runPython: bool
+    :return: The result of the experiment, with the iteration count and then if the list is partitionable
+    :rtype: tuple[int, bool]
+    """
+    if runPython: # luckily python only imports stuff once and then just reuses the pointers
+        from experiment_code.versions.python.MemoizedNormal import MemoizedNormal
+        from experiment_code.versions.python.OldMemoizedCrazy import OldMemoizedCrazy
+        from experiment_code.versions.python.NewMemoizedCrazy import NewMemoizedCrazy
+        import experiment_code.versions.python.TabulatedCrazy as TabulatedCrazy
+        import experiment_code.versions.python.TabulatedNormal as TabulatedNormal
+        from experiment_code.versions.python.RecursiveNormal import RecursiveNormal
+    else:
+        from experiment_code.versions.c_bin._MemoizedNormal import lib as MemoizedNormal
+        from experiment_code.versions.c_bin._OldMemoizedCrazy import lib as OldMemoizedCrazy
+        from experiment_code.versions.c_bin._NewMemoizedCrazy import lib as NewMemoizedCrazy
+        from experiment_code.versions.c_bin._TabulatedCrazy import lib as TabulatedCrazy
+        from experiment_code.versions.c_bin._TabulatedNormal import lib as TabulatedNormal
+        from experiment_code.versions.c_bin._RecursiveNormal import lib as RecursiveNormal
+        from experiment_code.versions.c_bin._NewMemoizedCrazy import ffi
+        testList = ffi.new("int[]", testList)
+
+    registry = {"oldMemoCrazy": OldMemoizedCrazy, "memoNormal": MemoizedNormal, "tabCrazy": TabulatedCrazy, "tabNormal": TabulatedNormal, "recurseNormal": RecursiveNormal, "newMemoCrazy": NewMemoizedCrazy}
+
+    if runPython:
+        return registry[taskName].testIterations(testList) 
+    result = registry[taskName].testIterations(testList, len(testList)) 
+    return (int(result.iterationCount), bool(result.result))
 
 class OutLevel(IntEnum):
     """
@@ -63,8 +93,14 @@ class ComplexityExperiment:
         self.disagreeLock = Manager().Lock()
         self.runReduced = inputArgs.reduced
         self.runPython = inputArgs.python
-
         self.outputLevel = outLevel
+        if self.runReduced:
+            self.tasks = ["oldMemoCrazy"]
+        else:
+            self.tasks = ["memoNormal", "tabCrazy", "tabNormal"]
+            if self.runRecurse:
+                self.tasks.append("recurseNormal")
+        self.tasks.append("newMemoCrazy")
 
     @classmethod
     def testProblemSize(cls, size: int, inputArgs) -> tuple[np.ndarray, list[DisagreeData]]:
@@ -254,22 +290,8 @@ class ComplexityExperiment:
         officialNames = {"newMemoCrazy": "New Memoized Crazy", "oldMemoCrazy": "Old Memoized Crazy", "memoNormal": "   Memoized Normal", 
                          "tabCrazy": "   Tabulated Crazy", "tabNormal": "  Tabulated Normal", "recurseNormal": "  Recursive Normal"}
     
-        if self.runReduced:
-            workers = 2
-        elif self.runRecurse:
-            workers = 5
-        else:
-            workers = 4
-        with ThreadPool.ProcessPoolExecutor(max_workers=workers) as innerPool:
-            if self.runReduced:
-                futures = {innerPool.submit(NewMemoizedCrazy.testIterations, testList, self.setCount): "newMemoCrazy", 
-                       innerPool.submit(OldMemoizedCrazy.testIterations, testList, self.setCount): "oldMemoCrazy"}
-            else:
-                futures = {innerPool.submit(NewMemoizedCrazy.testIterations, testList, self.setCount): "newMemoCrazy", 
-                        innerPool.submit(MemoizedNormal.testIterations, testList, self.setCount): "memoNormal", 
-                        innerPool.submit(TabulatedCrazy.testIterations, testList, self.setCount): "tabCrazy", 
-                        innerPool.submit(TabulatedNormal.testIterations, testList, self.setCount): "tabNormal"}
-                if self.runRecurse: futures[innerPool.submit(RecursiveNormal.testIterations, testList, self.setCount)] = "recurseNormal"
+        with ThreadPool.ProcessPoolExecutor(max_workers=len(self.tasks)) as innerPool:
+            futures = {innerPool.submit(worker, name, testList, self.runPython): name for name in self.tasks}
             results = {}
             for future in ThreadPool.as_completed(futures):
                 name = futures[future]

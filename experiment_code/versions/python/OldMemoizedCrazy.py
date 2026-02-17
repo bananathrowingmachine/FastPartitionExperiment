@@ -23,7 +23,7 @@ class OldMemoizedCrazy:
         self.answerMap: dict[tuple[int, int], bool] = {}
 
     @classmethod
-    def testIterations(cls, inputList: list[int], _) -> tuple[int, bool]:
+    def testIterations(cls, inputList: list[int]) -> tuple[int, bool]:
         """
         Tests the iteration count of a very slightly modified subset sum that uses top down dynamic programming with a bit of extra input and output code to produce an answer to partition for the same input.
 

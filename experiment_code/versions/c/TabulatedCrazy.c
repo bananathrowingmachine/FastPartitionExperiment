@@ -28,11 +28,11 @@ Output testIterations(int* inputList, int listLength) {
 
 /**
  * Solves the subset sum problem recursively.
- * NOT IMPLEMENTED YET THIS JUST PUTS THE ARRAYS SUM IN ITERATIONCOUNT AND RETURNS TRUE (used for C->Python testing)
+ * NOT IMPLEMENTED YET THIS JUST PUTS THE ARRAYS ABSOLUTE SUM IN ITERATIONCOUNT AND RETURNS TRUE (used for C->Python testing)
  */
 static bool subsetSum(Constants* constants, int index, int goal, int* iterationCount) {
   for (int i = 0; i < constants->listLength; i++)
-    *iterationCount += constants->inputList[i];
+    *iterationCount += abs(constants->inputList[i]);
   *iterationCount *= 4;
   return true;
 }
