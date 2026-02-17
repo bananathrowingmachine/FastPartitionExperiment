@@ -41,11 +41,23 @@ def collectData(queue: Queue, args):
     :param queue: The data queue. Used to allow the computer to collect and process data simultaneously. Effectively the output of the method.
     :param args: The command line arguments passed when the program started.
     """
+    if args.example:
+        import pandas as pd
+        import urllib.error
+        try:
+            if args.reduced:
+                fileLink = 'https://github.com/bananathrowingmachine/FastPartitionExperimentDocs/blob/main/Previous%20Results/Speedy%20Runs/Nov%2023%2C%202025%20r1/data_tables/Results.xlsx?raw=true'
+            else:
+                fileLink = 'https://github.com/bananathrowingmachine/FastPartitionExperimentDocs/blob/main/Previous%20Results/Full%20Runs/May%2026%2C%202025/data_tables/Results.xlsx?raw=true'
+            dataFrame = pd.ExcelFile(fileLink)
+        except (urllib.error.URLError, ConnectionError):
+            dataFrame = None
+            print('Could not download previous data from the internet. Resorting to fallback of randomly generated data.')
     noDisagrees = True
     for n in range(1, 21):
         size = n * 5
         try:
-            fullResults = ComplexityExperiment.testProblemSize(size, args)
+            fullResults = ComplexityExperiment.testProblemSize(size, args, dataFrame)
         except:
             print("Test process crashed. Terminating.")
             raise
@@ -67,8 +79,7 @@ def processData(queue: Queue, keepGoing, genFilesDir: Path, speedy: bool):
     if speedy:
         DataProcessor = MainDataProcessor(genFilesDir, (AlgoNames.TargetSum, AlgoNames.NewMemoizedCrazy, AlgoNames.OldMemoizedCrazy))
     else:
-        # (AlgoNames.TargetSum, AlgoNames.NewMemoizedCrazy, AlgoNames.MemoizedNormal, AlgoNames.TabulatedCrazy, AlgoNames.TabulatedNormal, AlgoNames.RecursiveNormal)
-        DataProcessor = MainDataProcessor(genFilesDir, (AlgoNames.NewMemoizedCrazy, AlgoNames.MemoizedNormal, AlgoNames.TabulatedCrazy, AlgoNames.TabulatedNormal))
+        DataProcessor = MainDataProcessor(genFilesDir, (AlgoNames.TargetSum, AlgoNames.NewMemoizedCrazy, AlgoNames.MemoizedNormal, AlgoNames.TabulatedCrazy, AlgoNames.TabulatedNormal, AlgoNames.RecursiveNormal))
     while keepGoing.is_set() or not queue.empty():
         try: 
             data = queue.get(timeout=0.25)
@@ -93,10 +104,11 @@ def main():
 
     Do note that this program will also wipe all previously generated graphs, data tables, and recorded solution conflicts when run.
     """
-    parser = argparse.ArgumentParser(description="Driver/main for my partition algorithm complexity experiment.")
+    parser = argparse.ArgumentParser(description="Driver/main for my partition algorithm complexity experiment.", add_help=False)
+    parser.add_argument('-h', '--help', action='help', default=argparse.SUPPRESS, help='Show this help message and exit. No files or folders will be created or deleted.')
     parser.add_argument('-c', '--clean', action='store_true', help="Clean then C binaries then exits. If used with --python, all __pycache__ will be cleaned as well.")
-    parser.add_argument('-e', '--example', action='store_true', help="Generate example data. Will not attempt to compile C binaries.")
-    parser.add_argument('-r', '--reduced', action='store_true', help="Run the reduced test suite. If used with --example will generate example data of the reduced test suite.")
+    parser.add_argument('-e', '--example', action='store_true', help="Output example data downloaded from GitHub if online, or randomly generated data if offline. Will not attempt to compile C binaries or run any algorithm version.")
+    parser.add_argument('-r', '--reduced', action='store_true', help="Run the reduced test suite. If used with --example will output example data of the reduced test suite.")
     parser.add_argument('-p', '--python', action='store_true', help="Run the Python versions of the algorithms instead of the C versions. Will not attempt to compile C binaries.")
     args = parser.parse_args()
     if sys.platform == 'win32':

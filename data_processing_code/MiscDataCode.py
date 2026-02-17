@@ -8,28 +8,40 @@ from dataclasses import dataclass, field
 import numpy as np
 import pandas as pd
 from typing import Union
-from enum import IntEnum
+from enum import StrEnum
+
+class AlgoNames(StrEnum):
+    """
+    A enum of each of the algorithm names to make declaring which one is wanted more clear
+    """
+    TargetSum = 'targetSum'
+    NewMemoizedCrazy = 'newMemoCrazy'
+    OldMemoizedCrazy = 'oldMemoCrazy'
+    MemoizedNormal = 'memoNormal'
+    TabulatedCrazy = 'tabCrazy'
+    TabulatedNormal = 'tabNormal'
+    RecursiveNormal = 'recurseNormal'
 
 FullResultsDType = np.dtype([
-    ('targetSum', np.uint32),
-    ('newMemoCrazy', np.float64), 
-    ('memoNormal', np.float64), 
-    ('tabCrazy', np.float64),
-    ('tabNormal', np.float64), 
-    ('recurseNormal', np.float64) 
+    (AlgoNames.TargetSum, np.uint32),
+    (AlgoNames.NewMemoizedCrazy, np.float64), 
+    (AlgoNames.MemoizedNormal, np.float64), 
+    (AlgoNames.TabulatedCrazy, np.float64),
+    (AlgoNames.TabulatedNormal, np.float64), 
+    (AlgoNames.RecursiveNormal, np.float64) 
 ])
 
 SpeedyResultsDType = np.dtype([
-    ('targetSum', np.uint32),
-    ('newMemoCrazy', np.float64), 
-    ('oldMemoCrazy', np.float64), 
+    (AlgoNames.TargetSum, np.uint32),
+    (AlgoNames.NewMemoizedCrazy, np.float64), 
+    (AlgoNames.OldMemoizedCrazy, np.float64), 
 ])
 
 MachinePredResultsDType = np.dtype([
-    ('newMemoCrazy', np.float64), 
-    ('memoNormal', np.float64), 
-    ('tabCrazy', np.float64),
-    ('tabNormal', np.float64), 
+    (AlgoNames.NewMemoizedCrazy, np.float64), 
+    (AlgoNames.MemoizedNormal, np.float64), 
+    (AlgoNames.TabulatedCrazy, np.float64),
+    (AlgoNames.TabulatedNormal, np.float64), 
 ])
 
 UnionDType = Union[FullResultsDType, SpeedyResultsDType, MachinePredResultsDType]
@@ -64,15 +76,3 @@ class DataProcessingInfo:
     DataFrame: pd.DataFrame
     BarColor: tuple[float, float, float]
     EdgeColor: tuple[float, float, float]
-
-class AlgoNames(IntEnum):
-    """
-    A enum of each of the algorithm names to make declaring which one is wanted more clear
-    """
-    TargetSum = 0
-    NewMemoizedCrazy = 1
-    OldMemoizedCrazy = 2
-    MemoizedNormal = 3
-    TabulatedCrazy = 4
-    TabulatedNormal = 5
-    RecursiveNormal = 6

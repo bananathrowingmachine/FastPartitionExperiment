@@ -3,11 +3,12 @@ Basic Instructions:
 
 To run the program use python3 on FastPartitionExperiment.py. The current set of python dependencies are 'numpy', 'pandas', 'matplotlib', 'python-docx', 'xlsxwriter', 'cffi' and 'setuptools'. Use ```pip install numpy pandas matplotlib python-docx xlsxwriter cffi setuptools``` to install them quickly in a virtual environment.
 
-options: \
-  -h, --help     show this help message and exit \
-  -r, --reduced  run a significantly reduced testing suite of just Old and New Memoized Crazy being run, on my machine doing this takes the runtime from about 24 hours to about 15 minutes using the python algorithm versions both times \
-  -e, --example  generate some random example data, used to test the data processor therefore it does not run the python or C implementations of the algorithms \
-  -p, --python   run the original python implementations of the algorithm versions instead of the C versions (NOT IMPLEMENTED YET, PYTHON VERSIONS WILL ALWAYS RUN) 
+options:\
+  -h, --help -> Show this help message and exit. No files or folders will be created or deleted.\
+  -c, --clean -> Clean then C binaries then exits. If used with --python, all \_\_pycache\_\_ will be cleaned as well.\
+  -e, --example -> Output example data downloaded from GitHub if online, or randomly generated data if offline. Will not attempt to compile C binaries or run any algorithm version.\
+  -r, --reduced -> Run the reduced test suite. If used with --example will output example data of the reduced test suite.\
+  -p, --python -> Run the Python versions of the algorithms instead of the C versions. Will not attempt to compile C binaries.
 
 NOTE: Running this program will always wipe previously recorded data, including graphs, data tables, and solution conflicts. If you want to save any previous data move it out of the generated files directory before running the program. This program will also automatically create any pycache or C binary files if they will be needed as well as folders for them.
 
