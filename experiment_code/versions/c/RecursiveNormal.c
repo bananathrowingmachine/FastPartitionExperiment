@@ -14,6 +14,8 @@ Output testIterations(int* inputList, int listLength) {
   Constants constants;
   constants.inputList = inputList;
   constants.listLength = listLength;
+  constants.posSum = 0;
+  constants.negSum = 0;
   for (int i = 0; i < listLength; i++) {
     if (inputList[i] > 0)
       constants.posSum += inputList[i];
@@ -39,10 +41,10 @@ static uint8_t subsetSum(Constants* constants, int index, int goal, int* iterati
     return 1;
   if (index >= constants->listLength)
     return 0;
-  *(iterationCount)++;
+  (*iterationCount)++;
   int nextGoal = goal - constants->inputList[index];
   index++;
   if (nextGoal > constants->posSum || nextGoal < constants->negSum)
     return subsetSum(constants, index, goal, iterationCount);
-  return subsetSum(constants, index, goal, iterationCount) || subsetSum(constants, index, nextGoal, iterationCount);
+  return subsetSum(constants, index, nextGoal, iterationCount) || subsetSum(constants, index, goal, iterationCount);
 }

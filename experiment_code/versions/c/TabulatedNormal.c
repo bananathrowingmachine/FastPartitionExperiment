@@ -29,14 +29,21 @@ Output testIterations(int* inputList, int listLength) {
  * Solves the partition problem with vectorized dynamic programming.
  */
 static Output partition(Constants* constants, int index, int goal) {
-  int sumRange = constants->posSum - constants->negSum + 1;
-  // uint8_t prev[sumRange];
+  int negSum = constants->negSum;
+  int sumRange = constants->posSum - negSum + 1;
+  uint8_t prev[sumRange];
+  uint8_t next[sumRange];
+  memset(prev, 0, sumRange);
+  prev[-negSum] = 1;
+
+  for (int i = 0; i < constants->listLength; i++) {
+  }
 
   Output output;
   for (int i = 0; i < constants->listLength; i++)
     output.iterationCount += abs(constants->inputList[i]);
   output.iterationCount *= 5;
-  // output.result = 1;
+  output.result = 1;
   return output;
   /**
    * python example array before and after
