@@ -4,7 +4,7 @@ Solves the partition problem using a bottom up dynamic programming algorithm, wh
 This is heavily inspired from Jeff Erickson's Subset Sum algorithm but it has a few notable changes, mainly in handing negative numbers and the changes needed to do that effectively as well as solve specifically for partition.
 His algorithm can be found in Chapter 3, page 117 in his free online algorithms textbook located here: http://algorithms.wtf/
 
-Made by bananathrowingmachine on May 9th, 2025.
+Made by bananathrowingmachine on Feb 17, 2026.
 """
 def testIterations(inputList: list[int]) -> tuple[int, bool]:
     """
@@ -43,4 +43,4 @@ def partition(inputList: list[int], posSum: int, negSum: int) -> tuple[int, bool
             else:
                 resultsTable[i][j] = resultsTable[i+1][j] or resultsTable[i+1][j-inputList[i]]
 
-    return (sumRange * len(inputList), resultsTable[0][int((posSum - negSum) / 2)]) # The iterations count will always be exactly the size of the tabulation table that is not predetermined (aka not a edge case bound).
+    return (sumRange * len(inputList), resultsTable[0][int((posSum + negSum) / 2)]) # The iterations count will always be exactly the size of the tabulation table that is not predetermined (aka not a edge case bound).

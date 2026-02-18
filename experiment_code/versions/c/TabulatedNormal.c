@@ -16,6 +16,8 @@ Output testIterations(int* inputList, int listLength) {
   Constants constants;
   constants.inputList = inputList;
   constants.listLength = listLength;
+  constants.posSum = 0;
+  constants.negSum = 0;
   for (int i = 0; i < listLength; i++) {
     if (inputList[i] > 0)
       constants.posSum += inputList[i];
@@ -29,36 +31,30 @@ Output testIterations(int* inputList, int listLength) {
  * Solves the partition problem with vectorized dynamic programming.
  */
 static Output partition(Constants* constants, int index, int goal) {
-  int negSum = constants->negSum;
-  int sumRange = constants->posSum - negSum + 1;
-  uint8_t prev[sumRange];
-  uint8_t next[sumRange];
+  int absNegSum = -constants->negSum;
+  int sumRange = constants->posSum + absNegSum + 1;
+  uint8_t buffer1[sumRange];
+  uint8_t buffer2[sumRange];
+  uint8_t* prev = buffer1;
+  uint8_t* next = buffer2;
   memset(prev, 0, sumRange);
-  prev[-negSum] = 1;
+  prev[absNegSum] = 1;
 
-  for (int i = 0; i < constants->listLength; i++) {
+  for (int i = constants->listLength - 1; i >= 0; i--) {
+    uint8_t* temp = prev;
+    prev = next;
+    next = temp;
+    for (int j = constants->negSum; j <= constants->posSum; j++) {
+      int nextGoal = j - constants->inputList[i];
+      if (nextGoal > constants->posSum || nextGoal < constants->negSum)
+        next[j + absNegSum] = prev[j + absNegSum];
+      else
+        next[j + absNegSum] = prev[j + absNegSum] || prev[nextGoal + absNegSum];
+    }
   }
 
   Output output;
-  for (int i = 0; i < constants->listLength; i++)
-    output.iterationCount += abs(constants->inputList[i]);
-  output.iterationCount *= 5;
-  output.result = 1;
+  output.iterationCount = sumRange * constants->listLength;
+  output.result = next[(constants->posSum - absNegSum) / 2 + absNegSum];
   return output;
-  /**
-   * python example array before and after
-   * [[None, None, None, None, None, None, None, None, None, None, None],
-   * [None, None, None, None, None, None, None, None, None, None, None],
-   * [None, None, None, None, None, None, None, None, None, None, None],
-   * [None, None, None, None, None, None, None, None, None, None, None],
-   * [None, None, None, None, None, None, None, None, None, None, None],
-   * [True, False, False, False, False, False, False, False, False, False, False]]
-   *
-   * [[True, True, True, True, True, True, True, True, True, True, True],
-   * [True, True, True, False, True, True, False, False, True, True, False],
-   * [True, True, False, False, True, True, False, False, False, False, False],
-   * [True, True, False, False, True, True, False, False, False, False, False],
-   * [True, True, False, False, False, False, False, False, False, False, False],
-   * [True, False, False, False, False, False, False, False, False, False, False]]
-   */
 }

@@ -15,6 +15,8 @@ Output testIterations(int* inputList, int listLength) {
   Constants constants;
   constants.inputList = inputList;
   constants.listLength = listLength;
+  constants.posSum = 0;
+  constants.negSum = 0;
   for (int i = 0; i < listLength; i++) {
     if (inputList[i] > 0)
       constants.posSum += inputList[i];
