@@ -1,10 +1,8 @@
 /**
  * Solves the partition problem using a bottom up dynamic programming algorithm, which is an algorithm that iteratively fills a list of subproblems in reverse order to then end at the answer.
- * NOT IMPLEMENTED YET THIS JUST PUTS THE ARRAYS SUM IN ITERATIONCOUNT AND RETURNS TRUE (used for C->Python testing)
  *
- * Made by bananathrowingmachine on Feb 17, 2026.
+ * Made by bananathrowingmachine on Feb 19, 2026.
  */
-#include <immintrin.h>
 #include <typedefs.h>
 
 static Output partition(Constants* constants, int index, int goal);
@@ -28,16 +26,13 @@ Output testIterations(int* inputList, int listLength) {
 }
 
 /**
- * Solves the partition problem with vectorized dynamic programming.
+ * Solves the partition problem with dynamic programming.
  */
 static Output partition(Constants* constants, int index, int goal) {
   int absNegSum = -constants->negSum;
   int sumRange = constants->posSum + absNegSum + 1;
-  uint8_t buffer1[sumRange];
-  uint8_t buffer2[sumRange];
-  uint8_t* prev = buffer1;
-  uint8_t* next = buffer2;
-  memset(prev, 0, sumRange);
+  uint8_t* prev = calloc(sumRange, sizeof(uint8_t));
+  uint8_t* next = malloc(sumRange);
   prev[absNegSum] = 1;
 
   for (int i = constants->listLength - 1; i >= 0; i--) {

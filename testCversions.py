@@ -6,6 +6,8 @@ import experiment_code.versions.python.TabulatedNormal as TabulatedNormal
 from experiment_code.versions.python.RecursiveNormal import RecursiveNormal
 from FastPartitionExperiment import buildCLibrary
 from pathlib import Path
+import time
+
 buildCLibrary(Path(__file__).resolve().parent / "experiment_code" / "versions")
 from experiment_code.versions.c_bin._MemoizedNormal import lib as MemoizedNormalC
 from experiment_code.versions.c_bin._OldMemoizedCrazy import lib as OldMemoizedCrazyC
@@ -15,9 +17,14 @@ from experiment_code.versions.c_bin._TabulatedNormal import lib as TabulatedNorm
 from experiment_code.versions.c_bin._RecursiveNormal import lib as RecursiveNormalC
 from experiment_code.versions.c_bin._NewMemoizedCrazy import ffi
 
-testList = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17]
+testList = [11, 13, 17, 19, 29, 31, 41, 43]
 testListC = ffi.new("int[]", testList)
+startTime = time.time_ns()
 result = TabulatedNormalC.testIterations(testListC, len(testListC)) 
 result = (result.iterationCount, bool(result.result))
-print(result)
-print(TabulatedNormal.testIterations(testList))
+endTime = time.time_ns()
+print(f"{result} -> {(endTime-startTime)/1000}ms")
+startTime = time.time_ns()
+result = TabulatedNormal.testIterations(testList)
+endTime = time.time_ns()
+print(f"{result} -> {(endTime-startTime)/1000}ms")

@@ -15,7 +15,7 @@ It will then send the packaged data completely unmodified to the data processing
 Once in the data processing code, the processor will unpack the data, processes it, and then once done will return back to the orchestrator, waiting for another chunk of data.
 Was designed to have as little code as possible to help my non comp sci major friend who does know how to graph in python.
 
-Made by bananathrowingmachine on Feb 17, 2026.
+Made by bananathrowingmachine on Feb 19, 2026.
 """
 from experiment_code.ComplexityExperiment import ComplexityExperiment
 from data_processing_code.MainDataProcessor import MainDataProcessor
@@ -180,7 +180,8 @@ def buildCLibrary(parentDir: Path):
                 f"""
                 #include "{name}.c"
                 """, 
-                include_dirs=[str(sourceDir)]            
+                include_dirs=[str(sourceDir)],     
+                extra_compile_args=['-O3', '-march=native', '-ftree-vectorize']       
             )
             ffibuilder.compile(tmpdir=targetDir)
             filesToClean += glob.glob(os.path.join(targetDir, f"_{name}.[co]"))
