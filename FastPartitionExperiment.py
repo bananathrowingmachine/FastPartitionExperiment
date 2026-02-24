@@ -15,7 +15,7 @@ It will then send the packaged data completely unmodified to the data processing
 Once in the data processing code, the processor will unpack the data, processes it, and then once done will return back to the orchestrator, waiting for another chunk of data.
 Was designed to have as little code as possible to help my non comp sci major friend who does know how to graph in python.
 
-Made by bananathrowingmachine on Feb 19, 2026.
+Made by bananathrowingmachine on Feb 23, 2026.
 """
 from experiment_code.ComplexityExperiment import ComplexityExperiment
 from data_processing_code.MainDataProcessor import MainDataProcessor
@@ -26,11 +26,9 @@ from multiprocessing import Process, Queue, Event
 from shutil import rmtree
 from pathlib import Path
 from queue import Empty
-import argparse
-import sys
-import os
-import glob
 from cffi import FFI
+
+import argparse, sys, os, glob, time
 
 disagreeCount = 1
 
@@ -131,6 +129,9 @@ def main():
     genFilesDir = Path(__file__).resolve().parent / "generated_files"
     rmtree(genFilesDir, ignore_errors=True)
     genFilesDir.mkdir(parents=True, exist_ok=True)
+    if not args.example:
+        print("()~~}|[==>>--:>-       Data collection has started. This will take a long time.      -<:--<<==]|{~~()")
+        startTime = time.time()
     queue = Queue()
     keepGoing = Event()
     keepGoing.set()
@@ -139,7 +140,7 @@ def main():
         processor = Process(target=processData, args=(queue, keepGoing, genFilesDir, args.reduced))
     except KeyboardInterrupt:
         keepGoing.clear()
-        raise
+        sys.exit(1)
     else:
         collector.start()
         processor.start()
@@ -147,7 +148,11 @@ def main():
         keepGoing.clear() # Signals end of work to the data processor.
         print("()~~}|[==>>--:>-        Data collection has finished. Finishing up processing.       -<:--<<==]|{~~()")
         processor.join()
-        print("()~~}|[==>>--:>-              All processing has been completed. Exiting.            -<:--<<==]|{~~()")
+        print("()~~}|[==>>--:>-      All processing has been completed. Program has completed.      -<:--<<==]|{~~()")
+        if not args.example:
+            hours, remainder = divmod(time.time() - startTime, 3600)
+            minutes = remainder / 60
+            print(f"()~~}}|[==>>--:>-               Execution took {int(hours):2} hours and {int(minutes):2} minutes.               -<:--<<==]|{{~~()")
         sys.exit(0)
 
 def buildCLibrary(parentDir: Path):
