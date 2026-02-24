@@ -1,15 +1,12 @@
 /**
  * Solves the partition problem using a bottom up dynamic programming algorithm, which is an algorithm that iteratively fills a list of subproblems in reverse order to then end at the answer.
  *
- * Made by bananathrowingmachine on Feb 19, 2026.
+ * Made by bananathrowingmachine on Feb 24, 2026.
  */
 #include <typedefs.h>
 
 static Output partition(Constants* constants, int index, int goal);
 
-/**
- * Tests the iteration count of a basic recursive partition algorithm.
- */
 Output testIterations(int* inputList, int listLength) {
   Constants constants;
   constants.inputList = inputList;

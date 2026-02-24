@@ -17,14 +17,31 @@ from experiment_code.versions.c_bin._TabulatedNormal import lib as TabulatedNorm
 from experiment_code.versions.c_bin._RecursiveNormal import lib as RecursiveNormalC
 from experiment_code.versions.c_bin._NewMemoizedCrazy import ffi
 
+# whichever iteration gets tested first seems to always be slower even if retested
+startupInput = [11, 13, 17, 19, 29, 31, 41, 43]
+NewMemoizedCrazyC.testIterations(ffi.new("int[]", startupInput), len(startupInput)) 
+
 testList = [11, 13, 17, 19, 29, 31, 41, 43]
 testListC = ffi.new("int[]", testList)
+
 startTime = time.time_ns()
-result = TabulatedNormalC.testIterations(testListC, len(testListC)) 
+result = TabulatedCrazyC.testIterations(testListC, len(testList)) 
 result = (result.iterationCount, bool(result.result))
 endTime = time.time_ns()
 print(f"{result} -> {(endTime-startTime)/1000}ms")
+
 startTime = time.time_ns()
-result = TabulatedNormal.testIterations(testList)
+result = TabulatedCrazy.testIterations(testList)
+endTime = time.time_ns()
+print(f"{result} -> {(endTime-startTime)/1000}ms")
+
+startTime = time.time_ns()
+result = TabulatedNormalC.testIterations(testListC, len(testList))
+result = (result.iterationCount, bool(result.result))
+endTime = time.time_ns()
+print(f"{result} -> {(endTime-startTime)/1000}ms")
+
+startTime = time.time_ns()
+result = RecursiveNormal.testIterations(testList)
 endTime = time.time_ns()
 print(f"{result} -> {(endTime-startTime)/1000}ms")
