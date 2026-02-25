@@ -6,12 +6,12 @@
 #include <khash.h>
 #include <typedefs.h>
 
-static uint8_t subsetSum(Constants* constants, int index, int goal, int* iterationCount, khash_t(answerMap) * h);
-
 KHASH_MAP_INIT_INT(answerMap, uint8_t)
 
+static uint8_t subsetSum(Constants* constants, int index, int goal, khash_t(answerMap) * h);
+
 /**
- * Tests the iteration count of a basic recursive partition algorithm. gg
+ * Tests the iteration count of a basic recursive partition algorithm.
  */
 Output testIterations(int* inputList, int listLength) {
   Constants constants;
@@ -25,20 +25,20 @@ Output testIterations(int* inputList, int listLength) {
     else
       constants.negSum += inputList[i];
   }
-  khash_t(answerMap)* h = kh_init(answerMap);
+  khash_t(answerMap)* hashTable = kh_init(answerMap);
   Output output;
-  output.iterationCount = 0;
-  output.result = subsetSum(&constants, 0, (constants.posSum + constants.negSum) / 2, &output.iterationCount, h);
-  kh_destroy(answerMap, h);
+  output.result = subsetSum(&constants, 0, (constants.posSum + constants.negSum) / 2, hashTable);
+  output.iterationCount = kh_size(hashTable);
+  kh_destroy(answerMap, hashTable);
   return output;
 }
 
 /**
- * Solves the subset sum problem recursively.
+ * Solves the subset sum problem recursively with memoized answers to prevent calculating the same subproblem multiple times.
  */
-static uint8_t subsetSum(Constants* constants, int index, int goal, int* iterationCount, khash_t(answerMap) * h) {
+static uint8_t subsetSum(Constants* constants, int index, int goal, khash_t(answerMap) * hashTable) {
   int ret;
-  khiter_t k;
+  khiter_t hashIter;
   if (goal == 0)
     return 1;
   if (index >= constants->listLength)
@@ -46,10 +46,25 @@ static uint8_t subsetSum(Constants* constants, int index, int goal, int* iterati
 
   int goalDiff = goal - constants->inputList[index];
   if (goalDiff < constants->posSum && goalDiff > constants->negSum) {
-    int num = index + 1 + goalDiff;
-    k = kh_get(answerMap, h, num);
-    if (k != kh_end(h)) {
-      // to do
+    uint8_t take;
+    int num = ((uint32_t)(goalDiff) << 7) | (index + 1);
+    hashIter = kh_put(answerMap, hashTable, num, &ret);
+    if (ret == 0)
+      take = kh_val(hashTable, hashIter);
+    else
+      take = subsetSum(constants, index + 1, goalDiff, hashTable);
+    if (take) {
+      kh_val(hashTable, kh_put(answerMap, hashTable, num - 1, &ret)) = 1;
+      return 1;
     }
   }
+  uint8_t skip;
+  int num = ((uint32_t)(goal) << 7) | (index + 1);
+  hashIter = kh_put(answerMap, hashTable, num, &ret);
+  if (ret == 0)
+    skip = kh_val(hashTable, hashIter);
+  else
+    skip = subsetSum(constants, index + 1, goal, hashTable);
+  kh_val(hashTable, kh_put(answerMap, hashTable, num - 1, &ret)) = skip;
+  return skip;
 }

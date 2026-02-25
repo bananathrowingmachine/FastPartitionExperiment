@@ -25,13 +25,13 @@ testList = [11, 13, 17, 19, 29, 31, 41, 43]
 testListC = ffi.new("int[]", testList)
 
 startTime = time.time_ns()
-result = TabulatedCrazyC.testIterations(testListC, len(testList)) 
+result = MemoizedNormalC.testIterations(testListC, len(testList)) 
 result = (result.iterationCount, bool(result.result))
 endTime = time.time_ns()
 print(f"{result} -> {(endTime-startTime)/1000}ms")
 
 startTime = time.time_ns()
-result = TabulatedCrazy.testIterations(testList)
+result = MemoizedNormal.testIterations(testList)
 endTime = time.time_ns()
 print(f"{result} -> {(endTime-startTime)/1000}ms")
 
